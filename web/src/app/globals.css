@@ -1,0 +1,85 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 260 30% 6%;
+    --foreground: 260 100% 97%;
+
+    --card: 260 24% 13%;
+    --card-foreground: 260 100% 97%;
+
+    --popover: 260 24% 10%;
+    --popover-foreground: 260 100% 97%;
+
+    --primary: 263 90% 66%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 260 24% 13%;
+    --secondary-foreground: 260 100% 97%;
+
+    --muted: 260 20% 18%;
+    --muted-foreground: 260 10% 55%;
+
+    --accent: 263 90% 66%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 60% 50%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 0 0% 100% / 0.1;
+    --input: 0 0% 100% / 0.1;
+    --ring: 263 90% 66%;
+
+    --radius: 1.5rem;
+
+    /* BullCapital Design System Tokens */
+    --void: #0d0b14;
+    --surface: #1a1625;
+    --starlight: #f4f0ff;
+    --amethyst: #8b5cf6;
+    --glass-rim: rgba(255, 255, 255, 0.1);
+    --glass-rim-strong: rgba(255, 255, 255, 0.2);
+    --shadow-soft: rgba(0, 0, 0, 0.4);
+    --shadow-deep: rgba(0, 0, 0, 0.6);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-[var(--void)] text-[var(--starlight)];
+    font-family:
+      'Inter',
+      system-ui,
+      -apple-system,
+      sans-serif;
+  }
+}
+
+@layer utilities {
+  .glow-amethyst {
+    box-shadow:
+      0 0 20px rgba(139, 92, 246, 0.3),
+      0 0 40px rgba(139, 92, 246, 0.1);
+  }
+
+  .text-gradient-amethyst {
+    background: linear-gradient(135deg, #8b5cf6, #a78bfa, #c4b5fd);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .glass-card {
+    @apply rounded-[2.5rem] border border-white/10 bg-[#1A1625]/40 backdrop-blur-2xl;
+    box-shadow:
+      inset 0 1px 1px rgba(255, 255, 255, 0.15),
+      inset 0 -2px 6px rgba(0, 0, 0, 0.6),
+      0 10px 20px rgba(0, 0, 0, 0.4);
+  }
+}

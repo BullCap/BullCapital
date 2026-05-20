@@ -1,0 +1,35 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    ports:
+      - '5432:5432'
+    environment:
+      POSTGRES_USER: bullcapital
+      POSTGRES_PASSWORD: bullcapital
+      POSTGRES_DB: bullcapital
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U bullcapital -d bullcapital']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: ./api
+    restart: unless-stopped
+    ports:
+      - '8001:8001'
+    environment:
+      DATABASE_URL: postgresql+asyncpg://bullcapital:bullcapital@db:5432/bullcapital
+      DATABASE_SSL: 'false'
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      CORS_ORIGINS: http://localhost:3000
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  postgres_data:

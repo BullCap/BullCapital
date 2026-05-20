@@ -1,7 +1,6 @@
 import NextAuth from 'next-auth'
 import { PrismaAdapter } from '@auth/prisma-adapter'
 import Credentials from 'next-auth/providers/credentials'
-import Google from 'next-auth/providers/google'
 import { compare } from 'bcryptjs'
 import { prisma } from '@/lib/db'
 import authConfig from '@/lib/auth.config'
@@ -11,7 +10,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   session: { strategy: 'jwt' },
   ...authConfig,
   providers: [
-    Google({ allowDangerousEmailAccountLinking: true }),
     Credentials({
       credentials: {
         email: { label: 'Email', type: 'email' },
@@ -55,11 +53,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     },
     async createUser(message) {
       console.log(`✅ [AUTH LOG] New user created: ${message.user.email}`)
-    },
-    async linkAccount(message) {
-      console.log(
-        `✅ [AUTH LOG] Account linked: ${message.user.email} with provider ${message.account.provider}`
-      )
     },
   },
   logger: {
