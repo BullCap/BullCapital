@@ -1,0 +1,1 @@
+"""BullCapital AI Service."""

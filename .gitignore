@@ -1,0 +1,42 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Next.js
+.next/
+out/
+build/
+
+# Env files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+*.egg-info/
+dist/
+.pytest_cache/
+
+# Editor
+.DS_Store
+*.swp
+*.swo
+
+# Turbo
+.turbo/
+
+# Coverage
+coverage/
+.coverage
+
+# Logs
+*.log
+npm-debug.log*
