@@ -57,7 +57,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   },
   logger: {
     error(error) {
-      console.error('❌ [AUTH ERROR]', error.name, error.message)
+      const e = error as Error
+      console.error('❌ [AUTH ERROR]', e.name, e.message)
     },
     warn(code) {
       console.warn('⚠️ [AUTH WARNING]', code)

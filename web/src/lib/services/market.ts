@@ -26,7 +26,7 @@ export async function getMarketRadarData(
   const apiKey = process.env.BRAPI_KEY
 
   if (!apiKey) {
-    console.error('BRAPI_KEY is not defined in the environment variables.')
+    console.warn('BRAPI_KEY is not defined in the environment variables.')
     return null
   }
 
@@ -127,7 +127,7 @@ export async function getMarketRadarData(
 
     return radarData
   } catch (error) {
-    console.error('Exception while fetching Brapi data:', error)
+    console.warn('Exception while fetching Brapi data:', error)
     return null
   }
 }
@@ -159,7 +159,7 @@ export async function getMarketListings(
   const apiKey = process.env.BRAPI_KEY
 
   if (!apiKey) {
-    console.error('BRAPI_KEY is not defined in the environment variables.')
+    console.warn('BRAPI_KEY is not defined in the environment variables.')
     return null
   }
 
@@ -195,7 +195,7 @@ export async function getMarketListings(
     })
 
     if (!response.ok) {
-      console.error(`Brapi listing API error (${response.status})`)
+      console.warn(`Brapi listing API error (${response.status})`)
       return null
     }
 
@@ -260,7 +260,7 @@ export async function getMarketListings(
       hasNextPage: data.hasNextPage ?? false,
     }
   } catch (error) {
-    console.error('Exception while fetching market listings:', error)
+    console.warn('Exception while fetching market listings:', error)
     return null
   }
 }
@@ -292,7 +292,7 @@ export async function getMultipleQuotes(
 
     if (!response.ok) {
       const errorBody = await response.text()
-      console.error(`Brapi API error (${response.status}):`, errorBody)
+      console.warn(`Brapi API error (${response.status}):`, errorBody)
       return { results: [], error: `Brapi API returned status ${response.status}.` }
     }
 
@@ -314,7 +314,7 @@ export async function getMultipleQuotes(
 
     return { results }
   } catch (error) {
-    console.error('Exception while fetching quotes from Brapi:', error)
+    console.warn('Exception while fetching quotes from Brapi:', error)
     return { results: [], error: 'Failed to fetch quotes from Brapi API.' }
   }
 }
@@ -349,7 +349,7 @@ export async function getMarketIndicators(): Promise<MarketIndicatorsData & { er
       const failedEndpoints: string[] = []
       if (!selicResponse.ok) failedEndpoints.push(`prime-rate (${selicResponse.status})`)
       if (!inflationResponse.ok) failedEndpoints.push(`inflation (${inflationResponse.status})`)
-      console.error('Brapi API error for:', failedEndpoints.join(', '))
+      console.warn('Brapi API error for:', failedEndpoints.join(', '))
       return {
         selic: [],
         inflation: [],
@@ -378,7 +378,7 @@ export async function getMarketIndicators(): Promise<MarketIndicatorsData & { er
 
     return { selic, inflation }
   } catch (error) {
-    console.error('Exception while fetching market indicators from Brapi:', error)
+    console.warn('Exception while fetching market indicators from Brapi:', error)
     return { selic: [], inflation: [], error: 'Failed to fetch market indicators from Brapi API.' }
   }
 }
@@ -417,7 +417,7 @@ export async function searchAssets(
 
     if (!response.ok) {
       const errorBody = await response.text()
-      console.error(`Brapi search API error (${response.status}):`, errorBody)
+      console.warn(`Brapi search API error (${response.status}):`, errorBody)
       return { ...empty, error: `Brapi API returned status ${response.status}.` }
     }
 
@@ -448,7 +448,7 @@ export async function searchAssets(
       hasNextPage: (data.hasNextPage as boolean) ?? false,
     }
   } catch (error) {
-    console.error('Exception while searching assets from Brapi:', error)
+    console.warn('Exception while searching assets from Brapi:', error)
     return { ...empty, error: 'Failed to search assets from Brapi API.' }
   }
 }
@@ -489,7 +489,7 @@ export async function getMarketStatus(): Promise<MarketStatusData & { error?: st
         }
       }
     } catch (err) {
-      console.error('Brapi market status error:', err)
+      console.warn('Brapi market status error:', err)
     }
   }
 
@@ -518,7 +518,7 @@ export async function getMarketStatus(): Promise<MarketStatusData & { error?: st
         }
       }
     } catch (err) {
-      console.error('Yahoo fallback error:', err)
+      console.warn('Yahoo fallback error:', err)
     }
   }
 
@@ -611,7 +611,7 @@ export async function getAssetHistory(
 
     if (!response.ok) {
       const errorBody = await response.text()
-      console.error(`Brapi history API error (${response.status}):`, errorBody)
+      console.warn(`Brapi history API error (${response.status}):`, errorBody)
       return { results: [], error: `Brapi API returned status ${response.status}.` }
     }
 
@@ -638,7 +638,7 @@ export async function getAssetHistory(
 
     return { results }
   } catch (err) {
-    console.error('Exception while fetching asset history:', err)
+    console.warn('Exception while fetching asset history:', err)
     return { results: [], error: 'Failed to fetch asset history from Brapi API.' }
   }
 }
@@ -668,7 +668,7 @@ export async function getCurrencyRates(
 
     if (!response.ok) {
       const errorBody = await response.text()
-      console.error(`Brapi currency API error (${response.status}):`, errorBody)
+      console.warn(`Brapi currency API error (${response.status}):`, errorBody)
       return { currencies: [], error: `Brapi API returned status ${response.status}.` }
     }
 
@@ -688,7 +688,7 @@ export async function getCurrencyRates(
 
     return { currencies }
   } catch (err) {
-    console.error('Exception while fetching currency rates:', err)
+    console.warn('Exception while fetching currency rates:', err)
     return { currencies: [], error: 'Failed to fetch currency rates from Brapi API.' }
   }
 }
