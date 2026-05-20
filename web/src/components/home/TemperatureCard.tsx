@@ -19,10 +19,7 @@ export default function TemperatureCard({ temperature }: TemperatureCardProps) {
       {temperature === null ? (
         <p className="text-center text-sm text-[#F4F0FF]/40">Dados indisponíveis</p>
       ) : (
-        <div className="flex flex-col items-center gap-4">
-          <MarketTemperatureDial value={temperature.value} stateName={temperature.label} />
-          <p className="font-serif text-lg text-[#F4F0FF]">{temperature.label}</p>
-        </div>
+        <MarketTemperatureDial value={temperature.value} stateName={temperature.label} />
       )}
     </div>
   )

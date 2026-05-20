@@ -1,6 +1,5 @@
-"""Core configuration module."""
-
 from functools import lru_cache
+import json
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -33,7 +32,20 @@ class Settings(BaseSettings):
     openai_model: str = "gpt-4o"
 
     # CORS
-    cors_origins: list[str] = ["http://localhost:3000"]
+    cors_origins: str = "http://localhost:3000"
+
+    @property
+    def cors_origin_list(self) -> list[str]:
+        """Return CORS origins from comma-separated or JSON env formats."""
+        value = self.cors_origins.strip()
+        if not value:
+            return []
+
+        if value.startswith("["):
+            parsed = json.loads(value)
+            return [str(origin).strip() for origin in parsed if str(origin).strip()]
+
+        return [origin.strip() for origin in value.split(",") if origin.strip()]
 
 
 @lru_cache

@@ -1,10 +1,10 @@
 import { redirect } from 'next/navigation'
 import { auth } from '@/lib/auth'
-import { getMarketStatus, getMarketIndicators, getMultipleQuotes } from '@/lib/services/market'
+import { getMarketListings } from '@/lib/services/market'
 import {
-  CURATED_TICKERS,
   computeTemperature,
-  formatSELIC,
+  fetchSELIC,
+  fetchIndexFromBrapi,
   isMarketOpen,
 } from '@/lib/market-utils'
 import TemperatureCard from '@/components/home/TemperatureCard'
@@ -17,44 +17,42 @@ export default async function HomePage() {
   const session = await auth()
   if (!session?.user) redirect('/auth/sign-in')
 
-  const [statusResult, indicatorsResult, quotesResult] = await Promise.allSettled([
-    getMarketStatus(),
-    getMarketIndicators(),
-    getMultipleQuotes(CURATED_TICKERS),
-  ])
+  // All 5 fetches in parallel — each is free-tier compatible (1 ticker per Brapi call)
+  const [ibovResult, sp500Result, vixResult, selicResult, gainersResult, losersResult] =
+    await Promise.allSettled([
+      fetchIndexFromBrapi('^BVSP'),
+      fetchIndexFromBrapi('^GSPC'),
+      fetchIndexFromBrapi('^VIX'),
+      fetchSELIC(),
+      getMarketListings({ sortBy: 'change', sortOrder: 'desc', limit: 3, type: 'stock' }),
+      getMarketListings({ sortBy: 'change', sortOrder: 'asc', limit: 3, type: 'stock' }),
+    ])
 
-  const status = statusResult.status === 'fulfilled' ? statusResult.value : null
-  const ibov = status?.indices.find((i) => i.symbol === '^BVSP') ?? null
-  const sp500 = status?.indices.find((i) => i.symbol === '^GSPC') ?? null
-  const vix = status?.indices.find((i) => i.symbol === '^VIX')?.regularMarketPrice ?? null
+  const ibov = ibovResult.status === 'fulfilled' ? ibovResult.value : null
+  const sp500 = sp500Result.status === 'fulfilled' ? sp500Result.value : null
+  const vix = vixResult.status === 'fulfilled' ? vixResult.value?.price ?? null : null
 
-  const temperature = ibov ? computeTemperature(ibov.regularMarketChangePercent, vix) : null
+  const temperature = ibov ? computeTemperature(ibov.changePercent, vix) : null
 
-  const indicators = indicatorsResult.status === 'fulfilled' ? indicatorsResult.value : null
-  const selicData = formatSELIC(indicators?.selic ?? [])
+  const selicData = selicResult.status === 'fulfilled' ? selicResult.value : null
 
-  const quotes =
-    quotesResult.status === 'fulfilled' ? (quotesResult.value.results ?? []) : []
-  const gainers = [...quotes]
-    .sort((a, b) => b.regularMarketChangePercent - a.regularMarketChangePercent)
-    .slice(0, 3)
-    .map((q) => ({
-      ticker: q.symbol,
-      name: q.shortName,
-      price: q.regularMarketPrice,
-      changePercent: q.regularMarketChangePercent,
-      logoUrl: q.logourl || undefined,
-    }))
-  const losers = [...quotes]
-    .sort((a, b) => a.regularMarketChangePercent - b.regularMarketChangePercent)
-    .slice(0, 3)
-    .map((q) => ({
-      ticker: q.symbol,
-      name: q.shortName,
-      price: q.regularMarketPrice,
-      changePercent: q.regularMarketChangePercent,
-      logoUrl: q.logourl || undefined,
-    }))
+  const gainersRaw =
+    gainersResult.status === 'fulfilled' ? (gainersResult.value?.stocks ?? []) : []
+  const losersRaw =
+    losersResult.status === 'fulfilled' ? (losersResult.value?.stocks ?? []) : []
+
+  const gainers = gainersRaw.map((s) => ({
+    ticker: s.stock,
+    name: s.name,
+    price: s.close,
+    changePercent: s.change,
+  }))
+  const losers = losersRaw.map((s) => ({
+    ticker: s.stock,
+    name: s.name,
+    price: s.close,
+    changePercent: s.change,
+  }))
 
   const marketOpen = isMarketOpen()
 
@@ -70,14 +68,14 @@ export default async function HomePage() {
       <div className="grid grid-cols-2 gap-4">
         <IndexCard
           name="IBOVESPA"
-          price={ibov?.regularMarketPrice ?? null}
-          changePercent={ibov?.regularMarketChangePercent ?? null}
+          price={ibov?.price ?? null}
+          changePercent={ibov?.changePercent ?? null}
           isOpen={marketOpen}
         />
         <IndexCard
           name="S&P 500"
-          price={sp500?.regularMarketPrice ?? null}
-          changePercent={sp500?.regularMarketChangePercent ?? null}
+          price={sp500?.price ?? null}
+          changePercent={sp500?.changePercent ?? null}
           isOpen={marketOpen}
         />
       </div>

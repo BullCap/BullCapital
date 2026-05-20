@@ -1,5 +1,3 @@
-import type { PrimeRateEntry } from '@/types/market'
-
 export const CURATED_TICKERS = [
   'PETR4',
   'VALE3',
@@ -42,16 +40,55 @@ export function computeTemperature(
   return { value, label, level }
 }
 
-export function formatSELIC(selic: PrimeRateEntry[]): { rate: string; date: string } | null {
-  if (!selic.length) return null
-  const latest = selic[0]
-  const rate =
-    parseFloat(latest.value).toLocaleString('pt-BR', {
-      minimumFractionDigits: 1,
-      maximumFractionDigits: 1,
-    }) + '% a.a.'
-  const date = new Date(latest.epochDate * 1000).toLocaleDateString('pt-BR')
-  return { rate, date }
+// Banco Central do Brasil API — free, no key required
+export async function fetchSELIC(): Promise<{ rate: string; date: string } | null> {
+  try {
+    const res = await fetch(
+      'https://api.bcb.gov.br/dados/serie/bcdata.sgs.432/dados/ultimos/1?formato=json',
+      { next: { revalidate: 86400 } }
+    )
+    if (!res.ok) return null
+    const data: Array<{ data: string; valor: string }> = await res.json()
+    if (!data[0]) return null
+    const value = parseFloat(data[0].valor.replace(',', '.'))
+    const rate =
+      value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) +
+      '% a.a.'
+    return { rate, date: data[0].data }
+  } catch {
+    return null
+  }
+}
+
+export interface YahooQuote {
+  ticker: string
+  name: string
+  price: number
+  changePercent: number
+}
+
+// Single-ticker fetch from Brapi — works on free plan (1 ticker per request).
+export async function fetchIndexFromBrapi(
+  symbol: string
+): Promise<{ price: number; changePercent: number } | null> {
+  const apiKey = process.env.BRAPI_KEY
+  if (!apiKey) return null
+  try {
+    const res = await fetch(
+      `https://brapi.dev/api/quote/${encodeURIComponent(symbol)}?token=${apiKey}`,
+      { next: { revalidate: 300 } }
+    )
+    if (!res.ok) return null
+    const data = await res.json()
+    const item = data.results?.[0]
+    if (!item) return null
+    return {
+      price: Number(item.regularMarketPrice ?? 0),
+      changePercent: Number(item.regularMarketChangePercent ?? 0),
+    }
+  } catch {
+    return null
+  }
 }
 
 export function isMarketOpen(): boolean {
