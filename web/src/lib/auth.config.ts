@@ -1,5 +1,4 @@
 import type { NextAuthConfig } from 'next-auth'
-import Google from 'next-auth/providers/google'
 import Credentials from 'next-auth/providers/credentials'
 
 /**
@@ -9,17 +8,16 @@ import Credentials from 'next-auth/providers/credentials'
  */
 export default {
   providers: [
-    Google({}),
     Credentials({
       credentials: {
         email: { label: 'Email', type: 'email' },
         password: { label: 'Password', type: 'password' },
       },
-      // No authorize here — included in auth.ts for Node.js runtime only
+      // authorize callback is in auth.ts (Node.js runtime only)
     }),
   ],
   pages: {
-    signIn: '/sign-in',
-    error: '/sign-in',
+    signIn: '/auth/sign-in',
+    error: '/auth/sign-in',
   },
 } satisfies NextAuthConfig
