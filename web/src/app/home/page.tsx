@@ -13,7 +13,8 @@ import IndexCard from '@/components/home/IndexCard'
 import SELICCard from '@/components/home/SELICCard'
 import VixCard from '@/components/home/VixCard'
 import MoversSection from '@/components/home/MoversSection'
-import DailyBriefHero, { type SuggestedPrompt } from '@/components/home/DailyBriefHero'
+import { DailyBriefContent, DailyBriefSkeleton } from '@/components/home/DailyBriefContent'
+import type { SuggestedPrompt } from '@/components/home/DailyBriefHero'
 import MarketBubbleMap from '@/components/home/MarketBubbleMap'
 import MarketPlaybookSection from '@/components/home/MarketPlaybookSection'
 import WatchlistRadarSection from '@/components/home/WatchlistRadarSection'
@@ -21,6 +22,7 @@ import type { RadarPulseItem } from '@/components/home/RadarPulseSection'
 import StoryDigestSection, { type StoryDigestItem } from '@/components/home/StoryDigestSection'
 import AppShell from '@/components/navigation/AppShell'
 import ScrollFocus from '@/components/ui/ScrollFocus'
+import { Suspense } from 'react'
 
 function getGreeting(name: string | null, email: string | null): string {
   const brt = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }))
@@ -46,40 +48,6 @@ function formatPercent(value: number | null) {
   return `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`
 }
 
-function buildHeadline(
-  ibovChange: number | null,
-  vix: number | null,
-  storiesCount: number
-) {
-  if (ibovChange === null) return 'O mercado abriu o dia pedindo confirmacao de contexto.'
-  if (ibovChange >= 1) return `A sessao comeca construtiva, com tracao visivel em bolsa e ${storiesCount} historias puxando o radar.`
-  if (ibovChange <= -1) return `O dia abre pressionado, com o humor mais fragil e ${storiesCount} pontos de atencao no fluxo.`
-  if (vix !== null && vix >= 20) return `O mercado segue seletivo: pouca direcao no indice e volatilidade pedindo leitura mais cuidadosa.`
-  return `O pregão abre equilibrado, com movimento moderado no indice e historias suficientes para separar ruido de sinal.`
-}
-
-function buildSummary(
-  ibovChange: number | null,
-  marketOpen: boolean,
-  selic: string | null,
-  sp500Change: number | null,
-  vix: number | null
-) {
-  const marketLine = marketOpen ? 'pregao em andamento' : 'mercado fora do horario regular'
-  const ibovLine =
-    ibovChange === null
-      ? 'O Ibovespa ainda nao conseguiu formar uma leitura confiavel.'
-      : `O Ibovespa marca ${formatPercent(ibovChange)}, o que ajuda a medir o apetite local por risco.`
-  const usLine =
-    sp500Change === null
-      ? 'O exterior segue sem leitura consolidada.'
-      : `Lá fora, o S&P 500 aparece em ${formatPercent(sp500Change)}.`
-  const riskLine =
-    vix === null ? 'A volatilidade segue sem referencia clara.' : `O VIX roda perto de ${vix.toFixed(1)}.`
-  const ratesLine = selic ? `No pano de fundo, a SELIC segue em ${selic}.` : 'Os juros locais seguem como pano de fundo importante.'
-
-  return `${ibovLine} Com ${marketLine}, o foco agora e separar movimentos tecnicos de mudancas reais de narrativa. ${usLine} ${riskLine} ${ratesLine}`
-}
 
 function buildAskHref(headline: string, tickers: string[]): string {
   const anchor = tickers.find((t) => !t.startsWith('^')) ?? tickers[0]
@@ -300,19 +268,6 @@ export default async function HomePage() {
   const radarItems = buildRadarItems(gainers, losers, topStories)
   const marketOpen = isMarketOpen()
   const selicValue = selicData?.rate ?? null
-  const headline = buildHeadline(ibov?.changePercent ?? null, vix, topStories.length)
-  const summary = buildSummary(
-    ibov?.changePercent ?? null,
-    marketOpen,
-    selicValue,
-    sp500?.changePercent ?? null,
-    vix
-  )
-  const focusPoints = [
-    `Ibovespa em ${formatPercent(ibov?.changePercent ?? null)} e S&P em ${formatPercent(sp500?.changePercent ?? null)}.`,
-    vix !== null ? `Volatilidade perto de ${vix.toFixed(1)}: ajuste o nivel de conviccao antes de seguir o fluxo.` : 'Volatilidade sem referencia forte: prefira confirmar movimento antes de reagir.',
-    selicValue ? `A ancora de juros segue em ${selicValue}, o que ainda pesa na leitura de valor e risco.` : 'Juros continuam relevantes para separar impulso tatico de narrativa mais estrutural.',
-  ]
   const dateLabel = new Intl.DateTimeFormat('pt-BR', {
     day: '2-digit',
     month: 'long',
@@ -376,17 +331,20 @@ export default async function HomePage() {
         </span>
       </header>
 
-      <ScrollFocus>
-        <DailyBriefHero
+      <Suspense fallback={<DailyBriefSkeleton dateLabel={dateLabel} storiesCount={topStories.length} />}>
+        <DailyBriefContent
+          ibovChange={ibov?.changePercent ?? null}
+          sp500Change={sp500?.changePercent ?? null}
+          vix={vix}
+          selicValue={selicValue}
+          marketOpen={marketOpen}
+          storyHeadlines={topStories.map((s) => s.headline)}
           contextLine={contextLine}
           dateLabel={dateLabel}
-          focusPoints={focusPoints}
-          headline={headline}
           storiesCount={topStories.length}
           suggestedPrompts={suggestedPrompts}
-          summary={summary}
         />
-      </ScrollFocus>
+      </Suspense>
 
       <div className="grid gap-5 xl:items-start xl:grid-cols-[minmax(0,1fr)_22rem]">
 
