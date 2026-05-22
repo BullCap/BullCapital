@@ -2,11 +2,11 @@
 
 ## What This Is
 
-BullCapital is a Brazilian investment intelligence PWA (Progressive Web App). It combines real-time Brazilian market data with AI agents to make investing accessible to beginner retail investors — a market that grew from 1M to 5M+ individual investors on B3 between 2019 and 2023.
+BullCapital is a Brazilian market intelligence PWA (Progressive Web App). It combines real-time Brazilian market data, visual dashboards, and AI-generated contextual analysis so users can monitor assets, macro indicators, and trends without depending on a generic conversation surface.
 
-The product has been validated by finance professionals, bankers, investors, and CEOs in Brazil. The core insight: most Brazilian retail investors are undereducated about markets and underserved by existing platforms (XP, Rico, BTG) which optimize for transaction revenue, not investor understanding.
+The current product thesis: BullCapital is not an AI that tells users where to invest. It is a radar that detects relevant market signals and translates them into clear, source-grounded analysis cards, briefings, and report-ready explanations. This keeps the product in the safer territory of market intelligence and education while preserving room for professional/reporting workflows later.
 
-**The moat**: a calm, beautiful UI (not fintech-generic) + AI that explains market movements in plain Portuguese, contextually, like a knowledgeable friend.
+**The moat direction**: a calm, beautiful UI (not fintech-generic) + Brazilian market context + opinionated monitoring workflows + AI that explains market movements in plain Portuguese, always tied to a specific asset, trend, event, or indicator.
 
 ---
 
@@ -17,16 +17,16 @@ Browser / Mobile (PWA)
     └── Next.js 15 (App Router, Server Components, PWA)
             ├── Auth: NextAuth v5 (email/password, JWT)
             ├── Market Data: Brapi SDK → Brazilian equities, indices, forex
-            └── AI Chat: FastAPI (api/) ← calls here for agent responses
+            └── AI Analysis: FastAPI (api/) ← contextual analysis + briefings
                     └── PostgreSQL + pgVector
                             ├── Users / sessions (Prisma)
-                            └── Conversations + embeddings (SQLAlchemy async)
+                            └── Analyses / optional follow-up context + embeddings (SQLAlchemy async)
 ```
 
 **Key decisions:**
 - PWA over native app: zero app store friction, instant deploy, share via WhatsApp link, Android-dominant Brazilian market (Chrome PWA support is excellent)
 - Single backend (FastAPI): Brapi market data calls moved here, one service, one database
-- Next.js stays as BFF: handles auth, serves the PWA, calls FastAPI for AI
+- Next.js stays as BFF: handles auth, serves the PWA, calls FastAPI for contextual analysis
 - No Turborepo: previous project had it, unnecessary overhead for solo/small team
 
 ---
@@ -40,10 +40,10 @@ Browser / Mobile (PWA)
 | Styling | Tailwind CSS + shadcn/ui | Utility-first, consistent with design system |
 | Auth | NextAuth v5 | Already configured, JWT + Prisma adapter |
 | ORM (web) | Prisma 7 + pg adapter | Auth schema already written |
-| Backend | FastAPI (Python) | AI/agent work, async, Agno framework |
+| Backend | FastAPI (Python) | AI analysis work, async, Agno framework |
 | ORM (api) | SQLAlchemy 2 async | pgVector support |
 | Vectors | pgVector | Conversation history embeddings for RAG |
-| AI | Agno + OpenAI gpt-4o | Agent orchestration framework |
+| AI | Agno + OpenAI gpt-4o | Contextual analysis and briefing generation |
 | Market Data | Brapi SDK | Brazilian equities, indices, SELIC, IPCA, forex |
 | Database | PostgreSQL 16 | Single instance for MVP |
 
@@ -87,14 +87,13 @@ User + Account + Session schema for NextAuth. Do not modify.
 ### `api/`
 FastAPI skeleton with:
 - `app/agent/base.py` — AbstractBaseAgent class
-- `app/agent/investment.py` — InvestmentAgent with Agno, gpt-4o, lazy init
+- `app/agent/market_analysis.py` — MarketAnalysisAgent with Agno, gpt-4o, lazy init
 - `app/models/conversation.py` — Conversation + Message with pgVector embeddings
 - `app/core/config.py` — Pydantic settings
 - `app/core/database.py` — SQLAlchemy async session
 
 **These routes need actual implementation (currently placeholders):**
-- `api/app/api/routes/chat.py` — POST /api/v1/chat
-- `api/app/api/routes/analysis.py` — POST/GET /api/v1/analysis
+- `api/app/api/routes/analysis.py` — POST/GET /api/v1/analysis for asset/event/trend analyses
 - `api/app/api/routes/health.py` — add real DB connectivity check
 
 ---
@@ -114,30 +113,32 @@ FastAPI skeleton with:
 - Top movers (gainers/losers) using `getMultipleQuotes`
 - IBOVESPA, S&P 500 index status using `getMarketStatus`
 - SELIC rate indicator using `getMarketIndicators`
-- Entry point to chat
+- Entry point to contextual market analysis
 
 ### 3. Asset Detail (`/asset/[ticker]`)
 - Price + change badge (`VariationBadge`)
 - Simple price chart (1d/1mo/1y range)
 - Radar chart (Rentabilidade, Momentum, Liquidez, Valuation, Tendência)
-- "Explain this asset" button → opens AI chat in context of this asset
+- "Analisar este ativo" action → requests an AI analysis for this asset and its latest signals
 
-### 4. AI Chat (`/chat`)
-- Conversational interface in Portuguese
-- Context-aware: can be opened from an asset detail
-- Backed by FastAPI `/api/v1/chat` endpoint (implement this)
-- Message history persisted to pgVector for context
-- Streaming responses
+### 4. Contextual Analysis (`/analysis` or inline analysis cards)
+- Portuguese analysis cards generated from a specific asset, market mover, macro indicator, or trend
+- Standard sections: "O que aconteceu", "Por que importa", "Impacto potencial", "O que acompanhar", "Riscos e incertezas"
+- Backed by FastAPI `/api/v1/analysis` endpoint
+- No buy/sell/hold recommendation, suitability claim, or portfolio advice
+- Optional future drill-down must stay anchored to the selected asset, event, trend, or generated analysis
 
 **Explicitly OUT of MVP:**
 - Portfolio tracking
-- Watchlists
+- Full watchlists with alerts and push notifications
 - Price alerts / push notifications
 - Settings screen
 - Social / sharing features
 - Screeners / filters
 - CSV export
 - Professional tools / advanced analysis
+- Open Finance, B3 scraping, brokerage integrations
+- Personalized investment recommendations
 
 ---
 
@@ -177,7 +178,7 @@ Full reference in `system-design.md`. Summary for agents:
 
 ## Brazilian Market Context
 
-- Target user: 25-40yo, discovered investing post-2020, uses Nubank/Inter, mobile-first
+- Target user: 25-45yo investor, creator, student, or lightweight professional who already follows the Brazilian market and wants faster interpretation of assets and trends
 - Language: all UI copy in Brazilian Portuguese (pt-BR)
 - Currency: BRL, format with `toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })`
 - Key indices: IBOVESPA (^BVSP), SELIC rate, IPCA inflation
@@ -228,22 +229,23 @@ python -m uvicorn app.main:app --reload --port 8001
 - Do not split into two databases — one Postgres for everything in MVP
 - Do not add Turborepo or complex monorepo tooling
 - Do not rewrite `market.ts` — it works, use it
-- Do not add portfolio tracking, watchlists, or alerts — not in MVP
+- Do not add portfolio tracking, Open Finance, brokerage ingestion, or alerts — not in MVP
+- Do not add an open-ended IA prompt as a primary surface — analysis must start from a concrete asset, event, trend, or indicator
 - Do not use English in user-facing text — everything is pt-BR
 - Do not use flat UI patterns — always apply the glassmorphism system
 - Do not add Swagger/API docs pages — not for MVP
 - Do not implement Google OAuth — credentials only for now
-- Do not over-engineer the AI — one conversational endpoint is enough for MVP
+- Do not over-engineer the AI — one contextual analysis endpoint is enough for MVP
 
 ---
 
 <!-- SPECKIT START -->
 ## Active Feature Plan
 
-**Branch**: `003-home-screen`
-**Plan**: [specs/003-home-screen/plan.md](specs/003-home-screen/plan.md)
-**Spec**: [specs/003-home-screen/spec.md](specs/003-home-screen/spec.md)
-**Tasks**: [specs/003-home-screen/tasks.md](specs/003-home-screen/tasks.md) *(generated by /speckit-tasks)*
+**Branch**: `004-asset-detail`
+**Plan**: [specs/004-asset-detail/plan.md](specs/004-asset-detail/plan.md)
+**Spec**: [specs/004-asset-detail/spec.md](specs/004-asset-detail/spec.md)
+**Tasks**: [specs/004-asset-detail/tasks.md](specs/004-asset-detail/tasks.md) *(generated by /speckit-tasks)*
 
-**Key decisions**: Server Component page, `Promise.allSettled` parallel fetch, temperature computed from IBOVESPA+VIX, 12-ticker curated movers list, 5-level Portuguese scale, no Three.js/heavy deps, BC `MarketHighlightItem` pattern reused for `MoverItem`
+**Key decisions**: Server Component shell + Client Component islands for Recharts charts, Server Action for range-toggle history fetch, `getMarketRadarData` provides both header quote and radar scores, back nav via `<Link href="/home">` (not router.back), ticker passed to /analysis as `?ticker=` query param, no logo in header (avoids extra API call)
 <!-- SPECKIT END -->

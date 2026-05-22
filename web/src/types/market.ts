@@ -119,6 +119,15 @@ export interface AssetHistoryResult {
 export interface AssetHistoricalPrice {
   timestamp: number
   close: number
+  high?: number
+  low?: number
+}
+
+export interface AssetNewsItem {
+  title: string
+  publisher: string
+  link: string
+  publishedAt: number
 }
 
 export interface CurrencyData {

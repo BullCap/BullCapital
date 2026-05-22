@@ -3,7 +3,7 @@ import authConfig from '@/lib/auth.config'
 
 const { auth } = NextAuth(authConfig)
 
-const protectedRoutes = ['/home', '/asset', '/chat']
+const protectedRoutes = ['/home', '/asset', '/analysis', '/search']
 
 const authRoutes = ['/auth/sign-in', '/auth/sign-up']
 

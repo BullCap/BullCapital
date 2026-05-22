@@ -71,9 +71,7 @@ export function MarketTemperatureDial({ value, stateName }: MarketTemperatureDia
       </svg>
 
       <div className="mt-3 flex flex-col items-center text-center">
-        <span className="font-sans text-3xl font-medium leading-none tracking-tight text-[#F4F0FF]">
-          {value}
-        </span>
+        <span className="font-sans text-3xl font-medium leading-none text-[#F4F0FF]">{value}</span>
         <span className="mt-1 font-serif text-[11px] uppercase tracking-widest text-[#F4F0FF]/60">
           {stateName}
         </span>
