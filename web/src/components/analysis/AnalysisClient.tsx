@@ -270,10 +270,16 @@ export default function AnalysisClient({ ticker, focusLabel, initialQuestion }: 
             <p className="mt-1 text-xs text-[#F4F0FF]/35">
               Verifique sua conexão com o serviço de análise.
             </p>
+            {pendingQuestion && (
+              <div className="mt-5 max-w-sm rounded-2xl border border-white/[0.08] bg-white/[0.04] px-4 py-3 text-left">
+                <p className="text-[11px] uppercase tracking-[0.14em] text-[#DBEAFE]/38">Sua pergunta</p>
+                <p className="mt-1.5 text-sm leading-5 text-[#F4F0FF]/70">{pendingQuestion}</p>
+              </div>
+            )}
             {ticker && (
               <button
                 onClick={() => run(ticker)}
-                className="mt-6 inline-flex min-h-10 items-center rounded-2xl border border-white/10 bg-white/[0.05] px-5 py-2 text-sm text-[#F4F0FF]/70 transition hover:bg-white/[0.09]"
+                className="mt-5 inline-flex min-h-10 items-center rounded-2xl border border-white/10 bg-white/[0.05] px-5 py-2 text-sm text-[#F4F0FF]/70 transition hover:bg-white/[0.09]"
               >
                 Tentar novamente
               </button>
