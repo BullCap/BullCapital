@@ -100,9 +100,10 @@ function extractInitialSuggestions(result: AnalysisResult): string[] {
 interface AnalysisClientProps {
   ticker?: string
   focusLabel: string
+  initialQuestion?: string
 }
 
-export default function AnalysisClient({ ticker, focusLabel }: AnalysisClientProps) {
+export default function AnalysisClient({ ticker, focusLabel, initialQuestion }: AnalysisClientProps) {
   const [result, setResult] = useState<AnalysisResult | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(false)
@@ -113,6 +114,7 @@ export default function AnalysisClient({ ticker, focusLabel }: AnalysisClientPro
   const [sending, setSending] = useState(false)
   const [currentSuggestions, setCurrentSuggestions] = useState<string[]>([])
   const [history, setHistory] = useState<ConversationHistory>([])
+  const [pendingQuestion, setPendingQuestion] = useState(initialQuestion ?? '')
 
   // Auto-scroll ref — points to first result element
   const resultsRef = useRef<HTMLDivElement>(null)
@@ -244,6 +246,7 @@ export default function AnalysisClient({ ticker, focusLabel }: AnalysisClientPro
 
   useEffect(() => {
     if (ticker) run(ticker)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ticker])
 
   const focusSubject = ticker ?? focusLabel
@@ -467,6 +470,7 @@ export default function AnalysisClient({ ticker, focusLabel }: AnalysisClientPro
             onSubmit={handleQuestion}
             disabled={sending}
             ticker={ticker}
+            initialValue={pendingQuestion}
           />
 
           <ConversationDisclaimer variant="footer" />

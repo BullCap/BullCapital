@@ -2,12 +2,18 @@ import Link from 'next/link'
 import { ArrowRight, Newspaper, Sparkles } from 'lucide-react'
 import { GlassHighlight } from '@/components/atoms/GlassHighlight'
 
+export interface SuggestedPrompt {
+  label: string
+  href: string
+}
+
 interface DailyBriefHeroProps {
   contextLine: string
   dateLabel: string
   focusPoints: string[]
   headline: string
   storiesCount: number
+  suggestedPrompts?: SuggestedPrompt[]
   summary: string
 }
 
@@ -17,6 +23,7 @@ export default function DailyBriefHero({
   focusPoints,
   headline,
   storiesCount,
+  suggestedPrompts,
   summary,
 }: DailyBriefHeroProps) {
   return (
@@ -49,6 +56,26 @@ export default function DailyBriefHero({
             </div>
           ))}
         </div>
+
+        {suggestedPrompts && suggestedPrompts.length > 0 && (
+          <div className="flex flex-col gap-2">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#DBEAFE]/42">
+              Perguntas do dia
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {suggestedPrompts.map((prompt) => (
+                <Link
+                  key={prompt.href}
+                  href={prompt.href}
+                  className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-[#8B5CF6]/25 bg-[#8B5CF6]/10 px-4 text-xs font-medium text-[#C4B5FD] transition hover:bg-[#8B5CF6]/18 hover:text-[#DDD6FE]"
+                >
+                  <Sparkles size={11} />
+                  {prompt.label}
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="flex flex-col gap-3 sm:flex-row">
           <Link

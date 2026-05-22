@@ -1,8 +1,11 @@
+import { Suspense } from 'react'
 import Link from 'next/link'
-import { ArrowRight, ArrowUpRight } from 'lucide-react'
+import { ArrowRight, ArrowUpRight, Sparkles } from 'lucide-react'
 import { GlassHighlight } from '@/components/atoms/GlassHighlight'
+import { StoryNote, StoryNoteSkeleton } from './StoryNote'
 
 export interface StoryDigestItem {
+  askHref?: string
   headline: string
   href: string
   note: string
@@ -76,22 +79,39 @@ export default function StoryDigestSection({ stories }: StoryDigestSectionProps)
                 </div>
               </Link>
 
-                <p className="mt-2 text-sm leading-5 text-[#F4F0FF]/62">{story.note}</p>
+              <Suspense fallback={<StoryNoteSkeleton />}>
+                <StoryNote
+                  headline={story.headline}
+                  tickers={story.tickers}
+                  fallback={story.note}
+                />
+              </Suspense>
 
-              <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
                 <p className="text-[11px] uppercase tracking-[0.14em] text-[#DBEAFE]/42">
                   {story.publisher}
                   {story.publishedAt > 0 ? ` · ${timeAgo(story.publishedAt)}` : ''}
                 </p>
-                {story.relatedHref && story.relatedLabel ? (
-                  <Link
-                    href={story.relatedHref}
-                    className="inline-flex min-h-9 items-center gap-1 rounded-full border border-white/10 bg-white/[0.05] px-3 text-xs text-[#F4F0FF]/76 transition hover:bg-white/[0.1] hover:text-[#F4F0FF]"
-                  >
-                    {story.relatedLabel}
-                    <ArrowRight size={13} />
-                  </Link>
-                ) : null}
+                <div className="flex flex-wrap items-center gap-2">
+                  {story.askHref && (
+                    <Link
+                      href={story.askHref}
+                      className="inline-flex min-h-8 items-center gap-1.5 rounded-full border border-[#8B5CF6]/30 bg-[#8B5CF6]/10 px-3 text-xs font-medium text-[#C4B5FD] transition hover:bg-[#8B5CF6]/20 hover:text-[#DDD6FE]"
+                    >
+                      <Sparkles size={11} />
+                      Perguntar ao BullCapital
+                    </Link>
+                  )}
+                  {story.relatedHref && story.relatedLabel ? (
+                    <Link
+                      href={story.relatedHref}
+                      className="inline-flex min-h-8 items-center gap-1 rounded-full border border-white/10 bg-white/[0.05] px-3 text-xs text-[#F4F0FF]/76 transition hover:bg-white/[0.1] hover:text-[#F4F0FF]"
+                    >
+                      {story.relatedLabel}
+                      <ArrowRight size={13} />
+                    </Link>
+                  ) : null}
+                </div>
               </div>
             </article>
           ))}

@@ -13,7 +13,7 @@ import IndexCard from '@/components/home/IndexCard'
 import SELICCard from '@/components/home/SELICCard'
 import VixCard from '@/components/home/VixCard'
 import MoversSection from '@/components/home/MoversSection'
-import DailyBriefHero from '@/components/home/DailyBriefHero'
+import DailyBriefHero, { type SuggestedPrompt } from '@/components/home/DailyBriefHero'
 import MarketBubbleMap from '@/components/home/MarketBubbleMap'
 import MarketPlaybookSection from '@/components/home/MarketPlaybookSection'
 import RadarPulseSection, { type RadarPulseItem } from '@/components/home/RadarPulseSection'
@@ -61,6 +61,63 @@ function buildSummary(
   return `${ibovLine} Com ${marketLine}, o foco agora e separar movimentos tecnicos de mudancas reais de narrativa. ${usLine} ${riskLine} ${ratesLine}`
 }
 
+function buildAskHref(headline: string, tickers: string[]): string {
+  const anchor = tickers.find((t) => !t.startsWith('^')) ?? tickers[0]
+  if (!anchor) return `/analysis?q=${encodeURIComponent(headline)}`
+  const q = `Explique o impacto desta notícia: "${headline.slice(0, 120)}"`
+  return `/analysis?ticker=${encodeURIComponent(anchor)}&q=${encodeURIComponent(q)}`
+}
+
+function buildSuggestedPrompts(
+  ibovChange: number | null,
+  vix: number | null,
+  topMover: { ticker: string; changePercent: number } | null,
+  leadStoryTicker: string | null,
+  marketOpen: boolean
+): SuggestedPrompt[] {
+  const prompts: SuggestedPrompt[] = []
+
+  if (ibovChange !== null) {
+    const direction = ibovChange >= 0 ? 'alta' : 'queda'
+    const label = `Por que o Ibovespa está em ${direction} hoje?`
+    prompts.push({
+      label,
+      href: `/analysis?ticker=%5EBVSP&q=${encodeURIComponent(label)}`,
+    })
+  }
+
+  if (topMover) {
+    const label = `O que explica o movimento de ${topMover.ticker}?`
+    prompts.push({
+      label,
+      href: `/analysis?ticker=${encodeURIComponent(topMover.ticker)}&q=${encodeURIComponent(label)}`,
+    })
+  }
+
+  if (vix !== null && vix >= 20) {
+    const label = `O VIX em ${vix.toFixed(1)} representa risco real para a B3?`
+    prompts.push({
+      label,
+      href: `/analysis?ticker=%5EBVSP&q=${encodeURIComponent(label)}`,
+    })
+  } else if (leadStoryTicker && leadStoryTicker !== (topMover?.ticker ?? '')) {
+    const label = `Qual o impacto de ${leadStoryTicker} no mercado hoje?`
+    prompts.push({
+      label,
+      href: `/analysis?ticker=${encodeURIComponent(leadStoryTicker)}&q=${encodeURIComponent(label)}`,
+    })
+  }
+
+  if (prompts.length < 3 && !marketOpen) {
+    prompts.push({
+      label: 'O que acompanhar antes da abertura de amanhã?',
+      href: `/analysis?ticker=%5EBVSP&q=${encodeURIComponent('O que acompanhar antes da abertura de amanhã?')}`,
+    })
+  }
+
+  return prompts.slice(0, 3)
+}
+
 function buildStoryNote(tickers: string[]) {
   if (tickers.includes('^BVSP')) return 'Use esta manchete para entender o clima geral do mercado brasileiro antes de entrar nos nomes individuais.'
   if (tickers.includes('PETR4')) return 'Se a historia ganhar tracao, PETR4 pode contaminar humor de indice e nomes ligados a commodities.'
@@ -92,6 +149,7 @@ function buildTopStories(
         relatedHref: source.ticker.startsWith('^') ? '/analysis' : buildAssetHref(source.ticker),
         relatedLabel: source.ticker.startsWith('^') ? 'Ler mercado' : `Abrir ${source.ticker}`,
         tickers: [source.ticker],
+        askHref: buildAskHref(item.title, [source.ticker]),
       })
     }
   }
@@ -242,6 +300,14 @@ export default async function HomePage() {
   const contextLine = marketOpen ? 'pregao em andamento' : 'mercado fora do horario regular'
   const leadStory = topStories[0]
   const storyTicker = leadStory?.tickers.find((ticker) => !ticker.startsWith('^'))
+  const topMover = gainers[0] ?? losers[0] ?? null
+  const suggestedPrompts = buildSuggestedPrompts(
+    ibov?.changePercent ?? null,
+    vix,
+    topMover ?? null,
+    storyTicker ?? null,
+    marketOpen
+  )
   const playbookActions = [
     {
       title: 'Ler o mercado por inteiro',
@@ -286,6 +352,7 @@ export default async function HomePage() {
           focusPoints={focusPoints}
           headline={headline}
           storiesCount={topStories.length}
+          suggestedPrompts={suggestedPrompts}
           summary={summary}
         />
       </ScrollFocus>

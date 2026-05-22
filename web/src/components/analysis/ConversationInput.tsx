@@ -7,10 +7,11 @@ interface ConversationInputProps {
   onSubmit: (question: string) => void
   disabled: boolean
   ticker: string
+  initialValue?: string
 }
 
-export function ConversationInput({ onSubmit, disabled, ticker }: ConversationInputProps) {
-  const [value, setValue] = useState('')
+export function ConversationInput({ onSubmit, disabled, ticker, initialValue }: ConversationInputProps) {
+  const [value, setValue] = useState(initialValue ?? '')
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   function submit() {
