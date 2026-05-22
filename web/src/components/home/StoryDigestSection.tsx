@@ -50,7 +50,7 @@ export default function StoryDigestSection({ stories }: StoryDigestSectionProps)
       ) : (
         <div className="mt-5 flex flex-col gap-3">
           {stories.map((story) => (
-            <article key={story.href} className="bull-panel-quiet p-4">
+            <article key={story.href} className="bull-panel-quiet p-3.5">
               <div className="flex flex-wrap gap-2">
                 {story.tickers.map((ticker) => (
                   <span key={`${story.href}-${ticker}`} className="bull-chip min-h-7 px-2.5 py-1 text-[11px]">
@@ -76,7 +76,7 @@ export default function StoryDigestSection({ stories }: StoryDigestSectionProps)
                 </div>
               </Link>
 
-              <p className="mt-2 text-sm leading-6 text-[#F4F0FF]/62">{story.note}</p>
+                <p className="mt-2 text-sm leading-5 text-[#F4F0FF]/62">{story.note}</p>
 
               <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
                 <p className="text-[11px] uppercase tracking-[0.14em] text-[#DBEAFE]/42">

@@ -11,10 +11,11 @@ import {
 import TemperatureCard from '@/components/home/TemperatureCard'
 import IndexCard from '@/components/home/IndexCard'
 import SELICCard from '@/components/home/SELICCard'
+import VixCard from '@/components/home/VixCard'
 import MoversSection from '@/components/home/MoversSection'
-import AnalysisCTA from '@/components/home/AnalysisCTA'
 import DailyBriefHero from '@/components/home/DailyBriefHero'
 import MarketBubbleMap from '@/components/home/MarketBubbleMap'
+import MarketPlaybookSection from '@/components/home/MarketPlaybookSection'
 import RadarPulseSection, { type RadarPulseItem } from '@/components/home/RadarPulseSection'
 import StoryDigestSection, { type StoryDigestItem } from '@/components/home/StoryDigestSection'
 import AppShell from '@/components/navigation/AppShell'
@@ -239,6 +240,33 @@ export default async function HomePage() {
     month: 'long',
   }).format(new Date())
   const contextLine = marketOpen ? 'pregao em andamento' : 'mercado fora do horario regular'
+  const leadStory = topStories[0]
+  const storyTicker = leadStory?.tickers.find((ticker) => !ticker.startsWith('^'))
+  const playbookActions = [
+    {
+      title: 'Ler o mercado por inteiro',
+      description: 'Abra a analise principal para juntar macro, narrativa e os nomes que puxam o dia.',
+      href: '/analysis',
+      label: 'analise guiada',
+      tone: 'analysis' as const,
+    },
+    {
+      title: storyTicker ? `Investigar ${storyTicker}` : 'Explorar o ativo em destaque',
+      description: storyTicker
+        ? `${storyTicker} apareceu no radar de noticias e vale cruzar manchete, preco e scores.`
+        : 'Use o detalhe do ativo para sair do painel e validar o movimento com mais contexto.',
+      href: storyTicker ? buildAssetHref(storyTicker) : '/search',
+      label: storyTicker ? 'detalhe do ativo' : 'buscar ativo',
+      tone: 'asset' as const,
+    },
+    {
+      title: 'Voltar para as historias do dia',
+      description: 'Passe pelas manchetes com mais potencial de follow-up antes de entrar em tese.',
+      href: '#stories',
+      label: 'noticias priorizadas',
+      tone: 'news' as const,
+    },
+  ]
 
   return (
     <AppShell active="market" contentClassName="md:max-w-none">
@@ -262,57 +290,68 @@ export default async function HomePage() {
         />
       </ScrollFocus>
 
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1.45fr)_minmax(20rem,0.95fr)]">
-        <div className="grid gap-5">
-          <ScrollFocus>
-            <TemperatureCard temperature={temperature} />
-          </ScrollFocus>
-          <ScrollFocus>
-            <MarketBubbleMap assets={bubbleAssets} />
-          </ScrollFocus>
+      <div className="grid gap-5">
+        <div className="grid gap-5 xl:items-start xl:grid-cols-[minmax(0,1.7fr)_minmax(21rem,0.82fr)]">
+          <div className="grid content-start gap-5">
+            <ScrollFocus>
+              <TemperatureCard temperature={temperature} />
+            </ScrollFocus>
+            <ScrollFocus>
+              <MarketBubbleMap assets={bubbleAssets} />
+            </ScrollFocus>
+
+            <div className="grid gap-5 md:grid-cols-2">
+              <ScrollFocus>
+                <IndexCard
+                  name="IBOVESPA"
+                  price={ibov?.price ?? null}
+                  changePercent={ibov?.changePercent ?? null}
+                  isOpen={marketOpen}
+                />
+              </ScrollFocus>
+              <ScrollFocus>
+                <IndexCard
+                  name="S&P 500"
+                  price={sp500?.price ?? null}
+                  changePercent={sp500?.changePercent ?? null}
+                  isOpen={marketOpen}
+                />
+              </ScrollFocus>
+              <ScrollFocus className="xl:col-span-2">
+                <SELICCard selic={selicData} />
+              </ScrollFocus>
+              <ScrollFocus className="xl:hidden">
+                <VixCard value={vix} />
+              </ScrollFocus>
+            </div>
+
+            <div className="grid gap-5 2xl:grid-cols-2">
+              <ScrollFocus>
+                <MoversSection title="Maiores altas" icon="gainers" movers={gainers} />
+              </ScrollFocus>
+              <ScrollFocus>
+                <MoversSection title="Maiores baixas" icon="losers" movers={losers} />
+              </ScrollFocus>
+            </div>
+          </div>
+          <div className="grid content-start gap-5">
+            <ScrollFocus className="hidden xl:block">
+              <VixCard value={vix} />
+            </ScrollFocus>
+            <ScrollFocus>
+              <StoryDigestSection stories={topStories} />
+            </ScrollFocus>
+          </div>
         </div>
-        <div className="grid gap-5">
-          <ScrollFocus>
-            <StoryDigestSection stories={topStories} />
+
+        <div className="grid gap-5 xl:items-stretch xl:grid-cols-[minmax(0,1.7fr)_minmax(21rem,0.82fr)]">
+          <ScrollFocus className="h-full">
+            <MarketPlaybookSection actions={playbookActions} />
           </ScrollFocus>
-          <ScrollFocus>
+          <ScrollFocus className="h-full">
             <RadarPulseSection items={radarItems} />
           </ScrollFocus>
-          <ScrollFocus>
-            <AnalysisCTA />
-          </ScrollFocus>
         </div>
-      </div>
-
-      <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)]">
-        <ScrollFocus>
-          <IndexCard
-            name="IBOVESPA"
-            price={ibov?.price ?? null}
-            changePercent={ibov?.changePercent ?? null}
-            isOpen={marketOpen}
-          />
-        </ScrollFocus>
-        <ScrollFocus>
-          <IndexCard
-            name="S&P 500"
-            price={sp500?.price ?? null}
-            changePercent={sp500?.changePercent ?? null}
-            isOpen={marketOpen}
-          />
-        </ScrollFocus>
-        <ScrollFocus>
-          <SELICCard selic={selicData} />
-        </ScrollFocus>
-      </div>
-
-      <div className="grid gap-5 xl:grid-cols-2">
-        <ScrollFocus>
-          <MoversSection title="Maiores altas" icon="gainers" movers={gainers} />
-        </ScrollFocus>
-        <ScrollFocus>
-          <MoversSection title="Maiores baixas" icon="losers" movers={losers} />
-        </ScrollFocus>
       </div>
     </AppShell>
   )

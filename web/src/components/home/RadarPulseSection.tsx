@@ -22,7 +22,7 @@ interface RadarPulseSectionProps {
 
 export default function RadarPulseSection({ items }: RadarPulseSectionProps) {
   return (
-    <section className="bull-panel p-5 md:p-6">
+    <section className="bull-panel h-full p-5 md:p-6">
       <GlassHighlight widthPercent={58} />
 
       <div className="flex items-end justify-between gap-3">
@@ -43,7 +43,7 @@ export default function RadarPulseSection({ items }: RadarPulseSectionProps) {
             <Link
               key={`${item.ticker}-${item.label}`}
               href={item.href}
-              className="bull-panel-quiet flex items-start gap-3 p-4 transition hover:-translate-y-0.5 hover:bg-white/[0.06]"
+              className="bull-panel-quiet flex items-start gap-3 p-3.5 transition hover:-translate-y-0.5 hover:bg-white/[0.06]"
             >
               <span
                 className={`inline-flex min-h-8 shrink-0 items-center rounded-full border px-3 text-[11px] font-medium ${TONE_STYLES[item.tone]}`}
@@ -52,7 +52,7 @@ export default function RadarPulseSection({ items }: RadarPulseSectionProps) {
               </span>
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium text-[#F4F0FF]">{item.label}</p>
-                <p className="mt-1 text-sm leading-6 text-[#F4F0FF]/62">{item.description}</p>
+                <p className="mt-1 text-sm leading-5 text-[#F4F0FF]/62">{item.description}</p>
               </div>
               <ArrowRight size={15} className="mt-1 shrink-0 text-[#F4F0FF]/28" />
             </Link>
