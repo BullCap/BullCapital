@@ -249,7 +249,20 @@ export default function AnalysisClient({ ticker, focusLabel, initialQuestion }: 
   }
 
   useEffect(() => {
-    if (ticker) run(ticker)
+    if (ticker) {
+      run(ticker)
+    } else {
+      // Navigating to /analysis without a ticker (e.g. clicking the dock tab) —
+      // reset to idle so stale results from a previous ticker don't ghost the page.
+      setResult(null)
+      setError(false)
+      setLoading(false)
+      setActiveTemplate(null)
+      setTurns([])
+      setHistory([])
+      setCurrentSuggestions([])
+      setPendingQuestion(initialQuestion ?? '')
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ticker])
 
