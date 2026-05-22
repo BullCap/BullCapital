@@ -13,59 +13,47 @@ import IndexCard from '@/components/home/IndexCard'
 import SELICCard from '@/components/home/SELICCard'
 import VixCard from '@/components/home/VixCard'
 import MoversSection from '@/components/home/MoversSection'
-import DailyBriefHero, { type SuggestedPrompt } from '@/components/home/DailyBriefHero'
+import { DailyBriefContent, DailyBriefSkeleton } from '@/components/home/DailyBriefContent'
+import type { SuggestedPrompt } from '@/components/home/DailyBriefHero'
 import MarketBubbleMap from '@/components/home/MarketBubbleMap'
 import MarketPlaybookSection from '@/components/home/MarketPlaybookSection'
-import RadarPulseSection, { type RadarPulseItem } from '@/components/home/RadarPulseSection'
+import WatchlistRadarSection from '@/components/home/WatchlistRadarSection'
+import type { RadarPulseItem } from '@/components/home/RadarPulseSection'
 import StoryDigestSection, { type StoryDigestItem } from '@/components/home/StoryDigestSection'
 import AppShell from '@/components/navigation/AppShell'
 import ScrollFocus from '@/components/ui/ScrollFocus'
+import { Suspense } from 'react'
+
+function getGreeting(name: string | null, email: string | null): string {
+  const brt = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }))
+  const hour = brt.getHours()
+  const firstName = name?.trim().split(/\s+/)[0] ?? email?.split('@')[0] ?? 'você'
+  if (hour < 12) return `Bom dia, ${firstName}.`
+  if (hour < 18) return `Boa tarde, ${firstName}.`
+  return `Boa noite, ${firstName}.`
+}
+
+function getInitials(name: string | null, email: string | null): string {
+  if (name) {
+    const parts = name.trim().split(/\s+/)
+    return parts.length >= 2
+      ? (parts[0][0]! + parts[parts.length - 1][0]!).toUpperCase()
+      : parts[0]!.slice(0, 2).toUpperCase()
+  }
+  return email?.[0]?.toUpperCase() ?? '?'
+}
 
 function formatPercent(value: number | null) {
   if (value === null) return 'n/d'
   return `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`
 }
 
-function buildHeadline(
-  ibovChange: number | null,
-  vix: number | null,
-  storiesCount: number
-) {
-  if (ibovChange === null) return 'O mercado abriu o dia pedindo confirmacao de contexto.'
-  if (ibovChange >= 1) return `A sessao comeca construtiva, com tracao visivel em bolsa e ${storiesCount} historias puxando o radar.`
-  if (ibovChange <= -1) return `O dia abre pressionado, com o humor mais fragil e ${storiesCount} pontos de atencao no fluxo.`
-  if (vix !== null && vix >= 20) return `O mercado segue seletivo: pouca direcao no indice e volatilidade pedindo leitura mais cuidadosa.`
-  return `O pregão abre equilibrado, com movimento moderado no indice e historias suficientes para separar ruido de sinal.`
-}
-
-function buildSummary(
-  ibovChange: number | null,
-  marketOpen: boolean,
-  selic: string | null,
-  sp500Change: number | null,
-  vix: number | null
-) {
-  const marketLine = marketOpen ? 'pregao em andamento' : 'mercado fora do horario regular'
-  const ibovLine =
-    ibovChange === null
-      ? 'O Ibovespa ainda nao conseguiu formar uma leitura confiavel.'
-      : `O Ibovespa marca ${formatPercent(ibovChange)}, o que ajuda a medir o apetite local por risco.`
-  const usLine =
-    sp500Change === null
-      ? 'O exterior segue sem leitura consolidada.'
-      : `Lá fora, o S&P 500 aparece em ${formatPercent(sp500Change)}.`
-  const riskLine =
-    vix === null ? 'A volatilidade segue sem referencia clara.' : `O VIX roda perto de ${vix.toFixed(1)}.`
-  const ratesLine = selic ? `No pano de fundo, a SELIC segue em ${selic}.` : 'Os juros locais seguem como pano de fundo importante.'
-
-  return `${ibovLine} Com ${marketLine}, o foco agora e separar movimentos tecnicos de mudancas reais de narrativa. ${usLine} ${riskLine} ${ratesLine}`
-}
 
 function buildAskHref(headline: string, tickers: string[]): string {
   const anchor = tickers.find((t) => !t.startsWith('^')) ?? tickers[0]
-  if (!anchor) return `/analysis?q=${encodeURIComponent(headline)}`
   const q = `Explique o impacto desta notícia: "${headline.slice(0, 120)}"`
-  return `/analysis?ticker=${encodeURIComponent(anchor)}&q=${encodeURIComponent(q)}`
+  if (!anchor) return `/analysis?q=${encodeURIComponent(q)}&source=news`
+  return `/analysis?ticker=${encodeURIComponent(anchor)}&q=${encodeURIComponent(q)}&source=news`
 }
 
 function buildSuggestedPrompts(
@@ -280,19 +268,6 @@ export default async function HomePage() {
   const radarItems = buildRadarItems(gainers, losers, topStories)
   const marketOpen = isMarketOpen()
   const selicValue = selicData?.rate ?? null
-  const headline = buildHeadline(ibov?.changePercent ?? null, vix, topStories.length)
-  const summary = buildSummary(
-    ibov?.changePercent ?? null,
-    marketOpen,
-    selicValue,
-    sp500?.changePercent ?? null,
-    vix
-  )
-  const focusPoints = [
-    `Ibovespa em ${formatPercent(ibov?.changePercent ?? null)} e S&P em ${formatPercent(sp500?.changePercent ?? null)}.`,
-    vix !== null ? `Volatilidade perto de ${vix.toFixed(1)}: ajuste o nivel de conviccao antes de seguir o fluxo.` : 'Volatilidade sem referencia forte: prefira confirmar movimento antes de reagir.',
-    selicValue ? `A ancora de juros segue em ${selicValue}, o que ainda pesa na leitura de valor e risco.` : 'Juros continuam relevantes para separar impulso tatico de narrativa mais estrutural.',
-  ]
   const dateLabel = new Intl.DateTimeFormat('pt-BR', {
     day: '2-digit',
     month: 'long',
@@ -334,91 +309,103 @@ export default async function HomePage() {
     },
   ]
 
+  const greeting = getGreeting(session.user.name ?? null, session.user.email ?? null)
+  const initials = getInitials(session.user.name ?? null, session.user.email ?? null)
+  const storyLine = topStories.length > 0
+    ? `${topStories.length} históri${topStories.length === 1 ? 'a relevante' : 'as relevantes'} no radar de hoje.`
+    : 'Aqui está o que está movendo o mercado.'
+
   return (
     <AppShell active="market" contentClassName="md:max-w-none">
-      <header className="flex items-end justify-between gap-4 px-1">
+      <header className="flex items-start justify-between gap-4 px-1">
         <div>
-          <p className="bull-eyebrow">BullCapital</p>
-          <h1 className="mt-2 font-serif text-3xl text-[#F4F0FF]">Morning update</h1>
-          <p className="mt-1 text-sm text-[#DBEAFE]/55">Leitura diaria do mercado brasileiro</p>
+          <p className="bull-eyebrow">{dateLabel}</p>
+          <h1 className="mt-2 font-serif text-3xl text-[#F4F0FF]">{greeting}</h1>
+          <p className="mt-1 text-sm text-[#DBEAFE]/55">{storyLine}</p>
         </div>
-        <span className="bull-chip shrink-0">B3</span>
+        <span
+          aria-hidden="true"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#8B5CF6]/35 bg-[#8B5CF6]/15 text-sm font-semibold tracking-wide text-[#C4B5FD]"
+        >
+          {initials}
+        </span>
       </header>
 
-      <ScrollFocus>
-        <DailyBriefHero
+      <Suspense fallback={<DailyBriefSkeleton dateLabel={dateLabel} storiesCount={topStories.length} />}>
+        <DailyBriefContent
+          ibovChange={ibov?.changePercent ?? null}
+          sp500Change={sp500?.changePercent ?? null}
+          vix={vix}
+          selicValue={selicValue}
+          marketOpen={marketOpen}
+          storyHeadlines={topStories.map((s) => s.headline)}
           contextLine={contextLine}
           dateLabel={dateLabel}
-          focusPoints={focusPoints}
-          headline={headline}
           storiesCount={topStories.length}
           suggestedPrompts={suggestedPrompts}
-          summary={summary}
         />
-      </ScrollFocus>
+      </Suspense>
 
-      <div className="grid gap-5">
-        <div className="grid gap-5 xl:items-start xl:grid-cols-[minmax(0,1.7fr)_minmax(21rem,0.82fr)]">
-          <div className="grid content-start gap-5">
+      <div className="grid gap-5 xl:items-start xl:grid-cols-[minmax(0,1fr)_22rem]">
+
+        {/* ── Main column ── */}
+        <div className="grid content-start gap-5">
+          <ScrollFocus>
+            <StoryDigestSection stories={topStories} />
+          </ScrollFocus>
+
+          <ScrollFocus>
+            <TemperatureCard temperature={temperature} />
+          </ScrollFocus>
+          <ScrollFocus>
+            <MarketBubbleMap assets={bubbleAssets} />
+          </ScrollFocus>
+
+          <div className="grid gap-5 md:grid-cols-2">
             <ScrollFocus>
-              <TemperatureCard temperature={temperature} />
+              <IndexCard
+                name="IBOVESPA"
+                price={ibov?.price ?? null}
+                changePercent={ibov?.changePercent ?? null}
+                isOpen={marketOpen}
+              />
             </ScrollFocus>
             <ScrollFocus>
-              <MarketBubbleMap assets={bubbleAssets} />
+              <IndexCard
+                name="S&P 500"
+                price={sp500?.price ?? null}
+                changePercent={sp500?.changePercent ?? null}
+                isOpen={marketOpen}
+              />
             </ScrollFocus>
-
-            <div className="grid gap-5 md:grid-cols-2">
-              <ScrollFocus>
-                <IndexCard
-                  name="IBOVESPA"
-                  price={ibov?.price ?? null}
-                  changePercent={ibov?.changePercent ?? null}
-                  isOpen={marketOpen}
-                />
-              </ScrollFocus>
-              <ScrollFocus>
-                <IndexCard
-                  name="S&P 500"
-                  price={sp500?.price ?? null}
-                  changePercent={sp500?.changePercent ?? null}
-                  isOpen={marketOpen}
-                />
-              </ScrollFocus>
-              <ScrollFocus className="xl:col-span-2">
-                <SELICCard selic={selicData} />
-              </ScrollFocus>
-              <ScrollFocus className="xl:hidden">
-                <VixCard value={vix} />
-              </ScrollFocus>
-            </div>
-
-            <div className="grid gap-5 2xl:grid-cols-2">
-              <ScrollFocus>
-                <MoversSection title="Maiores altas" icon="gainers" movers={gainers} />
-              </ScrollFocus>
-              <ScrollFocus>
-                <MoversSection title="Maiores baixas" icon="losers" movers={losers} />
-              </ScrollFocus>
-            </div>
-          </div>
-          <div className="grid content-start gap-5">
-            <ScrollFocus className="hidden xl:block">
+            <ScrollFocus className="md:col-span-2">
+              <SELICCard selic={selicData} />
+            </ScrollFocus>
+            <ScrollFocus className="md:col-span-2 xl:hidden">
               <VixCard value={vix} />
             </ScrollFocus>
+          </div>
+
+          <div className="grid gap-5 lg:grid-cols-2">
             <ScrollFocus>
-              <StoryDigestSection stories={topStories} />
+              <MoversSection title="Maiores altas" icon="gainers" movers={gainers} />
+            </ScrollFocus>
+            <ScrollFocus>
+              <MoversSection title="Maiores baixas" icon="losers" movers={losers} />
             </ScrollFocus>
           </div>
-        </div>
 
-        <div className="grid gap-5 xl:items-stretch xl:grid-cols-[minmax(0,1.7fr)_minmax(21rem,0.82fr)]">
-          <ScrollFocus className="h-full">
+          <ScrollFocus>
             <MarketPlaybookSection actions={playbookActions} />
           </ScrollFocus>
-          <ScrollFocus className="h-full">
-            <RadarPulseSection items={radarItems} />
-          </ScrollFocus>
         </div>
+
+        {/* ── Sticky right sidebar (xl+) ── */}
+        <div className="hidden xl:grid xl:content-start xl:gap-5 xl:sticky xl:top-5">
+          <VixCard value={vix} />
+          <WatchlistRadarSection fallbackItems={radarItems} />
+        </div>
+
       </div>
     </AppShell>
   )

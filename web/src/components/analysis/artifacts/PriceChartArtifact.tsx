@@ -28,22 +28,28 @@ export function PriceChartArtifact({ ticker, title, range = '1mo', chartNote }: 
   useEffect(() => {
     setLoading(true)
     setData([])
-    fetchAssetHistory(ticker, activeRange).then((res) => {
-      // Brapi may return the symbol as-is or with variations — try flexible match
-      const result =
-        res?.results?.find((r) => r.symbol === ticker) ??
-        res?.results?.find((r) => r.symbol?.toUpperCase() === ticker.toUpperCase()) ??
-        res?.results?.[0]
-      setData(result?.history ?? [])
-      setLoading(false)
-    })
+    fetchAssetHistory(ticker, activeRange)
+      .then((res) => {
+        const result =
+          res?.results?.find((r) => r.symbol === ticker) ??
+          res?.results?.find((r) => r.symbol?.toUpperCase() === ticker.toUpperCase()) ??
+          res?.results?.[0]
+        setData(result?.history ?? [])
+      })
+      .catch(() => {
+        setData([])
+      })
+      .finally(() => {
+        setLoading(false)
+      })
   }, [ticker, activeRange])
 
   const first = data[0]?.close ?? 0
   const last = data[data.length - 1]?.close ?? 0
   const positive = last >= first
   const stroke = positive ? '#8B5CF6' : '#F43F5E'
-  const gradId = `pchart-${ticker}-${activeRange}`
+  // Sanitise ticker so special chars (e.g. ^ in ^BVSP) don't break SVG id / url() refs
+  const gradId = `pchart-${ticker.replace(/[^a-zA-Z0-9]/g, '_')}-${activeRange}`
 
   return (
     <section className="bull-panel p-5">

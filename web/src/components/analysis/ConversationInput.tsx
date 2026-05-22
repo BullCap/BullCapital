@@ -6,11 +6,11 @@ import { ArrowUp } from 'lucide-react'
 interface ConversationInputProps {
   onSubmit: (question: string) => void
   disabled: boolean
-  ticker: string
+  subjectLabel: string
   initialValue?: string
 }
 
-export function ConversationInput({ onSubmit, disabled, ticker, initialValue }: ConversationInputProps) {
+export function ConversationInput({ onSubmit, disabled, subjectLabel, initialValue }: ConversationInputProps) {
   const [value, setValue] = useState(initialValue ?? '')
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
@@ -45,7 +45,7 @@ export function ConversationInput({ onSubmit, disabled, ticker, initialValue }: 
         onChange={handleInput}
         onKeyDown={handleKeyDown}
         disabled={disabled}
-        placeholder={`Pergunte sobre ${ticker}…`}
+        placeholder={`Pergunte sobre ${subjectLabel}…`}
         className="min-h-[28px] flex-1 resize-none bg-transparent text-sm text-[#F4F0FF] placeholder:text-[#F4F0FF]/35 focus:outline-none disabled:opacity-50"
       />
       <button

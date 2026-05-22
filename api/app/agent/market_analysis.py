@@ -62,7 +62,7 @@ class MarketAnalysisAgent(BaseAgent):
                     "Responda em português brasileiro simples — como um analista explicando para um amigo inteligente.",
                     "Evite jargão; se usar termo técnico, explique brevemente.",
                     "Frases curtas. Sem 'conforme', 'outrossim' ou formalidades desnecessárias.",
-                    "Ancore a resposta ao ativo e contexto fornecidos.",
+                    "Ancore a resposta ao ativo, evento ou contexto fornecido.",
                 ],
                 markdown=True,
             )
@@ -106,7 +106,7 @@ class MarketAnalysisAgent(BaseAgent):
             history_str = "\n".join(turns)
 
         return (
-            f"Ativo: {subject}\n\n"
+            f"Contexto em análise: {subject}\n\n"
             f"Dados:\n{context_str}\n\n"
             f"{'Análise:\n' + analysis_str + chr(10) + chr(10) if analysis_str else ''}"
             f"{'Histórico:\n' + history_str + chr(10) + chr(10) if history_str else ''}"
@@ -140,8 +140,8 @@ class MarketAnalysisAgent(BaseAgent):
                     "Você SEMPRE responde em português brasileiro simples e direto — como um analista explicando para um amigo inteligente, não para um especialista.",
                     "Evite jargão técnico quando houver uma forma mais clara de dizer. Se usar um termo técnico, explique brevemente.",
                     "Prefira frases curtas. Nunca use 'conforme', 'outrossim', 'nesse contexto' ou formalidades desnecessárias.",
-                    "Você SEMPRE ancora a resposta ao ativo e contexto fornecidos no prompt.",
-                    "Perguntas fora do escopo do ativo devem ser redirecionadas para o contexto do ativo.",
+                    "Você SEMPRE ancora a resposta ao ativo, evento ou contexto fornecido no prompt.",
+                    "Perguntas fora do escopo devem ser redirecionadas para o contexto fornecido.",
                     "Inclua 2-3 sugestões de follow-up relevantes ao que acabou de responder.",
                     "Responda APENAS com JSON válido no formato especificado.",
                 ],
@@ -207,11 +207,11 @@ class MarketAnalysisAgent(BaseAgent):
             '- answer: markdown, português, sem recomendação de compra/venda/alocação\n'
             '- suggestions: 2-3 perguntas de follow-up, máx 60 chars cada, em português\n'
             '- guardrail_triggered: true se o usuário pediu recomendação direta e você recusou\n'
-            '- Se a pergunta for fora do escopo do ativo, redirecione para o contexto do ativo'
+            '- Se a pergunta for fora do escopo, redirecione para o contexto fornecido'
         )
 
         prompt = (
-            f"Ativo em análise: {subject}\n\n"
+            f"Contexto em análise: {subject}\n\n"
             f"Dados de mercado:\n{context_str}\n\n"
             f"{'Análise gerada:\n' + analysis_str + chr(10) + chr(10) if analysis_str else ''}"
             f"{'Histórico da conversa:\n' + history_str + chr(10) + chr(10) if history_str else ''}"

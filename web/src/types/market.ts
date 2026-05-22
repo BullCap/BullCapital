@@ -128,6 +128,7 @@ export interface AssetNewsItem {
   publisher: string
   link: string
   publishedAt: number
+  relatedTickers: string[]
 }
 
 export interface CurrencyData {

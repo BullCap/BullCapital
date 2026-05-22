@@ -8,6 +8,7 @@ export interface SuggestedPrompt {
 }
 
 interface DailyBriefHeroProps {
+  aiGenerated?: boolean
   contextLine: string
   dateLabel: string
   focusPoints: string[]
@@ -18,6 +19,7 @@ interface DailyBriefHeroProps {
 }
 
 export default function DailyBriefHero({
+  aiGenerated,
   contextLine,
   dateLabel,
   focusPoints,
@@ -34,6 +36,12 @@ export default function DailyBriefHero({
         <div className="flex flex-wrap items-center gap-2">
           <span className="bull-chip">{dateLabel}</span>
           <span className="bull-chip">{storiesCount} historias no radar</span>
+          {aiGenerated && (
+            <span className="inline-flex items-center gap-1 rounded-full border border-[#8B5CF6]/20 bg-[#8B5CF6]/8 px-2.5 py-1 text-[10px] uppercase tracking-[0.12em] text-[#8B5CF6]/60">
+              <Sparkles size={9} />
+              IA
+            </span>
+          )}
         </div>
 
         <div className="max-w-3xl">

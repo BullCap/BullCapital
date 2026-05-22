@@ -648,34 +648,107 @@ export async function getAssetHistory(
 
 const NEWS_REVALIDATE = 900 // 15 minutes
 
+function buildYahooTicker(ticker: string): string {
+  return ticker.startsWith('^') ? ticker : `${ticker}.SA`
+}
+
+function isNewsRelatedToSymbols(relatedTickers: string[], symbols: string[]): boolean {
+  const normalizedSymbols = new Set(symbols.map((symbol) => symbol.toUpperCase()))
+  return relatedTickers.some((relatedTicker) => normalizedSymbols.has(relatedTicker.toUpperCase()))
+}
+
+function getCompanyNewsQuery(longName: string | undefined): string | null {
+  if (!longName) return null
+
+  const brandedName = longName.split(/\s+-\s+/).at(-1)?.trim()
+  if (brandedName && brandedName !== longName) return brandedName
+
+  return longName.replace(/\s+S\.?A\.?$/i, '').trim() || null
+}
+
+function toAssetNewsItems(news: unknown): AssetNewsItem[] {
+  if (!Array.isArray(news)) return []
+
+  return (news as Record<string, unknown>[]).map((item) => {
+    const relatedTickers = Array.isArray(item.relatedTickers)
+      ? item.relatedTickers.filter((relatedTicker): relatedTicker is string => typeof relatedTicker === 'string')
+      : []
+
+    return {
+      title: (item.title as string) ?? '',
+      publisher: (item.publisher as string) ?? '',
+      link: (item.link as string) ?? '',
+      publishedAt: (item.providerPublishTime as number) ?? 0,
+      relatedTickers,
+    }
+  })
+}
+
+function getQuoteSymbols(quotes: unknown): string[] {
+  if (!Array.isArray(quotes)) return []
+
+  return quotes
+    .map((quote) => (quote as Record<string, unknown>).symbol)
+    .filter((symbol): symbol is string => typeof symbol === 'string')
+}
+
+function getQuoteLongName(quotes: unknown, symbol: string): string | undefined {
+  if (!Array.isArray(quotes)) return undefined
+
+  const normalizedSymbol = symbol.toUpperCase()
+  const quote = (quotes as Record<string, unknown>[]).find(
+    (item) => typeof item.symbol === 'string' && item.symbol.toUpperCase() === normalizedSymbol
+  )
+  return typeof quote?.longname === 'string' ? quote.longname : undefined
+}
+
+async function fetchYahooNewsSearch(query: string, newsCount: number, quotesCount: number) {
+  const url = `https://query2.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(query)}&newsCount=${newsCount}&quotesCount=${quotesCount}`
+  const response = await fetch(url, {
+    headers: {
+      'User-Agent':
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      Accept: 'application/json',
+    },
+    next: { revalidate: NEWS_REVALIDATE },
+  })
+
+  if (!response.ok) return null
+  return response.json()
+}
+
 /**
  * Fetches recent news for a ticker via Yahoo Finance.
  * B3 stocks require the .SA suffix (e.g. PETR4.SA). Indices (^BVSP) are used as-is.
+ * Yahoo search can fall back to generic news for B3 symbols, so only items whose
+ * related tickers confirm the symbol or its company-search fallback are exposed.
  */
 export async function getAssetNews(
   ticker: string,
   newsCount: number = 3
 ): Promise<AssetNewsItem[]> {
-  const yahooTicker = ticker.startsWith('^') ? ticker : `${ticker}.SA`
-  const url = `https://query2.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(yahooTicker)}&newsCount=${newsCount}&quotesCount=0`
+  const yahooTicker = buildYahooTicker(ticker)
+  const candidateCount = Math.max(newsCount, 10)
 
   try {
-    const response = await fetch(url, {
-      headers: {
-        'User-Agent':
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        Accept: 'application/json',
-      },
-      next: { revalidate: NEWS_REVALIDATE },
-    })
-    if (!response.ok) return []
-    const data = await response.json()
-    return ((data.news ?? []) as Record<string, unknown>[]).slice(0, newsCount).map((item) => ({
-      title: (item.title as string) ?? '',
-      publisher: (item.publisher as string) ?? '',
-      link: (item.link as string) ?? '',
-      publishedAt: (item.providerPublishTime as number) ?? 0,
-    }))
+    const tickerSearch = await fetchYahooNewsSearch(yahooTicker, candidateCount, 1)
+    if (!tickerSearch) return []
+
+    const tickerNews = toAssetNewsItems(tickerSearch.news)
+      .filter((item) => isNewsRelatedToSymbols(item.relatedTickers, [ticker, yahooTicker]))
+      .slice(0, newsCount)
+    if (tickerNews.length > 0 || ticker.startsWith('^')) return tickerNews
+
+    const companyQuery = getCompanyNewsQuery(getQuoteLongName(tickerSearch.quotes, yahooTicker))
+    if (!companyQuery) return []
+
+    const companySearch = await fetchYahooNewsSearch(companyQuery, candidateCount, 3)
+    if (!companySearch) return []
+
+    const companySymbols = getQuoteSymbols(companySearch.quotes)
+    return toAssetNewsItems(companySearch.news)
+      .filter((item) => isNewsRelatedToSymbols(item.relatedTickers, companySymbols))
+      .slice(0, newsCount)
   } catch {
     return []
   }
