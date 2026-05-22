@@ -264,11 +264,17 @@ export default function AnalysisClient({ ticker, focusLabel, initialQuestion, so
       return
     }
     if (source === 'news' && initialQuestion) {
-      // News/event flow: skip the full asset analysis, stream the answer directly.
-      // setTimeout(0) defers until after mount so state is stable.
-      // Closure captures initial state (result=null, history=[]) which is correct —
-      // we intentionally have no prior analysis context for this flow.
-      setTimeout(() => handleQuestion(initialQuestion), 0)
+      // Defer until after mount so state is stable. Return cleanup so React 18
+      // Strict Mode's double-invoke doesn't fire the question twice — the first
+      // timer is cancelled before the second mount reschedules it.
+      let cancelled = false
+      const timer = setTimeout(() => {
+        if (!cancelled) handleQuestion(initialQuestion)
+      }, 0)
+      return () => {
+        cancelled = true
+        clearTimeout(timer)
+      }
     } else {
       run(ticker)
     }
