@@ -16,7 +16,8 @@ import MoversSection from '@/components/home/MoversSection'
 import DailyBriefHero, { type SuggestedPrompt } from '@/components/home/DailyBriefHero'
 import MarketBubbleMap from '@/components/home/MarketBubbleMap'
 import MarketPlaybookSection from '@/components/home/MarketPlaybookSection'
-import RadarPulseSection, { type RadarPulseItem } from '@/components/home/RadarPulseSection'
+import WatchlistRadarSection from '@/components/home/WatchlistRadarSection'
+import type { RadarPulseItem } from '@/components/home/RadarPulseSection'
 import StoryDigestSection, { type StoryDigestItem } from '@/components/home/StoryDigestSection'
 import AppShell from '@/components/navigation/AppShell'
 import ScrollFocus from '@/components/ui/ScrollFocus'
@@ -357,68 +358,66 @@ export default async function HomePage() {
         />
       </ScrollFocus>
 
-      <div className="grid gap-5">
-        <div className="grid gap-5 xl:items-start xl:grid-cols-[minmax(0,1.7fr)_minmax(21rem,0.82fr)]">
-          <div className="grid content-start gap-5">
+      <div className="grid gap-5 xl:items-start xl:grid-cols-[minmax(0,1fr)_22rem]">
+
+        {/* ── Main column ── */}
+        <div className="grid content-start gap-5">
+          <ScrollFocus>
+            <StoryDigestSection stories={topStories} />
+          </ScrollFocus>
+
+          <ScrollFocus>
+            <TemperatureCard temperature={temperature} />
+          </ScrollFocus>
+          <ScrollFocus>
+            <MarketBubbleMap assets={bubbleAssets} />
+          </ScrollFocus>
+
+          <div className="grid gap-5 md:grid-cols-2">
             <ScrollFocus>
-              <TemperatureCard temperature={temperature} />
+              <IndexCard
+                name="IBOVESPA"
+                price={ibov?.price ?? null}
+                changePercent={ibov?.changePercent ?? null}
+                isOpen={marketOpen}
+              />
             </ScrollFocus>
             <ScrollFocus>
-              <MarketBubbleMap assets={bubbleAssets} />
+              <IndexCard
+                name="S&P 500"
+                price={sp500?.price ?? null}
+                changePercent={sp500?.changePercent ?? null}
+                isOpen={marketOpen}
+              />
             </ScrollFocus>
-
-            <div className="grid gap-5 md:grid-cols-2">
-              <ScrollFocus>
-                <IndexCard
-                  name="IBOVESPA"
-                  price={ibov?.price ?? null}
-                  changePercent={ibov?.changePercent ?? null}
-                  isOpen={marketOpen}
-                />
-              </ScrollFocus>
-              <ScrollFocus>
-                <IndexCard
-                  name="S&P 500"
-                  price={sp500?.price ?? null}
-                  changePercent={sp500?.changePercent ?? null}
-                  isOpen={marketOpen}
-                />
-              </ScrollFocus>
-              <ScrollFocus className="xl:col-span-2">
-                <SELICCard selic={selicData} />
-              </ScrollFocus>
-              <ScrollFocus className="xl:hidden">
-                <VixCard value={vix} />
-              </ScrollFocus>
-            </div>
-
-            <div className="grid gap-5 2xl:grid-cols-2">
-              <ScrollFocus>
-                <MoversSection title="Maiores altas" icon="gainers" movers={gainers} />
-              </ScrollFocus>
-              <ScrollFocus>
-                <MoversSection title="Maiores baixas" icon="losers" movers={losers} />
-              </ScrollFocus>
-            </div>
-          </div>
-          <div className="grid content-start gap-5">
-            <ScrollFocus className="hidden xl:block">
+            <ScrollFocus className="md:col-span-2">
+              <SELICCard selic={selicData} />
+            </ScrollFocus>
+            <ScrollFocus className="md:col-span-2 xl:hidden">
               <VixCard value={vix} />
             </ScrollFocus>
+          </div>
+
+          <div className="grid gap-5 lg:grid-cols-2">
             <ScrollFocus>
-              <StoryDigestSection stories={topStories} />
+              <MoversSection title="Maiores altas" icon="gainers" movers={gainers} />
+            </ScrollFocus>
+            <ScrollFocus>
+              <MoversSection title="Maiores baixas" icon="losers" movers={losers} />
             </ScrollFocus>
           </div>
-        </div>
 
-        <div className="grid gap-5 xl:items-stretch xl:grid-cols-[minmax(0,1.7fr)_minmax(21rem,0.82fr)]">
-          <ScrollFocus className="h-full">
+          <ScrollFocus>
             <MarketPlaybookSection actions={playbookActions} />
           </ScrollFocus>
-          <ScrollFocus className="h-full">
-            <RadarPulseSection items={radarItems} />
-          </ScrollFocus>
         </div>
+
+        {/* ── Sticky right sidebar (xl+) ── */}
+        <div className="hidden xl:grid xl:content-start xl:gap-5 xl:sticky xl:top-5">
+          <VixCard value={vix} />
+          <WatchlistRadarSection fallbackItems={radarItems} />
+        </div>
+
       </div>
     </AppShell>
   )

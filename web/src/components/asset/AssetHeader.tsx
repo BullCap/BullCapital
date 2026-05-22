@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import { VariationBadge } from '@/components/atoms/VariationBadge'
@@ -8,9 +9,10 @@ interface AssetHeaderProps {
   name: string | null
   price: number | null
   changePercent: number | null
+  followButton?: ReactNode
 }
 
-export default function AssetHeader({ ticker, name, price, changePercent }: AssetHeaderProps) {
+export default function AssetHeader({ ticker, name, price, changePercent, followButton }: AssetHeaderProps) {
   return (
     <section className="bull-asset-hero p-5">
       <GlassHighlight widthPercent={70} />
@@ -29,7 +31,7 @@ export default function AssetHeader({ ticker, name, price, changePercent }: Asse
           BullCapital
         </span>
 
-        <span className="h-9 w-9" aria-hidden="true" />
+        {followButton ?? <span className="h-9 w-9" aria-hidden="true" />}
       </div>
 
       <div className="relative mt-8 flex flex-col items-center text-center">

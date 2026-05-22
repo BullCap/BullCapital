@@ -180,7 +180,11 @@ export default function AnalysisClient({ ticker, focusLabel, initialQuestion }: 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           subject: ticker,
-          context: {},
+          context: {
+            ...(result?.data?.price != null && { price: result.data.price }),
+            ...(result?.data?.change != null && { change: result.data.change }),
+            ...(result?.data?.radar != null && { radar: result.data.radar }),
+          },
           analysis: result?.sections ?? {},
           history,
           question,
