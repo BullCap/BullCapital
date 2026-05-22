@@ -152,7 +152,7 @@ export default function AnalysisClient({ ticker, focusLabel, initialQuestion, so
   }
 
   async function handleQuestion(question: string) {
-    if (!ticker || sending) return
+    if (sending) return
     setSending(true)
 
     const turnId = crypto.randomUUID()
@@ -185,7 +185,8 @@ export default function AnalysisClient({ ticker, focusLabel, initialQuestion, so
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          subject: ticker,
+          subject:
+            ticker ?? (activeMode === 'news' ? 'evento de mercado' : (result?.subject ?? focusLabel)),
           context: {
             ...(result?.data?.price != null && { price: result.data.price }),
             ...(result?.data?.change != null && { change: result.data.change }),
@@ -255,18 +256,6 @@ export default function AnalysisClient({ ticker, focusLabel, initialQuestion, so
   }
 
   useEffect(() => {
-    if (!ticker) {
-      setResult(null)
-      setError(false)
-      setLoading(false)
-      setActiveTemplate(null)
-      setTurns([])
-      setHistory([])
-      setCurrentSuggestions([])
-      setPendingQuestion(initialQuestion ?? '')
-      setActiveMode(source === 'news' ? 'news' : 'asset')
-      return
-    }
     if (source === 'news' && initialQuestion) {
       // Defer until after mount so state is stable. Return cleanup so React 18
       // Strict Mode's double-invoke doesn't fire the question twice — the first
@@ -279,9 +268,20 @@ export default function AnalysisClient({ ticker, focusLabel, initialQuestion, so
         cancelled = true
         clearTimeout(timer)
       }
-    } else {
-      run(ticker)
     }
+    if (!ticker) {
+      setResult(null)
+      setError(false)
+      setLoading(false)
+      setActiveTemplate(null)
+      setTurns([])
+      setHistory([])
+      setCurrentSuggestions([])
+      setPendingQuestion(initialQuestion ?? '')
+      setActiveMode(source === 'news' ? 'news' : 'asset')
+      return
+    }
+    run(ticker)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ticker])
 
@@ -554,7 +554,7 @@ export default function AnalysisClient({ ticker, focusLabel, initialQuestion, so
            News mode: shows as soon as a turn exists (no prior analysis needed).
            Asset mode: requires a completed analysis result.
       ── */}
-      {ticker && (activeMode === 'news' || result) && (
+      {(activeMode === 'news' || result) && (
         <>
           <ConversationSuggestions
             suggestions={currentSuggestions}
@@ -565,11 +565,13 @@ export default function AnalysisClient({ ticker, focusLabel, initialQuestion, so
           <ConversationThread turns={turns} sending={sending} />
 
           {/* In news mode only show input once first answer has arrived */}
-          {(activeMode !== 'news' || turns.length > 0) && (
+          {(activeMode !== 'news' || !initialQuestion || turns.length > 0) && (
             <ConversationInput
               onSubmit={handleQuestion}
               disabled={sending}
-              ticker={ticker}
+              subjectLabel={
+                ticker ?? (activeMode === 'news' ? 'este evento' : (result?.subject ?? focusLabel))
+              }
               initialValue={activeMode === 'news' ? '' : pendingQuestion}
             />
           )}

@@ -1,4 +1,4 @@
-"""Conversation router for contextual follow-up questions anchored to an asset."""
+"""Conversation router for contextual follow-up questions anchored to a subject."""
 
 import json
 import re
@@ -117,7 +117,7 @@ async def conversation_stream(request: ConversationRequest) -> StreamingResponse
 
 @router.post("", response_model=ConversationResponse)
 async def conversation(request: ConversationRequest) -> ConversationResponse:
-    """Generate a contextual conversation response for a specific asset."""
+    """Generate a contextual conversation response for a specific subject."""
     content = await market_analysis_agent.conversation_turn(
         subject=request.subject,
         context=request.context,
