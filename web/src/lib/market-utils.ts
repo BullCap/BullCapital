@@ -1,5 +1,7 @@
 export type TemperatureLevel = 'panico' | 'medo' | 'neutro' | 'ganancia' | 'euforia'
 
+const MARKET_FETCH_TIMEOUT_MS = 8000
+
 export interface ComputedTemperature {
   value: number
   label: string
@@ -30,7 +32,10 @@ export async function fetchSELIC(): Promise<{ rate: string; date: string } | nul
   try {
     const res = await fetch(
       'https://api.bcb.gov.br/dados/serie/bcdata.sgs.432/dados/ultimos/1?formato=json',
-      { next: { revalidate: 86400 } }
+      {
+        next: { revalidate: 86400 },
+        signal: AbortSignal.timeout(MARKET_FETCH_TIMEOUT_MS),
+      }
     )
     if (!res.ok) return null
     const data: Array<{ data: string; valor: string }> = await res.json()
@@ -54,7 +59,10 @@ export async function fetchIndexFromBrapi(
   try {
     const res = await fetch(
       `https://brapi.dev/api/quote/${encodeURIComponent(symbol)}?token=${apiKey}`,
-      { next: { revalidate: 300 } }
+      {
+        next: { revalidate: 300 },
+        signal: AbortSignal.timeout(MARKET_FETCH_TIMEOUT_MS),
+      }
     )
     if (!res.ok) return null
     const data = await res.json()

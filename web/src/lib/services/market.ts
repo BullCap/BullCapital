@@ -153,6 +153,7 @@ export interface MarketListingsParams {
 }
 
 const LISTINGS_REVALIDATE = 3600 // 1 hour
+const LISTINGS_FETCH_TIMEOUT_MS = 8000
 
 export async function getMarketListings(
   params: MarketListingsParams = {}
@@ -193,6 +194,7 @@ export async function getMarketListings(
 
     const response = await fetch(url, {
       next: { revalidate: LISTINGS_REVALIDATE },
+      signal: AbortSignal.timeout(LISTINGS_FETCH_TIMEOUT_MS),
     })
 
     if (!response.ok) {
