@@ -118,16 +118,19 @@ export default function AnalysisClient({ ticker, focusLabel, initialQuestion, so
   const [currentSuggestions, setCurrentSuggestions] = useState<string[]>([])
   const [history, setHistory] = useState<ConversationHistory>([])
   const [pendingQuestion, setPendingQuestion] = useState(initialQuestion ?? '')
+  // Tracks which stage is visually active so "Análise completa" can switch
+  // immediately without waiting for state resets like turns=[] to propagate.
+  const [activeMode, setActiveMode] = useState<'news' | 'asset'>(source === 'news' ? 'news' : 'asset')
 
   // Auto-scroll ref — points to first result element
   const resultsRef = useRef<HTMLDivElement>(null)
 
   async function run(t: string, template?: AnalysisTemplate) {
+    setActiveMode('asset')
     setLoading(true)
     setError(false)
     setResult(null)
     setActiveTemplate(template?.id ?? null)
-    // Reset conversation when re-running analysis
     setTurns([])
     setHistory([])
     setCurrentSuggestions([])
@@ -261,6 +264,7 @@ export default function AnalysisClient({ ticker, focusLabel, initialQuestion, so
       setHistory([])
       setCurrentSuggestions([])
       setPendingQuestion(initialQuestion ?? '')
+      setActiveMode(source === 'news' ? 'news' : 'asset')
       return
     }
     if (source === 'news' && initialQuestion) {
@@ -284,7 +288,7 @@ export default function AnalysisClient({ ticker, focusLabel, initialQuestion, so
   const focusSubject = ticker ?? focusLabel
 
   // ── News / event mode stage ──────────────────────────────────────────────────
-  const NewsStage = source === 'news' && (
+  const NewsStage = activeMode === 'news' && (
     <ScrollFocus>
       <section className={`bull-advisor-stage flex flex-col p-5 ${turns.length > 0 ? 'py-4' : 'min-h-[18rem]'}`}>
         {turns.length === 0 ? (
@@ -335,7 +339,7 @@ export default function AnalysisClient({ ticker, focusLabel, initialQuestion, so
   )
 
   // ── Asset analysis mode stage ─────────────────────────────────────────────
-  const AssetStage = source !== 'news' && (
+  const AssetStage = activeMode !== 'news' && (
     <ScrollFocus>
       <section className="bull-advisor-stage flex min-h-[28rem] flex-col p-5">
         {loading ? (
@@ -550,7 +554,7 @@ export default function AnalysisClient({ ticker, focusLabel, initialQuestion, so
            News mode: shows as soon as a turn exists (no prior analysis needed).
            Asset mode: requires a completed analysis result.
       ── */}
-      {ticker && (source === 'news' || result) && (
+      {ticker && (activeMode === 'news' || result) && (
         <>
           <ConversationSuggestions
             suggestions={currentSuggestions}
@@ -561,12 +565,12 @@ export default function AnalysisClient({ ticker, focusLabel, initialQuestion, so
           <ConversationThread turns={turns} sending={sending} />
 
           {/* In news mode only show input once first answer has arrived */}
-          {(source !== 'news' || turns.length > 0) && (
+          {(activeMode !== 'news' || turns.length > 0) && (
             <ConversationInput
               onSubmit={handleQuestion}
               disabled={sending}
               ticker={ticker}
-              initialValue={source === 'news' ? '' : pendingQuestion}
+              initialValue={activeMode === 'news' ? '' : pendingQuestion}
             />
           )}
 
