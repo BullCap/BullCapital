@@ -23,6 +23,17 @@ function fmt(v: number | null) {
   return `${v >= 0 ? '+' : ''}${v.toFixed(2)}%`
 }
 
+function extractJson(raw: string): string {
+  // Strip ```json ... ``` or ``` ... ``` wrappers if present
+  const fenced = raw.match(/```(?:json)?\s*([\s\S]*?)```/)
+  if (fenced?.[1]) return fenced[1].trim()
+  // Try to find first { ... } block
+  const start = raw.indexOf('{')
+  const end = raw.lastIndexOf('}')
+  if (start !== -1 && end > start) return raw.slice(start, end + 1)
+  return raw.trim()
+}
+
 export async function getDailyBrief(input: DailyBriefInput): Promise<DailyBrief | null> {
   const apiKey = process.env.OPENROUTER_API_KEY
   if (!apiKey) return null
@@ -32,7 +43,7 @@ export async function getDailyBrief(input: DailyBriefInput): Promise<DailyBrief 
   const marketStatus = marketOpen ? 'pregão em andamento' : 'fora do horário regular'
   const headlinesList = storyHeadlines.length
     ? storyHeadlines.map((h, i) => `${i + 1}. ${h}`).join('\n')
-    : 'Nenhuma manchete disponível.'
+    : 'Nenhuma manchete disponível no momento.'
 
   const userPrompt = `Dados do mercado agora (${marketStatus}):
 - Ibovespa: ${fmt(ibovChange)}
@@ -43,15 +54,15 @@ export async function getDailyBrief(input: DailyBriefInput): Promise<DailyBrief 
 Principais manchetes do dia:
 ${headlinesList}
 
-Gere um briefing diário em português para investidores brasileiros no mercado B3.
-Responda APENAS com JSON válido neste formato exato (sem markdown, sem explicações):
+Gere um briefing diário em português brasileiro para investidores no mercado B3.
+Retorne SOMENTE um objeto JSON válido, sem markdown, sem explicações, sem texto fora do JSON:
 {
-  "headline": "Uma frase direta capturando o humor do mercado hoje (máximo 18 palavras)",
-  "summary": "Dois ou três parágrafos curtos conectando os dados e manchetes, explicando o contexto do dia.",
+  "headline": "Uma frase direta e impactante sobre o humor do mercado hoje (máximo 18 palavras)",
+  "summary": "Dois parágrafos curtos separados por espaço duplo explicando o contexto do dia: conecte os dados macro com as manchetes, explique o que isso significa para quem acompanha B3. Seja analítico, não apenas repita os números.",
   "focusPoints": [
-    "Ponto de atenção 1 — máximo 20 palavras",
-    "Ponto de atenção 2 — máximo 20 palavras",
-    "Ponto de atenção 3 — máximo 20 palavras"
+    "Primeiro ponto de atenção prático para o investidor hoje (máximo 20 palavras)",
+    "Segundo ponto de atenção prático (máximo 20 palavras)",
+    "Terceiro ponto de atenção prático (máximo 20 palavras)"
   ]
 }`
 
@@ -70,24 +81,26 @@ Responda APENAS com JSON válido neste formato exato (sem markdown, sem explica�
           {
             role: 'system',
             content:
-              'Você é um analista de mercado financeiro brasileiro. Responda sempre em português. Seja direto, claro e objetivo. Nunca use jargão excessivo. Nunca faça recomendações de compra ou venda.',
+              'Você é um analista de mercado financeiro brasileiro experiente. Responda sempre em português brasileiro. Seja direto, analítico e objetivo. Nunca faça recomendações de compra ou venda de ativos específicos. Retorne apenas JSON válido quando solicitado.',
           },
           { role: 'user', content: userPrompt },
         ],
-        max_tokens: 400,
-        temperature: 0.5,
-        response_format: { type: 'json_object' },
+        max_tokens: 600,
+        temperature: 0.6,
       }),
       next: { revalidate: 1800 },
-      signal: AbortSignal.timeout(12000),
+      signal: AbortSignal.timeout(15000),
     })
 
     if (!res.ok) return null
+
     const data = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> }
-    const raw = data.choices?.[0]?.message?.content?.trim()
+    const raw = data.choices?.[0]?.message?.content
     if (!raw) return null
 
-    const parsed = JSON.parse(raw) as Partial<DailyBrief>
+    const jsonStr = extractJson(raw)
+    const parsed = JSON.parse(jsonStr) as Partial<DailyBrief>
+
     if (
       typeof parsed.headline !== 'string' ||
       typeof parsed.summary !== 'string' ||
@@ -96,9 +109,13 @@ Responda APENAS com JSON válido neste formato exato (sem markdown, sem explica�
     ) return null
 
     return {
-      headline: parsed.headline,
-      summary: parsed.summary,
-      focusPoints: [parsed.focusPoints[0]!, parsed.focusPoints[1]!, parsed.focusPoints[2]!],
+      headline: parsed.headline.trim(),
+      summary: parsed.summary.trim(),
+      focusPoints: [
+        String(parsed.focusPoints[0]).trim(),
+        String(parsed.focusPoints[1]).trim(),
+        String(parsed.focusPoints[2]).trim(),
+      ],
     }
   } catch {
     return null

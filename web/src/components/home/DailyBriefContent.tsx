@@ -20,7 +20,24 @@ function fallbackSummary(
 ): string {
   const fmt = (v: number | null) => v === null ? 'sem leitura' : `${v >= 0 ? '+' : ''}${v.toFixed(2)}%`
   const status = marketOpen ? 'pregão em andamento' : 'fora do horário regular'
-  return `Ibovespa em ${fmt(ibovChange)} e S&P 500 em ${fmt(sp500Change)}, com ${status}. VIX em ${vix !== null ? vix.toFixed(1) : 'sem referência'}. ${selicValue ? `SELIC em ${selicValue}.` : ''}`
+
+  const ibovLine = ibovChange === null
+    ? 'O Ibovespa ainda não formou leitura confiável.'
+    : `O Ibovespa opera em ${fmt(ibovChange)}, ${ibovChange >= 0 ? 'sinalizando algum apetite por risco local' : 'refletindo pressão no humor do investidor'}.`
+
+  const extLine = sp500Change === null
+    ? 'O exterior segue sem leitura consolidada.'
+    : `Lá fora, o S&P 500 aparece em ${fmt(sp500Change)}, ${sp500Change >= 0 ? 'o que reduz parte da pressão externa' : 'adicionando mais cautela ao cenário global'}.`
+
+  const vixLine = vix !== null
+    ? `O VIX em ${vix.toFixed(1)} ${vix >= 20 ? 'indica volatilidade elevada — momento de calibrar convicção antes de reagir' : 'sugere um ambiente relativamente controlado de risco'}.`
+    : 'A volatilidade implícita segue sem referência clara.'
+
+  const ratesLine = selicValue
+    ? `Com SELIC em ${selicValue}, o custo de capital permanece como pano de fundo relevante para leitura de valor.`
+    : 'Os juros seguem como pano de fundo importante para separar impulso tático de narrativa estrutural.'
+
+  return `${ibovLine} Com ${status}, o foco é separar movimentos técnicos de mudanças reais de narrativa. ${extLine} ${vixLine} ${ratesLine}`
 }
 
 function fallbackFocusPoints(
