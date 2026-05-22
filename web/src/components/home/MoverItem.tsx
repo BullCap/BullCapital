@@ -22,9 +22,9 @@ export default function MoverItem({
   return (
     <Link
       href={href}
-      className="flex min-h-11 items-center gap-3 rounded-2xl border border-white/5 bg-white/[0.02] px-4 py-2.5 transition-all duration-500 hover:-translate-y-0.5 hover:border-white/10 hover:bg-white/[0.05]"
+      className="flex min-h-14 items-center gap-3 rounded-[1.35rem] border border-white/10 bg-white/[0.035] px-4 py-2.5 hover:bg-white/[0.07]"
     >
-      <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-xl border border-white/10 bg-[#1A1625]/60">
+      <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-xl border border-white/10 bg-[#09111D]/70">
         {logoUrl ? (
           <Image src={logoUrl} alt={ticker} fill className="object-cover" unoptimized />
         ) : (

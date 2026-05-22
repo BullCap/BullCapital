@@ -1,4 +1,4 @@
-"""Conversation model for storing chat history."""
+"""Context model for storing analysis history."""
 
 from datetime import datetime
 from uuid import uuid4
@@ -12,7 +12,7 @@ from app.core.database import Base
 
 
 class Conversation(Base):
-    """Conversation/chat session model."""
+    """Context session for generated analyses and follow-ups."""
 
     __tablename__ = "conversations"
     __table_args__ = {"schema": "ai"}
@@ -42,7 +42,7 @@ class Conversation(Base):
 
 
 class Message(Base):
-    """Individual message in a conversation."""
+    """Individual context entry in an analysis session."""
 
     __tablename__ = "messages"
     __table_args__ = {"schema": "ai"}

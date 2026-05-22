@@ -1,3 +1,5 @@
+import Link from 'next/link'
+import { ArrowUpRight } from 'lucide-react'
 import { GlassHighlight } from '@/components/atoms/GlassHighlight'
 import { MarketTemperatureDial } from '@/components/atoms/MarketTemperatureDial'
 import type { ComputedTemperature } from '@/lib/market-utils'
@@ -8,19 +10,39 @@ interface TemperatureCardProps {
 
 export default function TemperatureCard({ temperature }: TemperatureCardProps) {
   return (
-    <div className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-[#1A1625]/40 p-6 shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),inset_0_-2px_6px_rgba(0,0,0,0.6),0_10px_20px_rgba(0,0,0,0.4)] backdrop-blur-2xl">
-      <div className="pointer-events-none absolute -top-10 left-1/2 h-48 w-48 -translate-x-1/2 rounded-full bg-[#8B5CF6]/15 blur-[80px]" />
+    <section className="bull-digest-panel p-6">
       <GlassHighlight widthPercent={75} />
 
-      <p className="mb-4 text-xs font-medium uppercase tracking-[0.2em] text-[#F4F0FF]/55">
-        Temperatura do Mercado
-      </p>
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <p className="bull-eyebrow">Daily Digest</p>
+          <h2 className="mt-2 font-serif text-xl text-[#F4F0FF]">Temperatura do mercado</h2>
+        </div>
+        <Link
+          href="/analysis"
+          className="inline-flex min-h-9 items-center gap-1 rounded-full border border-white/10 bg-white/[0.06] px-3 text-xs text-[#F4F0FF]/75 transition hover:bg-white/[0.1] hover:text-[#F4F0FF]"
+        >
+          Ler contexto
+          <ArrowUpRight size={13} />
+        </Link>
+      </div>
 
       {temperature === null ? (
-        <p className="text-center text-sm text-[#F4F0FF]/40">Dados indisponíveis</p>
+        <p className="py-10 text-center text-sm text-[#F4F0FF]/40">Dados indisponíveis</p>
       ) : (
-        <MarketTemperatureDial value={temperature.value} stateName={temperature.label} />
+        <div className="mt-5 grid gap-4">
+          <div className="bull-recap-surface py-5">
+            <MarketTemperatureDial value={temperature.value} stateName={temperature.label} />
+          </div>
+          <div className="bull-panel-quiet px-4 py-3">
+            <p className="text-xs text-[#DBEAFE]/50">Leitura atual</p>
+            <p className="mt-1 text-sm leading-6 text-[#F4F0FF]/75">
+              O pulso do mercado está em {temperature.label.toLowerCase()}. Use os ativos em
+              destaque para ver onde o movimento ficou mais forte.
+            </p>
+          </div>
+        </div>
       )}
-    </div>
+    </section>
   )
 }

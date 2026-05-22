@@ -14,7 +14,7 @@ const playfair = Playfair_Display({
 
 export const metadata: Metadata = {
   title: 'BullCapital',
-  description: 'Inteligência de investimentos para o investidor brasileiro',
+  description: 'Radar de inteligência para o mercado brasileiro',
   manifest: '/manifest.json',
 }
 

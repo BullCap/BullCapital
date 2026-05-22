@@ -1,5 +1,6 @@
 import Brapi from 'brapi'
 import {
+  AssetNewsItem,
   AssetQuote,
   AssetSearchData,
   AssetSearchResult,
@@ -640,6 +641,41 @@ export async function getAssetHistory(
   } catch (err) {
     console.warn('Exception while fetching asset history:', err)
     return { results: [], error: 'Failed to fetch asset history from Brapi API.' }
+  }
+}
+
+const NEWS_REVALIDATE = 900 // 15 minutes
+
+/**
+ * Fetches recent news for a ticker via Yahoo Finance.
+ * B3 stocks require the .SA suffix (e.g. PETR4.SA). Indices (^BVSP) are used as-is.
+ */
+export async function getAssetNews(
+  ticker: string,
+  newsCount: number = 3
+): Promise<AssetNewsItem[]> {
+  const yahooTicker = ticker.startsWith('^') ? ticker : `${ticker}.SA`
+  const url = `https://query2.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(yahooTicker)}&newsCount=${newsCount}&quotesCount=0`
+
+  try {
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        Accept: 'application/json',
+      },
+      next: { revalidate: NEWS_REVALIDATE },
+    })
+    if (!response.ok) return []
+    const data = await response.json()
+    return ((data.news ?? []) as Record<string, unknown>[]).slice(0, newsCount).map((item) => ({
+      title: (item.title as string) ?? '',
+      publisher: (item.publisher as string) ?? '',
+      link: (item.link as string) ?? '',
+      publishedAt: (item.providerPublishTime as number) ?? 0,
+    }))
+  } catch {
+    return []
   }
 }
 

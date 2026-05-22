@@ -31,6 +31,10 @@ class Settings(BaseSettings):
     openai_api_key: str = ""
     openai_model: str = "gpt-4o"
 
+    # OpenRouter
+    openrouter_api_key: str = ""
+    openrouter_model: str = "deepseek/deepseek-v4-flash"
+
     # CORS
     cors_origins: str = "http://localhost:3000"
 

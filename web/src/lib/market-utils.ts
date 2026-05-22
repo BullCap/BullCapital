@@ -1,18 +1,3 @@
-export const CURATED_TICKERS = [
-  'PETR4',
-  'VALE3',
-  'ITUB4',
-  'BBDC4',
-  'ABEV3',
-  'WEGE3',
-  'MGLU3',
-  'B3SA3',
-  'BBAS3',
-  'RENT3',
-  'SUZB3',
-  'RADL3',
-]
-
 export type TemperatureLevel = 'panico' | 'medo' | 'neutro' | 'ganancia' | 'euforia'
 
 export interface ComputedTemperature {
@@ -60,17 +45,10 @@ export async function fetchSELIC(): Promise<{ rate: string; date: string } | nul
   }
 }
 
-export interface YahooQuote {
-  ticker: string
-  name: string
-  price: number
-  changePercent: number
-}
-
 // Single-ticker fetch from Brapi — works on free plan (1 ticker per request).
 export async function fetchIndexFromBrapi(
   symbol: string
-): Promise<{ price: number; changePercent: number } | null> {
+): Promise<{ price: number; changePercent: number; name: string | null } | null> {
   const apiKey = process.env.BRAPI_KEY
   if (!apiKey) return null
   try {
@@ -85,6 +63,7 @@ export async function fetchIndexFromBrapi(
     return {
       price: Number(item.regularMarketPrice ?? 0),
       changePercent: Number(item.regularMarketChangePercent ?? 0),
+      name: (item.longName ?? item.shortName ?? null) as string | null,
     }
   } catch {
     return null

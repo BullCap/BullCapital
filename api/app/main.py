@@ -8,7 +8,7 @@ from app.core.config import settings
 
 app = FastAPI(
     title=settings.app_name,
-    description="Serviço de IA com agentes especializados para análise de investimentos",
+    description="Serviço de IA para análises contextuais de mercado",
     version=settings.app_version,
     docs_url="/docs",
     redoc_url="/redoc",
