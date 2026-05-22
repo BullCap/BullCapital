@@ -13,7 +13,7 @@ import SELICCard from '@/components/home/SELICCard'
 import MoversSection from '@/components/home/MoversSection'
 import AnalysisCTA from '@/components/home/AnalysisCTA'
 import MarketBubbleMap from '@/components/home/MarketBubbleMap'
-import AppDock from '@/components/navigation/AppDock'
+import AppShell from '@/components/navigation/AppShell'
 import ScrollFocus from '@/components/ui/ScrollFocus'
 
 export default async function HomePage() {
@@ -61,7 +61,7 @@ export default async function HomePage() {
   const marketOpen = isMarketOpen()
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-sm flex-col gap-5 px-4 pb-44 pt-6">
+    <AppShell active="market">
       <header className="flex items-end justify-between gap-4 px-1">
         <div>
           <p className="bull-eyebrow">BullCapital</p>
@@ -112,7 +112,6 @@ export default async function HomePage() {
       <ScrollFocus>
         <AnalysisCTA />
       </ScrollFocus>
-      <AppDock active="market" />
-    </main>
+    </AppShell>
   )
 }

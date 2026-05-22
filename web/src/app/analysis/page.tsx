@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import { auth } from '@/lib/auth'
 import { normalizeTicker } from '@/lib/market-routing'
 import AnalysisClient from '@/components/analysis/AnalysisClient'
-import AppDock from '@/components/navigation/AppDock'
+import AppShell from '@/components/navigation/AppShell'
 
 interface AnalysisPageProps {
   searchParams: Promise<{ ticker?: string | string[] }>
@@ -18,7 +18,7 @@ export default async function AnalysisPage({ searchParams }: AnalysisPageProps) 
   const focusLabel = ticker ? ticker.toUpperCase() : 'mercado'
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-sm flex-col gap-5 px-4 pb-44 pt-6">
+    <AppShell active="analysis">
       <header className="px-1">
         <p className="bull-eyebrow">BullCapital Advisor</p>
         <h1 className="mt-2 font-serif text-3xl text-[#F4F0FF]">Análises</h1>
@@ -27,7 +27,6 @@ export default async function AnalysisPage({ searchParams }: AnalysisPageProps) 
 
       <AnalysisClient ticker={ticker} focusLabel={focusLabel} />
 
-      <AppDock active="analysis" ticker={ticker} />
-    </main>
+    </AppShell>
   )
 }

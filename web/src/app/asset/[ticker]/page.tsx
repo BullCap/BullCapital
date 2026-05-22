@@ -10,7 +10,7 @@ import RadarSection from '@/components/asset/RadarSection'
 import AssetAnalysisCTA from '@/components/asset/AssetAnalysisCTA'
 import AssetNewsSection from '@/components/asset/AssetNewsSection'
 import { GlassHighlight } from '@/components/atoms/GlassHighlight'
-import AppDock from '@/components/navigation/AppDock'
+import AppShell from '@/components/navigation/AppShell'
 import ScrollFocus from '@/components/ui/ScrollFocus'
 
 interface AssetPageProps {
@@ -47,7 +47,7 @@ export default async function AssetPage({ params }: AssetPageProps) {
 
   if (quote === null && initialHistory.length === 0) {
     return (
-      <main className="mx-auto flex min-h-screen max-w-sm flex-col gap-6 px-4 pb-44 pt-6">
+      <AppShell active="market" contentClassName="gap-6">
         <ScrollFocus>
           <div className="bull-panel p-8 text-center">
             <GlassHighlight widthPercent={60} />
@@ -62,13 +62,12 @@ export default async function AssetPage({ params }: AssetPageProps) {
             </Link>
           </div>
         </ScrollFocus>
-        <AppDock active="market" ticker={ticker} />
-      </main>
+      </AppShell>
     )
   }
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-sm flex-col gap-5 px-4 pb-44 pt-6">
+    <AppShell active="market">
       <ScrollFocus>
         <AssetHeader ticker={ticker} name={name} price={price} changePercent={changePercent} />
       </ScrollFocus>
@@ -90,7 +89,6 @@ export default async function AssetPage({ params }: AssetPageProps) {
       <ScrollFocus>
         <AssetAnalysisCTA ticker={ticker} />
       </ScrollFocus>
-      <AppDock active="market" ticker={ticker} />
-    </main>
+    </AppShell>
   )
 }
