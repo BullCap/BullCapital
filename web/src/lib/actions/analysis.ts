@@ -15,13 +15,26 @@ export interface AnalysisSections {
 }
 
 export interface AnalysisArtifact {
-  template: 'insight_card' | 'signal_list' | 'metrics'
+  template: 'insight_card' | 'signal_list' | 'metrics' | 'price_chart' | 'radar_chart' | 'bar_chart'
   eyebrow?: string
   title?: string
   body?: string
   tone?: 'neutral' | 'positive' | 'negative'
   bullets?: string[]
   metrics?: Array<{ label: string; value: string }>
+  // chart-specific
+  range?: '1d' | '1mo' | '1y'
+  chart_note?: string
+  bars?: Array<{ label: string; value: number; color?: 'positive' | 'negative' | 'neutral' }>
+}
+
+export interface AnalysisRadarData {
+  Rentabilidade?: number
+  Momentum?: number
+  Liquidez?: number
+  Valuation?: number
+  Tendência?: number
+  [key: string]: number | undefined
 }
 
 export interface AnalysisResult {
@@ -29,6 +42,11 @@ export interface AnalysisResult {
   summary: string
   sections: AnalysisSections
   artifacts?: AnalysisArtifact[]
+  data?: {
+    price?: number
+    change?: number
+    radar?: AnalysisRadarData
+  }
 }
 
 export async function requestAnalysis(

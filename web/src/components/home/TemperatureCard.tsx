@@ -15,7 +15,7 @@ export default function TemperatureCard({ temperature }: TemperatureCardProps) {
 
       <div className="flex items-center justify-between gap-3">
         <div>
-          <p className="bull-eyebrow">Daily Digest</p>
+          <p className="bull-eyebrow">Resumo do dia</p>
           <h2 className="mt-2 font-serif text-xl text-[#F4F0FF]">Temperatura do mercado</h2>
         </div>
         <Link

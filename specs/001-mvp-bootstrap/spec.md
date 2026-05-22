@@ -86,7 +86,7 @@ The shadcn/ui library is configured and at least one base component (Button) is 
 - **FR-013**: The `web/src/app/` MUST have a working root page (`page.tsx`) that renders a minimal placeholder with the correct dark background and design tokens — not a blank screen.
 - **FR-014**: The existing pre-built files in `web/src/` (components/atoms/, lib/services/market.ts, lib/auth.ts, lib/auth.config.ts, types/market.ts, middleware.ts) MUST compile without TypeScript errors after the package dependencies are installed.
 - **FR-015**: A `.nvmrc` or `package.json` `engines` field MUST specify Node >= 20.
-- **FR-016**: The `web/src/app/` structure MUST include the route placeholders for all 4 MVP screens: `/` (root/landing), `/auth/sign-in`, `/auth/sign-up`, `/home`, `/asset/[ticker]`, `/chat` — each as a minimal `page.tsx` returning a placeholder so routing works before screens are fully implemented.
+- **FR-016**: The `web/src/app/` structure MUST include the route placeholders for all 4 MVP screens: `/` (root/landing), `/auth/sign-in`, `/auth/sign-up`, `/home`, `/asset/[ticker]`, `/analysis` — each as a minimal `page.tsx` returning a placeholder so routing works before screens are fully implemented.
 
 ### Key Entities
 
@@ -103,7 +103,7 @@ The shadcn/ui library is configured and at least one base component (Button) is 
 - **SC-001**: A developer can go from a clean clone to a running app (`localhost:3000`) in under 5 minutes following only the README commands.
 - **SC-002**: Zero TypeScript compiler errors when `pnpm type-check` runs after fresh install.
 - **SC-003**: The root page (`/`) renders with the correct void background (`#0D0B14`) and amethyst accent visible — confirmed visually and by checking the CSS output.
-- **SC-004**: All 6 MVP route placeholders (`/`, `/auth/sign-in`, `/auth/sign-up`, `/home`, `/asset/[ticker]`, `/chat`) return HTTP 200 and render without crashing.
+- **SC-004**: All 6 MVP route placeholders (`/`, `/auth/sign-in`, `/auth/sign-up`, `/home`, `/asset/[ticker]`, `/analysis`) return HTTP 200 and render without crashing.
 - **SC-005**: `docker compose up -d db` starts the database and `pnpm prisma migrate dev` completes in under 60 seconds on a standard developer machine.
 
 ---

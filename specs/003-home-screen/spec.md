@@ -6,7 +6,7 @@
 
 **Status**: Draft
 
-**Input**: Home screen — market overview dashboard: market temperature dial, top movers (gainers/losers), IBOVESPA and S&P 500 status, SELIC rate indicator, and entry point to AI chat. Uses pre-built atoms and Brapi market services. Mobile-first, glassmorphism design.
+**Input**: Home screen — market intelligence dashboard: market temperature dial, top movers (gainers/losers), IBOVESPA and S&P 500 status, SELIC rate indicator, and entry point to contextual AI analysis. Uses pre-built atoms and Brapi market services. Mobile-first, glassmorphism design.
 
 ---
 
@@ -44,18 +44,19 @@ The investor scrolls down and sees a list of the biggest gainers and the biggest
 
 ---
 
-### User Story 3 — Investor opens the AI chat from the home screen (Priority: P3)
+### User Story 3 — Investor opens contextual AI analysis from the home screen (Priority: P3)
 
-The investor sees a clear call-to-action on the home screen to start a conversation with the AI assistant about the current market.
+The investor sees a clear call-to-action on the home screen to generate or view an AI analysis of relevant market signals from the current dashboard.
 
-**Why this priority**: The AI chat is the product's core value driver. The home screen must make it obvious and accessible — not buried. This is the funnel entry point.
+**Why this priority**: AI is valuable when tied to concrete market signals. The home screen must make it obvious that BullCapital explains what changed and why it matters, without making an open-ended prompt the main workflow.
 
-**Independent Test**: On the home screen, a prominent button or banner is visible reading something like "Conversar com a IA" or "Perguntar sobre o mercado". Tapping it navigates to `/chat` within 100ms.
+**Independent Test**: On the home screen, a prominent button or banner is visible reading something like "Ver análise do mercado" or "Entender sinais de hoje". Tapping it navigates to `/analysis` within 100ms with the current market context available.
 
 **Acceptance Scenarios**:
 
-1. **Given** the investor is on the home screen, **When** they tap the AI chat entry point, **Then** they are navigated to `/chat`.
-2. **Given** the AI chat entry point is rendered, **When** inspected on a 390px mobile screen, **Then** the element is fully visible without horizontal scroll and has a minimum tap target of 44px height.
+1. **Given** the investor is on the home screen, **When** they tap the contextual analysis entry point, **Then** they are navigated to `/analysis`.
+2. **Given** the contextual analysis entry point is rendered, **When** inspected on a 390px mobile screen, **Then** the element is fully visible without horizontal scroll and has a minimum tap target of 44px height.
+3. **Given** the user opens the analysis flow from home, **When** the analysis is generated, **Then** it is framed around market signals visible on the home screen and never presents buy/sell/hold recommendations.
 
 ---
 
@@ -82,7 +83,7 @@ The investor sees a clear call-to-action on the home screen to start a conversat
 - **FR-007**: The screen MUST display a "Maiores altas" section showing the 3 assets with the highest positive daily change %, each with: ticker code, asset name, current price in BRL (formatted as Brazilian currency), and change % badge.
 - **FR-008**: The screen MUST display a "Maiores baixas" section showing the 3 assets with the highest negative daily change %, each with the same fields as FR-007.
 - **FR-009**: Each asset card in the movers sections MUST be tappable and navigate to `/asset/[ticker]` for that asset.
-- **FR-010**: The screen MUST include a visible call-to-action to navigate to `/chat`.
+- **FR-010**: The screen MUST include a visible call-to-action to navigate to `/analysis` for contextual market analysis.
 - **FR-011**: All user-facing text, labels, error messages, and empty states MUST be in Brazilian Portuguese.
 - **FR-012**: Each data section (temperature dial, indices, SELIC, movers) MUST render independently — if one fails, the others still display.
 - **FR-013**: Each failed or unavailable data section MUST display a Portuguese-language empty state message ("Dados indisponíveis") instead of a blank space or error crash.
@@ -107,7 +108,7 @@ The investor sees a clear call-to-action on the home screen to start a conversat
 - **SC-002**: The temperature dial value changes between visits when market conditions change — it is never hardcoded.
 - **SC-003**: Each of the 5 data sections (temperature, IBOVESPA, S&P 500, SELIC, top movers) renders with real data on at least 4 out of 5 load attempts during active market hours.
 - **SC-004**: Zero JavaScript crashes or white screens occur when any single data source returns an error.
-- **SC-005**: Every interactive element (asset cards, AI chat CTA) has a minimum tap target of 44×44px.
+- **SC-005**: Every interactive element (asset cards, contextual analysis CTA) has a minimum tap target of 44×44px.
 - **SC-006**: All text on the screen meets WCAG AA contrast ratio (4.5:1) against the void background.
 - **SC-007**: Tapping an asset card navigates to the correct `/asset/[ticker]` route within 300ms.
 
@@ -123,4 +124,4 @@ The investor sees a clear call-to-action on the home screen to start a conversat
 - The `MarketTemperatureDial`, `VariationBadge`, and `GlassHighlight` atoms are already built and must be used as-is without modification.
 - The home screen is a Next.js Server Component that fetches all data server-side in parallel on each request — this avoids client-side loading spinners and improves perceived performance.
 - B3 market hours are 10:00–17:00 BRT (UTC-3) on weekdays excluding Brazilian public holidays — the "Mercado fechado" indicator is based on the market status returned by the existing `getMarketStatus()` service.
-- The screen does NOT include: search, asset filtering, portfolio balances, notifications, or settings — these are out of MVP scope.
+- The screen does NOT include: search, asset filtering, portfolio balances, notifications, settings, or a generic prompt entry point — these are out of MVP scope.

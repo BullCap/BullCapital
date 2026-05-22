@@ -29,7 +29,7 @@ export default function RadarSection({ data }: RadarSectionProps) {
       <div className="mb-4 flex items-end justify-between gap-3">
         <div>
           <p className="bull-eyebrow">Perfil do Ativo</p>
-          <p className="mt-2 text-sm text-[#F4F0FF]/60">Qualidade, ritmo e liquidez em um olhar.</p>
+          <p className="mt-2 text-sm text-[#F4F0FF]/60">Qualidade, força e movimento em um olhar.</p>
         </div>
         {averageScore !== null && (
           <div className="flex flex-col items-center gap-0.5">

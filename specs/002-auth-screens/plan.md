@@ -38,7 +38,7 @@ Implement the sign-in and sign-up screens using the React 19 Server Actions patt
 |-----------|-------|--------|
 | I. Ship First | Minimal scope — 2 screens, no new deps | PASS |
 | II. Presentation Is the Moat | `glass-card`, `GlassHighlight`, amethyst focus, `font-serif` headings | PASS |
-| III. AI Is Core | N/A for auth screens | PASS |
+| III. AI Interprets Signals | N/A for auth screens | PASS |
 | IV. Portuguese Always | All labels, errors, links, placeholders in pt-BR | PASS |
 | V. Mobile-First | 44px min tap targets, single-column, no horizontal scroll at 390px | PASS |
 | VI. Scope Discipline | No email verification, no password reset, no social login | PASS |

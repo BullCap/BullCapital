@@ -15,7 +15,7 @@ export default function AssetAnalysisCTA({ ticker }: AssetAnalysisCTAProps) {
         <div>
           <h2 className="font-serif text-2xl text-[#F4F0FF]">Analisar {ticker.toUpperCase()}</h2>
           <p className="mt-2 text-sm leading-6 text-[#F4F0FF]/60">
-            Junte preço, radar e cenário de mercado antes de tirar uma conclusão.
+            Veja preço, qualidade e contexto do ativo antes de tirar uma conclusão.
           </p>
         </div>
         <Link

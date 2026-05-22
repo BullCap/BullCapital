@@ -64,7 +64,7 @@ Falls back to `base` alone if VIX data is unavailable.
 4. SELIC card (full width)
 5. Maiores altas section (full width)
 6. Maiores baixas section (full width)
-7. AI chat CTA banner (full width)
+7. Contextual analysis CTA banner (full width)
 
 **Rationale**: BC's home used `lg:grid-cols-2` desktop grid with `TopAssetsCirclePacking` (Three.js circle packing). That component is explicitly out of scope for BullCapital MVP. The target user is on mobile; a clean vertical stack delivers all information without horizontal scrolling or cramped layouts.
 **Alternatives considered**: 2-column grid like BC — only relevant for desktop; 390px users would see 50% width cards which are too narrow for the data.
@@ -103,7 +103,7 @@ Falls back to `base` alone if VIX data is unavailable.
 **Reuse from BC (pattern only, re-implement):**
 - `MarketHighlightItem` atom pattern → create `web/src/components/home/MoverItem.tsx` (same glass row design, but typed to `AssetQuote` instead of `StockSummary` mock)
 - `MarketHighlightList` organism glass card pattern → create `web/src/components/home/MoversSection.tsx`
-- `MarketInsightCard` AI badge + copy → replace with `ChatCTA.tsx` — a simpler amethyst banner linking to `/chat` (no hardcoded AI analysis text)
+- `MarketInsightCard` AI badge + copy → replace with `AnalysisCTA.tsx` — a simpler amethyst banner linking to `/analysis` and framing AI as interpretation of the visible market context
 
 **Reuse directly (no changes):**
 - `MarketTemperatureDial` atom — `web/src/components/atoms/MarketTemperatureDial.tsx`
@@ -114,12 +114,12 @@ Falls back to `base` alone if VIX data is unavailable.
 - `web/src/components/home/IndexCard.tsx` — single index display (name, price, change %)
 - `web/src/components/home/SELICCard.tsx` — SELIC rate display
 - `web/src/components/home/TemperatureCard.tsx` — wraps `MarketTemperatureDial` in a glass card
-- `web/src/components/home/ChatCTA.tsx` — amethyst call-to-action banner for `/chat`
+- `web/src/components/home/AnalysisCTA.tsx` — amethyst call-to-action banner for `/analysis`
 - `web/src/lib/market-utils.ts` — `computeTemperature()` and `getTemperatureLabel()` utilities
 
 **DO NOT port from BC:**
 - `TopAssetsCirclePacking` — Three.js/nivo circle packing, heavy deps, out of scope
-- `MarketInsightCard` with hardcoded AI text — replaced by real chat CTA
+- `MarketInsightCard` with hardcoded AI text — replaced by contextual analysis CTA
 - `MarketRadarCard` — belongs to asset detail screen, not home
 - `Grainient` — Three.js animated background, heavy dep, out of scope
 

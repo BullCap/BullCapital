@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   Activity,
   AlertTriangle,
@@ -17,6 +17,15 @@ import {
   type AnalysisResult,
   type AnalysisSections,
 } from '@/lib/actions/analysis'
+import type { ConversationHistory, ConversationTurn } from '@/lib/actions/conversation'
+import { ConversationDisclaimer } from './ConversationDisclaimer'
+import { ConversationInput } from './ConversationInput'
+import { ConversationSuggestions } from './ConversationSuggestions'
+import { ConversationThread } from './ConversationThread'
+import { AnalysisSkeleton } from './AnalysisSkeleton'
+import { PriceChartArtifact } from './artifacts/PriceChartArtifact'
+import { RadarChartArtifact } from './artifacts/RadarChartArtifact'
+import { BarChartArtifact } from './artifacts/BarChartArtifact'
 
 interface SectionConfig {
   key: keyof AnalysisSections
@@ -47,35 +56,46 @@ interface AnalysisTemplate {
 const TEMPLATE_CHOICES: AnalysisTemplate[] = [
   {
     id: 'tendencias-pregao',
-    label: 'Tendências do pregão',
-    prompt: 'Foque nos sinais de tendência do pregão e momentum de curto prazo.',
+    label: 'O que está em tendência',
+    prompt: 'Foque nos movimentos de tendência do dia e nos sinais de curto prazo, explicando de forma clara o que está acontecendo.',
   },
   {
     id: 'risco-liquidez',
-    label: 'Risco e liquidez',
-    prompt: 'Foque em risco, volatilidade e liquidez do ativo no pregão atual.',
+    label: 'Riscos e pontos de atenção',
+    prompt: 'Explique os principais riscos e pontos de atenção do ativo hoje, em linguagem acessível.',
   },
   {
     id: 'pressao-compra-venda',
-    label: 'Pressão compradora/vendedora',
-    prompt: 'Descreva sinais de pressão compradora ou vendedora e o que isso indica.',
+    label: 'Sinais de compra e venda',
+    prompt: 'Descreva os sinais de interesse comprador ou vendedor e o que isso pode indicar sobre o momento do ativo.',
   },
   {
     id: 'qualidade-valor',
     label: 'Qualidade e valor',
-    prompt: 'Traduza os scores de qualidade em leitura de valor e estabilidade.',
+    prompt: 'Traduza os indicadores de qualidade em uma leitura simples sobre o valor e a estabilidade do ativo.',
   },
   {
     id: 'o-que-monitorar',
-    label: 'O que monitorar',
-    prompt: 'Liste os pontos de monitoramento mais importantes para os próximos dias.',
+    label: 'O que acompanhar agora',
+    prompt: 'Liste os pontos mais importantes para ficar de olho nos próximos dias, de forma direta e sem jargão.',
   },
   {
     id: 'cenario-sessao',
-    label: 'Cenário da sessão',
-    prompt: 'Resuma o clima da sessão e como o ativo se posiciona dentro dele.',
+    label: 'Clima do dia',
+    prompt: 'Explique como está o clima do mercado hoje e como o ativo se posiciona nesse contexto.',
   },
 ]
+
+function extractInitialSuggestions(result: AnalysisResult): string[] {
+  const candidates: string[] = []
+  const acompanhar = result.sections?.o_que_acompanhar
+  const riscos = result.sections?.riscos_e_incertezas
+  if (acompanhar) candidates.push('O que devo acompanhar em ' + (result.subject ?? 'este ativo') + '?')
+  if (riscos) candidates.push('Quais são os principais riscos?')
+  const firstArtifact = result.artifacts?.[0]
+  if (firstArtifact?.title) candidates.push(`Me explique mais sobre "${firstArtifact.title.slice(0, 40)}"`)
+  return candidates.slice(0, 3)
+}
 
 interface AnalysisClientProps {
   ticker?: string
@@ -88,23 +108,142 @@ export default function AnalysisClient({ ticker, focusLabel }: AnalysisClientPro
   const [error, setError] = useState(false)
   const [activeTemplate, setActiveTemplate] = useState<string | null>(null)
 
+  // Conversation state
+  const [turns, setTurns] = useState<ConversationTurn[]>([])
+  const [sending, setSending] = useState(false)
+  const [currentSuggestions, setCurrentSuggestions] = useState<string[]>([])
+  const [history, setHistory] = useState<ConversationHistory>([])
+
+  // Auto-scroll ref — points to first result element
+  const resultsRef = useRef<HTMLDivElement>(null)
+
   async function run(t: string, template?: AnalysisTemplate) {
     setLoading(true)
     setError(false)
     setResult(null)
     setActiveTemplate(template?.id ?? null)
+    // Reset conversation when re-running analysis
+    setTurns([])
+    setHistory([])
+    setCurrentSuggestions([])
     const data = await requestAnalysis(t, template?.prompt)
     if (data) {
       setResult(data)
+      const seedSuggestions = extractInitialSuggestions(data)
+      setCurrentSuggestions(seedSuggestions)
+      // Auto-scroll to results after paint
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        }, 120)
+      })
     } else {
       setError(true)
     }
     setLoading(false)
   }
 
+  async function handleQuestion(question: string) {
+    if (!ticker || sending) return
+    setSending(true)
+
+    const turnId = crypto.randomUUID()
+    setTurns((prev) => [...prev, { id: turnId, question, answer: '', suggestions: [] }])
+    setCurrentSuggestions([])
+
+    let fullAnswer = ''
+
+    // Word-by-word display — o stream alimenta receivedText, o intervalo
+    // consome uma palavra por tick independente da velocidade do LLM
+    let receivedText = ''
+    let displayedWords = 0
+    let displayInterval = 0
+
+    const startWordInterval = () => {
+      if (displayInterval) return
+      displayInterval = window.setInterval(() => {
+        const words = receivedText.split(' ')
+        if (displayedWords >= words.length) return
+        displayedWords++
+        const shown = words.slice(0, displayedWords).join(' ')
+        setTurns((prev) =>
+          prev.map((t) => (t.id === turnId ? { ...t, answer: shown } : t))
+        )
+      }, 65) // ~15 palavras por segundo — fluido mas legível
+    }
+
+    try {
+      const res = await fetch('/api/conversation/stream', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          subject: ticker,
+          context: {},
+          analysis: result?.sections ?? {},
+          history,
+          question,
+        }),
+      })
+
+      if (!res.ok || !res.body) throw new Error('stream failed')
+
+      const reader = res.body.getReader()
+      const decoder = new TextDecoder()
+      let buf = ''
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        buf += decoder.decode(value, { stream: true })
+        const lines = buf.split('\n')
+        buf = lines.pop() ?? ''
+
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue
+          try {
+            const event = JSON.parse(line.slice(6)) as Record<string, unknown>
+            if (event.type === 'text') {
+              receivedText = String(event.text ?? '')
+              fullAnswer = receivedText
+              startWordInterval()
+            } else if (event.type === 'done') {
+              // Para o intervalo e exibe o texto final completo
+              if (displayInterval) { clearInterval(displayInterval); displayInterval = 0 }
+              const finalAnswer = String(event.answer ?? fullAnswer)
+              const suggestions = Array.isArray(event.suggestions)
+                ? (event.suggestions as string[])
+                : []
+              fullAnswer = finalAnswer
+              setTurns((prev) =>
+                prev.map((t) =>
+                  t.id === turnId ? { ...t, answer: finalAnswer, suggestions } : t
+                )
+              )
+              setCurrentSuggestions(suggestions)
+              setHistory((prev) => [
+                ...prev,
+                { role: 'user', content: question },
+                { role: 'assistant', content: finalAnswer },
+              ])
+            }
+          } catch {
+            // ignore malformed SSE lines
+          }
+        }
+      }
+      if (displayInterval) { clearInterval(displayInterval); displayInterval = 0 }
+    } catch {
+      const errMsg = 'Não foi possível gerar uma resposta. Tente novamente.'
+      setTurns((prev) =>
+        prev.map((t) => (t.id === turnId ? { ...t, answer: errMsg } : t))
+      )
+    }
+
+    setSending(false)
+  }
+
   useEffect(() => {
     if (ticker) run(ticker)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ticker])
 
   const focusSubject = ticker ?? focusLabel
@@ -113,12 +252,12 @@ export default function AnalysisClient({ ticker, focusLabel }: AnalysisClientPro
     <ScrollFocus>
       <section className="bull-advisor-stage flex min-h-[28rem] flex-col p-5">
         {loading ? (
-          <div className="my-auto flex flex-col items-center px-4 py-10 text-center">
+          <div className="my-auto flex flex-col items-center px-4 py-8 text-center">
             <span className="bull-advisor-orb animate-pulse">
               <span className="bull-brand-mark scale-[1.65]" />
             </span>
-            <p className="mt-6 text-sm text-[#DBEAFE]/60">Analisando {focusLabel}</p>
-            <h2 className="mt-2 max-w-[15rem] font-serif text-3xl leading-tight text-[#F4F0FF]">
+            <p className="mt-5 text-sm text-[#DBEAFE]/60">Analisando {focusLabel}</p>
+            <h2 className="mt-1.5 max-w-[15rem] font-serif text-2xl leading-tight text-[#F4F0FF]">
               Lendo os sinais…
             </h2>
           </div>
@@ -158,7 +297,7 @@ export default function AnalysisClient({ ticker, focusLabel }: AnalysisClientPro
                 Pergunte sobre {focusLabel}
               </h2>
               <p className="mt-3 max-w-[17rem] text-sm leading-6 text-[#F4F0FF]/60">
-                Combine preço, radar e cenário antes da próxima leitura.
+                Escolha um ângulo abaixo para começar a análise.
               </p>
             </div>
 
@@ -191,51 +330,95 @@ export default function AnalysisClient({ ticker, focusLabel }: AnalysisClientPro
     <>
       {AdvisorStage}
 
+      {/* Skeleton while loading */}
+      {loading && <AnalysisSkeleton />}
+
+      {/* Results anchor for auto-scroll */}
+      <div ref={resultsRef} />
+
       {result?.artifacts?.length ? (
         <>
-          {result.artifacts.map((artifact, index) => (
-            <ScrollFocus key={`${artifact.template}-${index}`}>
-              <section className="bull-panel p-5">
-                <GlassHighlight widthPercent={55} />
-                {artifact.eyebrow && <p className="bull-eyebrow">{artifact.eyebrow}</p>}
-                {artifact.title && (
-                  <h3 className="mt-2 font-serif text-xl text-[#F4F0FF]">{artifact.title}</h3>
-                )}
-                {artifact.body && (
-                  <MarkdownBody className={`mt-3 ${TONE_STYLES[artifact.tone ?? 'neutral']}`}>
-                    {artifact.body}
-                  </MarkdownBody>
-                )}
+          {result.artifacts.map((artifact, index) => {
+            const key = `${artifact.template}-${index}`
 
-                {artifact.template === 'signal_list' && artifact.bullets?.length ? (
-                  <ul className="mt-4 space-y-2 text-sm text-[#F4F0FF]/70">
-                    {artifact.bullets.map((item, itemIndex) => (
-                      <li key={`${item}-${itemIndex}`} className="flex items-start gap-2">
-                        <span className="mt-1 h-1.5 w-1.5 rounded-full bg-[#8B5CF6]" />
-                        <span>{item}</span>
-                      </li>
-                    ))}
-                  </ul>
-                ) : null}
+            if (artifact.template === 'price_chart' && ticker) {
+              return (
+                <ScrollFocus key={key}>
+                  <PriceChartArtifact
+                    ticker={ticker}
+                    title={artifact.title}
+                    range={artifact.range ?? '1mo'}
+                    chartNote={artifact.chart_note}
+                  />
+                </ScrollFocus>
+              )
+            }
 
-                {artifact.template === 'metrics' && artifact.metrics?.length ? (
-                  <div className="mt-4 grid gap-3">
-                    {artifact.metrics.map((metric, metricIndex) => (
-                      <div
-                        key={`${metric.label}-${metricIndex}`}
-                        className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3"
-                      >
-                        <span className="text-xs uppercase tracking-[0.2em] text-[#F4F0FF]/40">
-                          {metric.label}
-                        </span>
-                        <span className="text-sm text-[#F4F0FF]">{metric.value}</span>
-                      </div>
-                    ))}
-                  </div>
-                ) : null}
-              </section>
-            </ScrollFocus>
-          ))}
+            if (artifact.template === 'radar_chart' && result.data?.radar) {
+              return (
+                <ScrollFocus key={key}>
+                  <RadarChartArtifact
+                    title={artifact.title}
+                    chartNote={artifact.chart_note}
+                    radarData={result.data.radar}
+                  />
+                </ScrollFocus>
+              )
+            }
+
+            if (artifact.template === 'bar_chart' && artifact.bars?.length) {
+              return (
+                <ScrollFocus key={key}>
+                  <BarChartArtifact
+                    eyebrow={artifact.eyebrow}
+                    title={artifact.title}
+                    bars={artifact.bars}
+                    chartNote={artifact.chart_note}
+                  />
+                </ScrollFocus>
+              )
+            }
+
+            return (
+              <ScrollFocus key={key}>
+                <section className="bull-panel p-5">
+                  <GlassHighlight widthPercent={55} />
+                  {artifact.eyebrow && <p className="bull-eyebrow">{artifact.eyebrow}</p>}
+                  {artifact.title && (
+                    <h3 className="mt-2 font-serif text-xl text-[#F4F0FF]">{artifact.title}</h3>
+                  )}
+                  {artifact.body && (
+                    <MarkdownBody className={`mt-3 ${TONE_STYLES[artifact.tone ?? 'neutral']}`}>
+                      {artifact.body}
+                    </MarkdownBody>
+                  )}
+                  {artifact.template === 'signal_list' && artifact.bullets?.length ? (
+                    <ul className="mt-4 space-y-2 text-sm text-[#F4F0FF]/70">
+                      {artifact.bullets.map((item, i) => (
+                        <li key={`${item}-${i}`} className="flex items-start gap-2">
+                          <span className="mt-1 h-1.5 w-1.5 rounded-full bg-[#8B5CF6]" />
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
+                  {artifact.template === 'metrics' && artifact.metrics?.length ? (
+                    <div className="mt-4 grid gap-3">
+                      {artifact.metrics.map((metric, i) => (
+                        <div
+                          key={`${metric.label}-${i}`}
+                          className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3"
+                        >
+                          <span className="text-xs uppercase tracking-[0.2em] text-[#F4F0FF]/40">{metric.label}</span>
+                          <span className="text-sm text-[#F4F0FF]">{metric.value}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
+                </section>
+              </ScrollFocus>
+            )
+          })}
         </>
       ) : null}
 
@@ -266,6 +449,27 @@ export default function AnalysisClient({ ticker, focusLabel }: AnalysisClientPro
               Atualizar análise
             </button>
           )}
+        </>
+      )}
+
+      {/* ── Conversation area — only when analysis is ready ── */}
+      {result && ticker && (
+        <>
+          <ConversationSuggestions
+            suggestions={currentSuggestions}
+            onSelect={handleQuestion}
+            disabled={sending}
+          />
+
+          <ConversationThread turns={turns} sending={sending} />
+
+          <ConversationInput
+            onSubmit={handleQuestion}
+            disabled={sending}
+            ticker={ticker}
+          />
+
+          <ConversationDisclaimer variant="footer" />
         </>
       )}
     </>

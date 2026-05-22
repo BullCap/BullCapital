@@ -43,7 +43,7 @@
 
 - [x] T006 [P] Create `web/src/components/home/MoversSection.tsx` — Server Component; props: `{ title: string; icon: 'gainers' | 'losers'; movers: Array<{ ticker: string; name: string; price: number; changePercent: number; logoUrl?: string }> }`; render: glass card wrapper `<div className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-[#1A1625]/40 p-6 shadow-[...] backdrop-blur-2xl">` with `<GlassHighlight widthPercent={50} />`, amethyst glow, header row `<div className="mb-4 flex items-center gap-2">` with SVG triangle icon (upward + amethyst for gainers: `<svg width="14" height="14"><path d="M7 2L12 10H2L7 2Z" fill="#8B5CF6"/></svg>`, downward + rose for losers: `<svg width="14" height="14"><path d="M7 12L2 4H12L7 12Z" fill="#F43F5E"/></svg>`) and `<h3 className="font-serif text-lg text-[#F4F0FF]">{title}</h3>`; if `movers.length === 0` render `<p className="text-center text-sm text-[#F4F0FF]/40 py-4">Dados de mercado indisponíveis</p>`, else render `<div className="flex flex-col gap-2">` with `movers.slice(0,3).map(m => <MoverItem key={m.ticker} {...m} href={'/asset/'+m.ticker} />)`; imports: `MoverItem` from `'./MoverItem'`, `{ GlassHighlight }` from `'@/components/atoms/GlassHighlight'`
 
-- [x] T007 [P] Create `web/src/components/home/ChatCTA.tsx` — Server Component, no props; render: `<div className="relative overflow-hidden rounded-[2rem] border border-[#8B5CF6]/20 bg-[#8B5CF6]/10 p-8 shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),0_0_40px_rgba(139,92,246,0.15)] backdrop-blur-2xl text-center">` with `<GlassHighlight widthPercent={70} />`, amethyst glow `<div className="pointer-events-none absolute left-1/2 top-0 h-40 w-40 -translate-x-1/2 rounded-full bg-[#8B5CF6]/20 blur-[60px]" />`, heading `<h2 className="font-serif text-2xl text-[#F4F0FF] mb-2">Pergunte sobre o mercado</h2>`, subtext `<p className="text-sm text-[#F4F0FF]/60 mb-6">Nossa IA explica o que está acontecendo em linguagem simples</p>`, link `<Link href="/chat" className="inline-flex min-h-11 items-center justify-center rounded-2xl border border-[#8B5CF6]/40 bg-[#8B5CF6]/20 px-8 py-3 text-sm font-medium text-[#F4F0FF] transition hover:bg-[#8B5CF6]/30 hover:-translate-y-0.5">Conversar com a IA</Link>`; imports: `Link` from `'next/link'`, `{ GlassHighlight }` from `'@/components/atoms/GlassHighlight'`
+- [x] T007 [P] Create `web/src/components/home/AnalysisCTA.tsx` — Server Component, no props; render: `<div className="relative overflow-hidden rounded-[2rem] border border-[#8B5CF6]/20 bg-[#8B5CF6]/10 p-8 shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),0_0_40px_rgba(139,92,246,0.15)] backdrop-blur-2xl text-center">` with `<GlassHighlight widthPercent={70} />`, amethyst glow `<div className="pointer-events-none absolute left-1/2 top-0 h-40 w-40 -translate-x-1/2 rounded-full bg-[#8B5CF6]/20 blur-[60px]" />`, heading `<h2 className="font-serif text-2xl text-[#F4F0FF] mb-2">Entenda os sinais de hoje</h2>`, subtext `<p className="text-sm text-[#F4F0FF]/60 mb-6">A IA transforma movimentos do mercado em análise contextual</p>`, link `<Link href="/analysis" className="inline-flex min-h-11 items-center justify-center rounded-2xl border border-[#8B5CF6]/40 bg-[#8B5CF6]/20 px-8 py-3 text-sm font-medium text-[#F4F0FF] transition hover:bg-[#8B5CF6]/30 hover:-translate-y-0.5">Ver análise do mercado</Link>`; imports: `Link` from `'next/link'`, `{ GlassHighlight }` from `'@/components/atoms/GlassHighlight'`; do not use open-ended prompt copy
 
 **Checkpoint**: All 6 leaf components created. Each can be rendered standalone with sample props.
 
@@ -57,7 +57,7 @@
 
 ### Implementation
 
-- [x] T008 [US1] Replace `web/src/app/home/page.tsx` with a full async Server Component: (1) auth guard: `const session = await auth(); if (!session?.user) redirect('/auth/sign-in')`; (2) parallel data fetch: `const [statusResult, indicatorsResult, quotesResult] = await Promise.allSettled([getMarketStatus(), getMarketIndicators(), getMultipleQuotes(CURATED_TICKERS)])`; (3) extract status data: `const status = statusResult.status === 'fulfilled' ? statusResult.value : null`; extract IBOVESPA: `const ibov = status?.indices.find(i => i.symbol === '^BVSP') ?? null`; extract S&P 500: `const sp500 = status?.indices.find(i => i.symbol === '^GSPC') ?? null`; extract VIX: `const vix = status?.indices.find(i => i.symbol === '^VIX')?.regularMarketPrice ?? null`; (4) compute temperature: `const temperature = ibov ? computeTemperature(ibov.regularMarketChangePercent, vix) : null`; (5) extract indicators: `const indicators = indicatorsResult.status === 'fulfilled' ? indicatorsResult.value : null`; `const selicData = formatSELIC(indicators?.selic ?? [])`; (6) extract quotes: `const quotes = quotesResult.status === 'fulfilled' ? (quotesResult.value.results ?? []) : []`; `const gainers = [...quotes].sort((a,b) => b.regularMarketChangePercent - a.regularMarketChangePercent).slice(0,3)`; `const losers = [...quotes].sort((a,b) => a.regularMarketChangePercent - b.regularMarketChangePercent).slice(0,3)`; (7) `const marketOpen = isMarketOpen()`; (8) render a `<main className="mx-auto max-w-sm px-4 py-6 flex flex-col gap-6">` containing: page heading `<div className="mb-2"><h1 className="font-serif text-3xl text-[#F4F0FF]">Visão Geral</h1><p className="text-sm text-[#F4F0FF]/50">Mercado brasileiro hoje</p></div>`, `<TemperatureCard temperature={temperature} />`, indices row `<div className="grid grid-cols-2 gap-4"><IndexCard name="IBOVESPA" price={ibov?.regularMarketPrice ?? null} changePercent={ibov?.regularMarketChangePercent ?? null} isOpen={marketOpen} /><IndexCard name="S&P 500" price={sp500?.regularMarketPrice ?? null} changePercent={sp500?.regularMarketChangePercent ?? null} isOpen={marketOpen} /></div>`, `<SELICCard selic={selicData} />`, `<MoversSection title="Maiores altas" icon="gainers" movers={gainers.map(q => ({ ticker: q.symbol, name: q.shortName, price: q.regularMarketPrice, changePercent: q.regularMarketChangePercent, logoUrl: q.logourl }))} />`, `<MoversSection title="Maiores baixas" icon="losers" movers={losers.map(q => ({ ticker: q.symbol, name: q.shortName, price: q.regularMarketPrice, changePercent: q.regularMarketChangePercent, logoUrl: q.logourl }))} />`, `<ChatCTA />`; imports: `{ auth }` from `'@/lib/auth'`, `{ redirect }` from `'next/navigation'`, `{ getMarketStatus, getMarketIndicators, getMultipleQuotes }` from `'@/lib/services/market'`, `{ CURATED_TICKERS, computeTemperature, formatSELIC, isMarketOpen }` from `'@/lib/market-utils'`, all home components from `'@/components/home/...'`
+- [x] T008 [US1] Replace `web/src/app/home/page.tsx` with a full async Server Component: (1) auth guard: `const session = await auth(); if (!session?.user) redirect('/auth/sign-in')`; (2) parallel data fetch for indices, SELIC, and movers; (3) compute temperature from IBOVESPA + VIX; (4) format SELIC and map gainers/losers into `MoverDisplayData`; (5) render a mobile stack containing page heading, `<TemperatureCard />`, index cards, `<SELICCard />`, movers sections, and `<AnalysisCTA />`; imports: `{ auth }` from `'@/lib/auth'`, `{ redirect }` from `'next/navigation'`, market service functions, market utilities, and all home components from `'@/components/home/...'`
 
 **Checkpoint**: US1 complete — `/home` renders temperature dial, two index cards, SELIC. Each section shows empty state if its data source fails. `pnpm type-check` passes.
 
@@ -79,19 +79,19 @@
 
 ---
 
-## Phase 5: User Story 3 — Investor Opens AI Chat from Home (Priority: P3)
+## Phase 5: User Story 3 — Investor Opens Contextual Analysis from Home (Priority: P3)
 
-**Goal**: The `ChatCTA` component is visible on the home screen and tapping "Conversar com a IA" navigates to `/chat`.
+**Goal**: The `AnalysisCTA` component is visible on the home screen and tapping "Ver análise do mercado" navigates to `/analysis`.
 
-**Independent Test**: On the home screen, scroll to the bottom. `ChatCTA` is visible. Tap "Conversar com a IA" → lands on `/chat`. The button is ≥44px tall and fully visible on 390px without horizontal scroll.
+**Independent Test**: On the home screen, scroll to the bottom. `AnalysisCTA` is visible. Tap "Ver análise do mercado" → lands on `/analysis`. The button is ≥44px tall and fully visible on 390px without horizontal scroll.
 
 ### Implementation
 
-> **Note**: US3 is fully implemented by T007 and T008. `ChatCTA` is rendered as the last item in the page stack. This phase contains one verification task only.
+> **Note**: US3 is fully implemented by T007 and T008. `AnalysisCTA` is rendered as the last item in the page stack. This phase contains one verification task only.
 
-- [x] T010 [US3] Verify `ChatCTA` in `web/src/components/home/ChatCTA.tsx`: confirm `href="/chat"` is present, button text is "Conversar com a IA" (exact string), the `<Link>` element has `min-h-11` ensuring 44px tap height, and the component is included as the last child in the page stack in `web/src/app/home/page.tsx` — fix any issues found
+- [x] T010 [US3] Verify `AnalysisCTA` in `web/src/components/home/AnalysisCTA.tsx`: confirm `href="/analysis"` is present, button text is "Ver análise do mercado" (exact string), the `<Link>` element has `min-h-11` ensuring 44px tap height, and the component is included as the last child in the page stack in `web/src/app/home/page.tsx` — fix any issues found
 
-**Checkpoint**: US3 complete — chat CTA visible and tappable at the bottom of the home screen.
+**Checkpoint**: US3 complete — contextual analysis CTA visible and tappable at the bottom of the home screen.
 
 ---
 
@@ -99,8 +99,8 @@
 
 - [x] T011 Run `pnpm type-check` from `web/` — resolve all TypeScript errors across `market-utils.ts`, all 6 home components, and `home/page.tsx`; zero errors required before proceeding
 - [x] T012 [P] Audit all user-facing strings in `web/src/components/home/` and `web/src/app/home/page.tsx` for English — check section titles, empty state messages, labels, button text; fix any found (all must be pt-BR)
-- [x] T013 [P] Verify 44px tap targets: `MoverItem` has `min-h-11`, `ChatCTA` link has `min-h-11`, `IndexCard` touch areas; fix any that fall short
-- [x] T014 Manual end-to-end verification: (1) `docker compose up -d db && pnpm dev`; (2) sign in → `/home`; (3) confirm temperature dial renders with a value + label; (4) confirm IBOVESPA and S&P 500 cards show prices; (5) confirm SELIC shows a rate; (6) confirm movers show 3 assets each or empty state; (7) tap a mover → confirm navigation to `/asset/[ticker]`; (8) tap "Conversar com a IA" → confirm `/chat`; (9) test with `BRAPI_KEY` unset — confirm all sections show empty state without crashing
+- [x] T013 [P] Verify 44px tap targets: `MoverItem` has `min-h-11`, `AnalysisCTA` link has `min-h-11`, `IndexCard` touch areas; fix any that fall short
+- [x] T014 Manual end-to-end verification: (1) `docker compose up -d db && pnpm dev`; (2) sign in → `/home`; (3) confirm temperature dial renders with a value + label; (4) confirm IBOVESPA and S&P 500 cards show prices; (5) confirm SELIC shows a rate; (6) confirm movers show 3 assets each or empty state; (7) tap a mover → confirm navigation to `/asset/[ticker]`; (8) tap "Ver análise do mercado" → confirm `/analysis`; (9) test with `BRAPI_KEY` unset — confirm all sections show empty state without crashing
 
 ---
 
@@ -116,7 +116,7 @@ T002–T007 [all parallel — 6 leaf components]
 T008 (home/page.tsx — imports T001 + T002–T007)
   ↓
 T009 (verify movers pipeline)
-T010 (verify ChatCTA)
+T010 (verify AnalysisCTA)
   ↓
 T011 (type-check gate)
   ↓
@@ -134,7 +134,7 @@ T003  components/home/IndexCard.tsx
 T004  components/home/SELICCard.tsx
 T005  components/home/MoverItem.tsx
 T006  components/home/MoversSection.tsx
-T007  components/home/ChatCTA.tsx
+T007  components/home/AnalysisCTA.tsx
 ```
 
 ---
@@ -144,7 +144,7 @@ T007  components/home/ChatCTA.tsx
 ### MVP First (User Story 1)
 
 1. T001 — utility module
-2. T002 + T003 + T004 — TemperatureCard, IndexCard, SELICCard (skip MoversSection/MoverItem/ChatCTA for now)
+2. T002 + T003 + T004 — TemperatureCard, IndexCard, SELICCard (skip MoversSection/MoverItem/AnalysisCTA for now)
 3. T008 (partial) — page with only temperature + indices + SELIC rendered
 4. **STOP and VALIDATE**: `/home` shows market at a glance
 
