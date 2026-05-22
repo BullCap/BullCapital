@@ -40,27 +40,11 @@ function formatChange(change: number) {
   return `${change >= 0 ? '+' : ''}${change.toFixed(2)}%`
 }
 
-function formatCompactVolume(volume: number) {
-  return new Intl.NumberFormat('pt-BR', {
-    notation: 'compact',
-    maximumFractionDigits: 1,
-  }).format(volume)
-}
-
-function formatMarketCap(marketCap: number | null) {
-  if (!marketCap) return null
-
-  return new Intl.NumberFormat('pt-BR', {
-    notation: 'compact',
-    style: 'currency',
-    currency: 'BRL',
-    maximumFractionDigits: 1,
-  }).format(marketCap)
-}
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value))
 }
+
 
 function buildBubbleAssets(assets: MarketListingItem[]): BubbleAsset[] {
   const uniqueAssets = Array.from(
@@ -122,68 +106,65 @@ export default function MarketBubbleMap({ assets }: MarketBubbleMapProps) {
         </div>
       </div>
 
-      <div className="relative h-[314px] overflow-hidden rounded-[1.75rem] border border-white/[0.07] bg-[#080B12]/75 shadow-[inset_0_1px_16px_rgba(0,0,0,0.5)]">
-        <div className="bull-bubble-grid absolute inset-0" />
-        <div className="absolute bottom-6 left-1/2 top-5 w-px bg-white/[0.08]" />
-        <div className="absolute bottom-[4.55rem] left-5 right-5 h-px bg-white/[0.08]" />
+      <div className="relative h-[314px] rounded-[1.75rem] border border-white/[0.07]">
+        {/* Background layer — overflow-hidden mantém bordas arredondadas e clipa a grade */}
+        <div className="absolute inset-0 overflow-hidden rounded-[1.75rem] bg-[#080B12]/75 shadow-[inset_0_1px_16px_rgba(0,0,0,0.5)]">
+          <div className="bull-bubble-grid absolute inset-0" />
+          <div className="absolute bottom-6 left-1/2 top-5 w-px bg-white/[0.08]" />
+          <div className="absolute bottom-[4.55rem] left-5 right-5 h-px bg-white/[0.08]" />
+          <span className="absolute left-5 top-4 text-[10px] uppercase text-[#DBEAFE]/35">
+            Mais liquidez
+          </span>
+          <span className="absolute bottom-4 left-5 text-[10px] uppercase text-[#FB7185]/60">
+            Pressão
+          </span>
+          <span className="absolute bottom-4 right-5 text-[10px] uppercase text-[#4ADE80]/60">
+            Tração
+          </span>
+        </div>
 
-        <span className="absolute left-5 top-4 text-[10px] uppercase text-[#DBEAFE]/35">
-          Mais liquidez
-        </span>
-        <span className="absolute bottom-4 left-5 text-[10px] uppercase text-[#FB7185]/60">
-          Pressão
-        </span>
-        <span className="absolute bottom-4 right-5 text-[10px] uppercase text-[#4ADE80]/60">
-          Tração
-        </span>
+        {/* Bubble layer — tooltips usam o slot para abrir na area livre do mapa. */}
+        <div className="absolute inset-0">
+          {bubbles.length === 0 ? (
+            <div className="relative flex h-full items-center justify-center px-8 text-center">
+              <p className="text-sm text-[#F4F0FF]/40">Mapa de ativos indisponível</p>
+            </div>
+          ) : (
+            bubbles.map((asset) => {
+              const tone =
+                asset.change > 0
+                  ? 'bull-bubble-up'
+                  : asset.change < 0
+                    ? 'bull-bubble-down'
+                    : 'bull-bubble-flat'
 
-        {bubbles.length === 0 ? (
-          <div className="relative flex h-full items-center justify-center px-8 text-center">
-            <p className="text-sm text-[#F4F0FF]/40">Mapa de ativos indisponível</p>
-          </div>
-        ) : (
-          bubbles.map((asset) => {
-            const cap = formatMarketCap(asset.marketCap)
-            const tone =
-              asset.change > 0
-                ? 'bull-bubble-up'
-                : asset.change < 0
-                  ? 'bull-bubble-down'
-                  : 'bull-bubble-flat'
-
-            return (
-              <div
-                key={asset.stock}
-                className="bull-bubble-float absolute"
-                style={{
-                  left: `${asset.left}%`,
-                  top: `${asset.top}%`,
-                  width: `${asset.size}px`,
-                  zIndex: asset.zIndex,
-                }}
-              >
-                <Link
-                  href={buildAssetHref(asset.stock)}
-                  aria-label={`${asset.stock}, variação ${formatChange(asset.change)}`}
-                  className={`bull-market-bubble ${tone}`}
+              return (
+                <div
+                  key={asset.stock}
+                  className="bull-bubble-float absolute"
+                  style={{
+                    left: `${asset.left}%`,
+                    top: `${asset.top}%`,
+                    width: `${asset.size}px`,
+                    zIndex: asset.zIndex,
+                  }}
                 >
-                  <span className="max-w-[84%] truncate text-[11px] font-semibold">
-                    {asset.stock}
-                  </span>
-                  <span className="text-[10px] font-medium">{formatChange(asset.change)}</span>
-                </Link>
+                  <Link
+                    href={buildAssetHref(asset.stock)}
+                    aria-label={`${asset.stock}, variação ${formatChange(asset.change)}`}
+                    className={`bull-market-bubble ${tone}`}
+                  >
+                    <span className="max-w-[84%] truncate text-[11px] font-semibold">
+                      {asset.stock}
+                    </span>
+                    <span className="text-[10px] font-medium">{formatChange(asset.change)}</span>
+                  </Link>
 
-                <div className="bull-bubble-tooltip pointer-events-none absolute left-1/2 top-full z-20 mt-2 w-40 -translate-x-1/2 rounded-2xl border border-white/10 bg-[#111827]/95 p-3 text-left opacity-0 shadow-[0_18px_36px_rgba(0,0,0,0.45)] backdrop-blur-xl">
-                  <p className="truncate text-xs font-medium text-[#F4F0FF]">{asset.name}</p>
-                  <p className="mt-1 text-[10px] text-[#DBEAFE]/45">
-                    Volume {formatCompactVolume(asset.volume)}
-                  </p>
-                  {cap && <p className="text-[10px] text-[#DBEAFE]/45">Valor {cap}</p>}
                 </div>
-              </div>
-            )
-          })
-        )}
+              )
+            })
+          )}
+        </div>
       </div>
     </section>
   )

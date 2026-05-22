@@ -6,7 +6,7 @@
 
 ## Summary
 
-Implement the `/home` market overview screen as a full Server Component that fetches market data in parallel from three existing service functions (`getMarketStatus`, `getMarketIndicators`, `getMultipleQuotes`). Six new presentational components are created under `src/components/home/`. A new utility module `src/lib/market-utils.ts` computes the temperature value and curates the ticker list. The screen is a vertical mobile-first stack with independent failure handling per section. No new dependencies required.
+Implement the `/home` market intelligence screen as a full Server Component that fetches market data in parallel from three existing service functions (`getMarketStatus`, `getMarketIndicators`, `getMultipleQuotes`). Six new presentational components are created under `src/components/home/`. A new utility module `src/lib/market-utils.ts` computes the temperature value and curates the ticker list. The screen is a vertical mobile-first stack with independent failure handling per section and a contextual analysis entry point. No new dependencies required.
 
 ---
 
@@ -38,10 +38,10 @@ Implement the `/home` market overview screen as a full Server Component that fet
 |-----------|-------|--------|
 | I. Ship First | 6 focused components, no new deps, reuses all existing services and atoms | PASS |
 | II. Presentation Is the Moat | All cards use glassmorphism treatment (`backdrop-blur-2xl`, `bg-[#1A1625]/40`, `border-white/10`, `rounded-[2rem]`), `GlassHighlight` on every card, amethyst glow | PASS |
-| III. AI Is Core | `ChatCTA` is prominently placed at the bottom, driving users to `/chat` | PASS |
+| III. AI Interprets Signals | `AnalysisCTA` is placed at the bottom, driving users to `/analysis` with market context instead of a generic prompt | PASS |
 | IV. Portuguese Always | All labels, empty states, section titles, SELIC format, temperature labels in pt-BR | PASS |
 | V. Mobile-First | Single-column vertical stack, 390px-first, all tap targets ≥44px | PASS |
-| VI. Scope Discipline | No search, no portfolio, no watchlist, no alerts, no settings — just the 5 data sections | PASS |
+| VI. Scope Discipline | No search, no portfolio ingestion, no alerts, no settings, no generic prompt — just market data and contextual analysis entry | PASS |
 | No Three.js/heavy deps | `TopAssetsCirclePacking` and `Grainient` explicitly excluded | PASS |
 | No skeleton loaders | Suspense with graceful empty state cards per section | PASS |
 
@@ -83,7 +83,7 @@ web/src/
         ├── SELICCard.tsx                 ← NEW
         ├── MoverItem.tsx                 ← NEW
         ├── MoversSection.tsx             ← NEW
-        └── ChatCTA.tsx                   ← NEW
+        └── AnalysisCTA.tsx               ← NEW
 ```
 
 **Unchanged and used**: `atoms/MarketTemperatureDial.tsx`, `atoms/VariationBadge.tsx`, `atoms/GlassHighlight.tsx`, `lib/services/market.ts`, `types/market.ts`
@@ -116,7 +116,7 @@ All six components follow the same glass card pattern. Each is a Server Componen
 
 **`MoversSection.tsx`**: Receives `title`, `icon: 'gainers' | 'losers'`, `movers: MoverDisplayData[]`. Glass card + section header (SVG triangle icon + serif title) + up to 3 `MoverItem` rows. Empty state if movers.length === 0.
 
-**`ChatCTA.tsx`**: No props. Glass card + amethyst glow + `GlassHighlight` + serif heading + subtext + amethyst `<Link href="/chat">` button.
+**`AnalysisCTA.tsx`**: No props. Glass card + amethyst glow + `GlassHighlight` + serif heading + subtext + amethyst `<Link href="/analysis">` button. Copy frames AI as market signal interpretation, not conversation.
 
 ### Phase C: Page Assembly
 
@@ -124,7 +124,7 @@ Replace `web/src/app/home/page.tsx` placeholder:
 1. Auth guard: `const session = await auth()` + redirect to `/auth/sign-in` if no session
 2. Fetch data with `Promise.allSettled([getMarketStatus(), getMarketIndicators(), getMultipleQuotes(CURATED_TICKERS)])`
 3. Extract + transform data: compute temperature, extract IBOVESPA + S&P 500, format SELIC, sort movers
-4. Render vertical stack: heading → TemperatureCard → 2-col indices grid → SELICCard → MoversSection gainers → MoversSection losers → ChatCTA
+4. Render vertical stack: heading → TemperatureCard → 2-col indices grid → SELICCard → MoversSection gainers → MoversSection losers → AnalysisCTA
 
 ### Phase D: Type-check + Visual Verification
 

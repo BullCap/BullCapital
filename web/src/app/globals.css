@@ -397,13 +397,37 @@
       radial-gradient(circle at 50% 50%, rgba(96, 165, 250, 0.32), rgba(22, 35, 72, 0.82));
   }
 
-  .bull-bubble-float:hover .bull-bubble-tooltip,
-  .bull-bubble-float:focus-within .bull-bubble-tooltip {
-    opacity: 1;
-    transform: translateX(-50%) translateY(2px);
+  .bull-bubble-tooltip {
     transition:
       opacity 240ms ease,
       transform 240ms ease;
+  }
+
+  .bull-bubble-tooltip-top {
+    transform: translateY(4px);
+  }
+
+  .bull-bubble-tooltip-bottom {
+    transform: translateY(-4px);
+  }
+
+  .bull-bubble-tooltip-center.bull-bubble-tooltip-top {
+    transform: translateX(-50%) translateY(4px);
+  }
+
+  .bull-bubble-tooltip-center.bull-bubble-tooltip-bottom {
+    transform: translateX(-50%) translateY(-4px);
+  }
+
+  .bull-bubble-float:hover .bull-bubble-tooltip,
+  .bull-bubble-float:focus-within .bull-bubble-tooltip {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .bull-bubble-float:hover .bull-bubble-tooltip-center,
+  .bull-bubble-float:focus-within .bull-bubble-tooltip-center {
+    transform: translateX(-50%) translateY(0);
   }
 }
 
@@ -433,4 +457,3 @@
   }
 
 }
-

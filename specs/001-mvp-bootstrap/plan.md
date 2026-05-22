@@ -42,10 +42,10 @@ Bootstrap the BullCapital Next.js web app from a source-files-only state to a fu
 |-----------|-------|--------|
 | I. Ship First | Bootstrap unblocks all 4 screens — correct sequencing | PASS |
 | II. Presentation Is the Moat | Design tokens ported, glassmorphism system wired in globals.css + tailwind.config.ts | PASS |
-| III. AI Is Core | FastAPI service added to docker-compose; AI routes placeholder | PASS |
+| III. AI Interprets Signals | FastAPI service added to docker-compose; contextual analysis route placeholder | PASS |
 | IV. Portuguese Always | Root layout sets `lang="pt-BR"`; placeholder pages have no English UI text | PASS |
 | V. Mobile-First | Root layout has no fixed header; meta viewport configured in Next.js metadata | PASS |
-| VI. Scope Discipline | No portfolio, watchlists, alerts, social features, settings | PASS |
+| VI. Scope Discipline | No portfolio ingestion, alerts, social features, settings, or generic conversation surface | PASS |
 | No Google OAuth | Google provider removed from auth.config.ts and auth.ts | PASS |
 | No Turborepo | pnpm-workspace.yaml only, no turbo.json | PASS |
 | No Supabase | Plain postgres:16-alpine in docker-compose, no Supabase SDK | PASS |
@@ -127,8 +127,8 @@ BullCapital/                          # Repo root
         │   │   └── [ticker]/
         │   │       └── page.tsx      # NEW: placeholder for /asset/[ticker] (protected)
         │   │
-        │   └── chat/
-        │       └── page.tsx          # NEW: placeholder for /chat (protected)
+        │   └── analysis/
+        │       └── page.tsx          # NEW: placeholder for /analysis (protected contextual analysis)
         │
         ├── components/
         │   ├── atoms/                # EXISTS (unchanged: GlassHighlight, MarketTemperatureDial, VariationBadge)
@@ -142,7 +142,7 @@ BullCapital/                          # Repo root
         │   └── services/
         │       └── market.ts         # EXISTS (unchanged)
         │
-        ├── middleware.ts             # UPDATED: protect /home, /asset/:path*, /chat → redirect to /auth/sign-in
+        ├── middleware.ts             # UPDATED: protect /home, /asset/:path*, /analysis → redirect to /auth/sign-in
         └── types/
             └── market.ts             # EXISTS (unchanged)
 ```
@@ -185,7 +185,7 @@ Create the `globals.css`, root layout, and all route placeholder pages. This pha
 6. `web/src/app/(auth)/sign-up/page.tsx` — placeholder (renders title "Criar conta")
 7. `web/src/app/home/page.tsx` — placeholder (renders "Visão Geral" heading, protected)
 8. `web/src/app/asset/[ticker]/page.tsx` — placeholder (renders ticker param, protected)
-9. `web/src/app/chat/page.tsx` — placeholder (renders "Chat", protected)
+9. `web/src/app/analysis/page.tsx` — placeholder (renders "Análises", protected)
 
 ### Phase C: Auth + Lib Updates
 
@@ -195,7 +195,7 @@ Fix the pre-built auth files and add the Prisma db client.
 1. `web/src/lib/auth.config.ts` — remove Google provider; change `signIn` page to `/auth/sign-in`; `error` page to `/auth/sign-in`
 2. `web/src/lib/auth.ts` — remove Google provider, remove Google log events
 3. `web/src/lib/db.ts` — new file: Prisma client + PrismaPg adapter, no Supabase SSL, pool max 10
-4. `web/src/middleware.ts` — update protected routes to `/home`, `/asset/:path*`, `/chat`; redirect to `/auth/sign-in`
+4. `web/src/middleware.ts` — update protected routes to `/home`, `/asset/:path*`, `/analysis`; redirect to `/auth/sign-in`
 
 ### Phase D: shadcn/ui + PWA Assets
 

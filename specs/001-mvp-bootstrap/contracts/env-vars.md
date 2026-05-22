@@ -43,10 +43,10 @@
 - **How it's used**: SQLAlchemy async session for pgVector conversation persistence.
 
 ### `OPENAI_API_KEY`
-- **Required**: Yes for AI features; FastAPI service starts but chat endpoints return errors without it
+- **Required**: Yes for AI features; FastAPI service starts but contextual analysis endpoints return errors without it
 - **Format**: OpenAI API key starting with `sk-`
 - **Example**: `sk-...`
-- **How it's used**: The Agno `InvestmentAgent` uses gpt-4o for conversational responses.
+- **How it's used**: The Agno `MarketAnalysisAgent` uses gpt-4o for contextual analysis responses.
 
 ### `CORS_ORIGINS`
 - **Required**: Yes

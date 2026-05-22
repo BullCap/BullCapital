@@ -11,7 +11,7 @@ export default function AnalysisCTA() {
         <div>
           <h2 className="font-serif text-2xl text-[#F4F0FF]">Entenda os sinais de hoje</h2>
           <p className="mt-2 text-sm leading-6 text-[#F4F0FF]/60">
-            Leve temperatura, juros e destaques do pregão para uma leitura contextual.
+            Veja temperatura, juros e os ativos em destaque para entender o contexto do dia.
           </p>
         </div>
         <Link

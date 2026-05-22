@@ -60,7 +60,7 @@ export default function IndexCard({ name, price, changePercent, isOpen }: IndexC
           <p className="mt-auto font-serif text-2xl font-semibold text-[#F4F0FF]">
             {price.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
           </p>
-          <p className="text-[10px] uppercase text-[#DBEAFE]/35">Série modelo</p>
+          <p className="text-[10px] uppercase text-[#DBEAFE]/35">Tendência</p>
           <svg viewBox="0 0 120 34" aria-hidden="true" className="h-8 w-full overflow-visible">
             <path d={sparkline.area} fill={tone} fillOpacity="0.1" />
             <path

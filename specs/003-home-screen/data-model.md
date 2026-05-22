@@ -124,7 +124,7 @@ web/src/
         ├── SELICCard.tsx                 ← NEW: SELIC rate display
         ├── MoverItem.tsx                 ← NEW: single asset row (ticker, name, price, %)
         ├── MoversSection.tsx             ← NEW: section header + list of MoverItems
-        └── ChatCTA.tsx                   ← NEW: amethyst banner → /chat
+        └── AnalysisCTA.tsx               ← NEW: amethyst banner → /analysis
 ```
 
 **Unchanged pre-built files used by this feature**:
@@ -147,3 +147,22 @@ export const CURATED_TICKERS = [
 ```
 
 Covers top ~12 most liquid B3 stocks by average daily volume. Updated when a stock is delisted or a major new addition joins the IBOVESPA top tier.
+
+---
+
+## Contextual Analysis Entry (business rule)
+
+The home screen does not open a generic prompt. It exposes a single contextual analysis entry point that carries the visible market context into the analysis surface.
+
+```typescript
+interface AnalysisContext {
+  source: 'home'
+  temperature: ComputedTemperature | null
+  indices: IndexDisplayData[]
+  selic: SELICDisplayData | null
+  gainers: MoverDisplayData[]
+  losers: MoverDisplayData[]
+}
+```
+
+The `/analysis` surface uses this context to generate sections such as "O que aconteceu", "Por que importa", "Impacto potencial", "O que acompanhar", and "Riscos e incertezas". It must not generate buy/sell/hold recommendations.

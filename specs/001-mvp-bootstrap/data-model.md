@@ -47,7 +47,7 @@ All runtime secrets and config values required by the application. See `contract
 | Variable         | Required | Description |
 |-----------------|----------|-------------|
 | `DATABASE_URL`   | Yes      | Same PostgreSQL connection string |
-| `OPENAI_API_KEY` | Yes      | OpenAI API key for the investment agent |
+| `OPENAI_API_KEY` | Yes      | OpenAI API key for the contextual analysis agent |
 | `CORS_ORIGINS`   | Yes      | Comma-separated allowed origins (`http://localhost:3000`) |
 
 ---
@@ -76,8 +76,8 @@ web/src/app/
 │   └── [ticker]/
 │       └── page.tsx        # /asset/[ticker] — asset detail (protected)
 │
-└── chat/
-    └── page.tsx            # /chat — AI chat (protected)
+└── analysis/
+    └── page.tsx            # /analysis — contextual AI analysis (protected)
 ```
 
 ---

@@ -71,15 +71,15 @@
 
 ## Decision 9: Route URL Structure
 
-**Decision**: Auth routes at `/auth/sign-in` and `/auth/sign-up` (route group `(auth)` under `app/`). Protected dashboard at `/home`. Asset at `/asset/[ticker]`. Chat at `/chat`.
-**Rationale**: Matches CLAUDE.md spec exactly. The BC reference used `/sign-in` and `/dashboard` — these differ from the new spec. The `(auth)` route group allows a separate layout for auth screens (centered, fullscreen, no bottom nav).
+**Decision**: Auth routes at `/auth/sign-in` and `/auth/sign-up` (route group `(auth)` under `app/`). Protected dashboard at `/home`. Asset at `/asset/[ticker]`. Contextual analysis at `/analysis`.
+**Rationale**: Matches the current BullCapital spec: AI starts from concrete assets, events, and market signals rather than a generic prompt surface. The BC reference used `/sign-in` and `/dashboard` — these differ from the new spec. The `(auth)` route group allows a separate layout for auth screens (centered, fullscreen, no bottom nav).
 **Alternatives considered**: BC route structure (`/sign-in`, `/dashboard`) — rejected; new BullCapital spec defines the target routes.
 
 ---
 
 ## Decision 10: Middleware Protected Routes
 
-**Decision**: Update `web/src/middleware.ts` to protect `/home`, `/asset/:path*`, `/chat` (the 3 post-auth MVP screens). Redirect unauthenticated users to `/auth/sign-in`.
+**Decision**: Update `web/src/middleware.ts` to protect `/home`, `/asset/:path*`, `/analysis` (the 3 post-auth MVP screens). Redirect unauthenticated users to `/auth/sign-in`.
 **Rationale**: The existing middleware already has protection logic but points to `/dashboard` (old BC route). It must be updated to match the new route structure.
 **Alternatives considered**: Per-page auth checks — rejected because middleware provides a single enforcement point that can't be bypassed by navigating directly.
 

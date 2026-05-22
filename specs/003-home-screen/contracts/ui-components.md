@@ -127,17 +127,19 @@ interface MoversSectionProps {
 
 ---
 
-## Component: `ChatCTA`
+## Component: `AnalysisCTA`
 
-**File**: `web/src/components/home/ChatCTA.tsx`
+**File**: `web/src/components/home/AnalysisCTA.tsx`
 **Type**: Server Component
 
 ```typescript
 // No props — static CTA
-export default function ChatCTA(): JSX.Element
+export default function AnalysisCTA(): JSX.Element
 ```
 
-**Renders**: Full-width glass card with amethyst glow, `GlassHighlight`, a heading "Pergunte sobre o mercado" in font-serif, a short subtext "Nossa IA explica o que está acontecendo em linguagem simples", and a `<Link href="/chat">` button "Conversar com a IA" styled as the primary amethyst button. Minimum height 44px on the button.
+**Renders**: Full-width glass card with amethyst glow, `GlassHighlight`, a heading "Entenda os sinais de hoje" in font-serif, a short subtext "A IA transforma movimentos do mercado em análise contextual", and a `<Link href="/analysis">` button "Ver análise do mercado" styled as the primary amethyst button. Minimum height 44px on the button.
+
+**Constraint**: This component must not use open-ended prompt copy such as "conversar" or "perguntar livremente". It frames AI as interpretation of concrete market signals.
 
 ---
 
@@ -163,5 +165,5 @@ const [statusResult, indicatorsResult, quotesResult] = await Promise.allSettled(
 <SELICCard />              ← full width
 <MoversSection gainers />  ← full width
 <MoversSection losers />   ← full width
-<ChatCTA />                ← full width
+<AnalysisCTA />            ← full width
 ```

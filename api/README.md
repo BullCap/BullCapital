@@ -1,12 +1,12 @@
 # BullCapital AI Service
 
-Serviço de IA baseado em FastAPI com agentes especializados (Agno framework).
+Serviço de IA baseado em FastAPI para transformar ativos, eventos e tendências de mercado em análises contextuais.
 
 ## Database
 
 Utiliza **PostgreSQL + pgVector** para:
 
-- Armazenamento de conversas e mensagens
+- Armazenamento de análises e contexto de acompanhamento
 - Embeddings vetoriais para RAG (Retrieval-Augmented Generation)
 - Busca semântica em documentos financeiros
 
