@@ -22,6 +22,25 @@ import StoryDigestSection, { type StoryDigestItem } from '@/components/home/Stor
 import AppShell from '@/components/navigation/AppShell'
 import ScrollFocus from '@/components/ui/ScrollFocus'
 
+function getGreeting(name: string | null, email: string | null): string {
+  const brt = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }))
+  const hour = brt.getHours()
+  const firstName = name?.trim().split(/\s+/)[0] ?? email?.split('@')[0] ?? 'você'
+  if (hour < 12) return `Bom dia, ${firstName}.`
+  if (hour < 18) return `Boa tarde, ${firstName}.`
+  return `Boa noite, ${firstName}.`
+}
+
+function getInitials(name: string | null, email: string | null): string {
+  if (name) {
+    const parts = name.trim().split(/\s+/)
+    return parts.length >= 2
+      ? (parts[0][0]! + parts[parts.length - 1][0]!).toUpperCase()
+      : parts[0]!.slice(0, 2).toUpperCase()
+  }
+  return email?.[0]?.toUpperCase() ?? '?'
+}
+
 function formatPercent(value: number | null) {
   if (value === null) return 'n/d'
   return `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`
@@ -335,15 +354,26 @@ export default async function HomePage() {
     },
   ]
 
+  const greeting = getGreeting(session.user.name ?? null, session.user.email ?? null)
+  const initials = getInitials(session.user.name ?? null, session.user.email ?? null)
+  const storyLine = topStories.length > 0
+    ? `${topStories.length} históri${topStories.length === 1 ? 'a relevante' : 'as relevantes'} no radar de hoje.`
+    : 'Aqui está o que está movendo o mercado.'
+
   return (
     <AppShell active="market" contentClassName="md:max-w-none">
-      <header className="flex items-end justify-between gap-4 px-1">
+      <header className="flex items-start justify-between gap-4 px-1">
         <div>
-          <p className="bull-eyebrow">BullCapital</p>
-          <h1 className="mt-2 font-serif text-3xl text-[#F4F0FF]">Morning update</h1>
-          <p className="mt-1 text-sm text-[#DBEAFE]/55">Leitura diaria do mercado brasileiro</p>
+          <p className="bull-eyebrow">{dateLabel}</p>
+          <h1 className="mt-2 font-serif text-3xl text-[#F4F0FF]">{greeting}</h1>
+          <p className="mt-1 text-sm text-[#DBEAFE]/55">{storyLine}</p>
         </div>
-        <span className="bull-chip shrink-0">B3</span>
+        <span
+          aria-hidden="true"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#8B5CF6]/35 bg-[#8B5CF6]/15 text-sm font-semibold tracking-wide text-[#C4B5FD]"
+        >
+          {initials}
+        </span>
       </header>
 
       <ScrollFocus>
