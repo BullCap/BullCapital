@@ -4,8 +4,10 @@ import { useEffect, useRef, useState } from 'react'
 import {
   Activity,
   AlertTriangle,
+  Compass,
   Eye,
   Lightbulb,
+  Newspaper,
   TrendingUp,
 } from 'lucide-react'
 import { GlassHighlight } from '@/components/atoms/GlassHighlight'
@@ -101,9 +103,10 @@ interface AnalysisClientProps {
   ticker?: string
   focusLabel: string
   initialQuestion?: string
+  source?: 'news'
 }
 
-export default function AnalysisClient({ ticker, focusLabel, initialQuestion }: AnalysisClientProps) {
+export default function AnalysisClient({ ticker, focusLabel, initialQuestion, source }: AnalysisClientProps) {
   const [result, setResult] = useState<AnalysisResult | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(false)
@@ -249,11 +252,7 @@ export default function AnalysisClient({ ticker, focusLabel, initialQuestion }: 
   }
 
   useEffect(() => {
-    if (ticker) {
-      run(ticker)
-    } else {
-      // Navigating to /analysis without a ticker (e.g. clicking the dock tab) —
-      // reset to idle so stale results from a previous ticker don't ghost the page.
+    if (!ticker) {
       setResult(null)
       setError(false)
       setLoading(false)
@@ -262,13 +261,75 @@ export default function AnalysisClient({ ticker, focusLabel, initialQuestion }: 
       setHistory([])
       setCurrentSuggestions([])
       setPendingQuestion(initialQuestion ?? '')
+      return
+    }
+    if (source === 'news' && initialQuestion) {
+      // News/event flow: skip the full asset analysis, stream the answer directly.
+      // setTimeout(0) defers until after mount so state is stable.
+      // Closure captures initial state (result=null, history=[]) which is correct —
+      // we intentionally have no prior analysis context for this flow.
+      setTimeout(() => handleQuestion(initialQuestion), 0)
+    } else {
+      run(ticker)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ticker])
 
   const focusSubject = ticker ?? focusLabel
 
-  const AdvisorStage = (
+  // ── News / event mode stage ──────────────────────────────────────────────────
+  const NewsStage = source === 'news' && (
+    <ScrollFocus>
+      <section className={`bull-advisor-stage flex flex-col p-5 ${turns.length > 0 ? 'py-4' : 'min-h-[18rem]'}`}>
+        {turns.length === 0 ? (
+          // First answer still loading
+          <div className="my-auto flex flex-col items-center px-4 py-8 text-center">
+            <span className="bull-advisor-orb animate-pulse">
+              <span className="bull-brand-mark scale-[1.65]" />
+            </span>
+            <p className="mt-5 text-sm text-[#DBEAFE]/60">{focusLabel}</p>
+            <h2 className="mt-1.5 max-w-[16rem] font-serif text-2xl leading-tight text-[#F4F0FF]">
+              Contextualizando o evento…
+            </h2>
+            {initialQuestion && (
+              <p className="mt-3 line-clamp-2 max-w-xs text-sm leading-5 text-[#F4F0FF]/38">
+                {initialQuestion}
+              </p>
+            )}
+          </div>
+        ) : (
+          // Answer arrived — collapse to a compact context bar
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex min-w-0 items-center gap-2.5">
+              <Newspaper size={14} className="shrink-0 text-[#8B5CF6]/60" />
+              <div className="min-w-0">
+                <p className="text-[11px] uppercase tracking-[0.12em] text-[#DBEAFE]/40">
+                  {focusLabel} · Evento
+                </p>
+                {initialQuestion && (
+                  <p className="mt-0.5 max-w-sm truncate text-sm text-[#F4F0FF]/55">
+                    {initialQuestion}
+                  </p>
+                )}
+              </div>
+            </div>
+            {ticker && (
+              <button
+                onClick={() => run(ticker)}
+                className="inline-flex shrink-0 min-h-9 items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.05] px-3 text-xs text-[#F4F0FF]/65 transition hover:bg-white/[0.09] hover:text-[#F4F0FF]"
+              >
+                <Compass size={13} />
+                Análise completa
+              </button>
+            )}
+          </div>
+        )}
+      </section>
+    </ScrollFocus>
+  )
+
+  // ── Asset analysis mode stage ─────────────────────────────────────────────
+  const AssetStage = source !== 'news' && (
     <ScrollFocus>
       <section className="bull-advisor-stage flex min-h-[28rem] flex-col p-5">
         {loading ? (
@@ -335,10 +396,10 @@ export default function AnalysisClient({ ticker, focusLabel, initialQuestion }: 
                   type="button"
                   onClick={() => run(focusSubject, template)}
                   disabled={loading}
-                    className={`bull-suggestion-pill w-full snap-start px-5 py-2 text-sm font-extrabold tracking-wide transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8B5CF6]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0B14] ${
+                  className={`bull-suggestion-pill w-full snap-start px-5 py-2 text-sm font-extrabold tracking-wide transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8B5CF6]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0B14] ${
                     activeTemplate === template.id
-                        ? 'border-white/25 bg-white/[0.12] text-[#F4F0FF] shadow-[0_10px_26px_rgba(139,92,246,0.18)]'
-                        : 'border-white/15 text-[#F4F0FF]/85 hover:border-white/25 hover:text-[#F4F0FF] hover:shadow-[0_10px_24px_rgba(139,92,246,0.12)]'
+                      ? 'border-white/25 bg-white/[0.12] text-[#F4F0FF] shadow-[0_10px_26px_rgba(139,92,246,0.18)]'
+                      : 'border-white/15 text-[#F4F0FF]/85 hover:border-white/25 hover:text-[#F4F0FF] hover:shadow-[0_10px_24px_rgba(139,92,246,0.12)]'
                   } ${loading ? 'cursor-not-allowed opacity-60' : ''}`}
                 >
                   {template.label}
@@ -354,9 +415,10 @@ export default function AnalysisClient({ ticker, focusLabel, initialQuestion }: 
 
   return (
     <>
-      {AdvisorStage}
+      {NewsStage}
+      {AssetStage}
 
-      {/* Skeleton while loading */}
+      {/* Skeleton while loading asset analysis */}
       {loading && <AnalysisSkeleton />}
 
       {/* Results anchor for auto-scroll */}
@@ -478,8 +540,11 @@ export default function AnalysisClient({ ticker, focusLabel, initialQuestion }: 
         </>
       )}
 
-      {/* ── Conversation area — only when analysis is ready ── */}
-      {result && ticker && (
+      {/* ── Conversation area ──────────────────────────────────────────────────
+           News mode: shows as soon as a turn exists (no prior analysis needed).
+           Asset mode: requires a completed analysis result.
+      ── */}
+      {ticker && (source === 'news' || result) && (
         <>
           <ConversationSuggestions
             suggestions={currentSuggestions}
@@ -489,12 +554,15 @@ export default function AnalysisClient({ ticker, focusLabel, initialQuestion }: 
 
           <ConversationThread turns={turns} sending={sending} />
 
-          <ConversationInput
-            onSubmit={handleQuestion}
-            disabled={sending}
-            ticker={ticker}
-            initialValue={pendingQuestion}
-          />
+          {/* In news mode only show input once first answer has arrived */}
+          {(source !== 'news' || turns.length > 0) && (
+            <ConversationInput
+              onSubmit={handleQuestion}
+              disabled={sending}
+              ticker={ticker}
+              initialValue={source === 'news' ? '' : pendingQuestion}
+            />
+          )}
 
           <ConversationDisclaimer variant="footer" />
         </>

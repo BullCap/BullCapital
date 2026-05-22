@@ -51,9 +51,9 @@ function formatPercent(value: number | null) {
 
 function buildAskHref(headline: string, tickers: string[]): string {
   const anchor = tickers.find((t) => !t.startsWith('^')) ?? tickers[0]
-  if (!anchor) return `/analysis?q=${encodeURIComponent(headline)}`
   const q = `Explique o impacto desta notícia: "${headline.slice(0, 120)}"`
-  return `/analysis?ticker=${encodeURIComponent(anchor)}&q=${encodeURIComponent(q)}`
+  if (!anchor) return `/analysis?q=${encodeURIComponent(q)}&source=news`
+  return `/analysis?ticker=${encodeURIComponent(anchor)}&q=${encodeURIComponent(q)}&source=news`
 }
 
 function buildSuggestedPrompts(
