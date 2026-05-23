@@ -175,21 +175,19 @@
   .bull-brand-mark {
     position: relative;
     display: inline-block;
-    height: 1.35em;
-    width: 1.35em;
+    height: 1.8em;
+    width: 1.8em;
     vertical-align: middle;
     background-image: url("/icons/logo-nav.png");
     background-size: contain;
     background-repeat: no-repeat;
     background-position: center;
-    filter: drop-shadow(0 0 6px rgba(139, 92, 246, 0.45));
-    transition: transform 300ms cubic-bezier(0.16, 1, 0.3, 1), filter 300ms ease;
+    transition: transform 300ms cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   .bull-brand-mark:hover,
   .bull-wordmark:hover .bull-brand-mark {
-    transform: rotate(12deg) scale(1.08);
-    filter: drop-shadow(0 0 10px rgba(139, 92, 246, 0.75));
+    transform: rotate(12deg) scale(1.12);
   }
 
   .bull-asset-hero,
