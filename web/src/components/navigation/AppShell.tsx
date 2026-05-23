@@ -16,7 +16,10 @@ export default function AppShell({ active, children, contentClassName }: AppShel
         <header className="flex min-h-14 items-center px-1">
           <Link href="/home" className="bull-wordmark" aria-label="BullCapital home">
             <span className="bull-brand-mark" />
-            <span>BullCapital</span>
+            <span className="flex items-baseline">
+              <span className="font-serif font-bold text-[#F4F0FF] text-[22px]">Bull</span>
+              <span className="font-sans font-light tracking-[0.14em] text-[#F4F0FF]/60 text-sm uppercase ml-1">Capital</span>
+            </span>
           </Link>
         </header>
 

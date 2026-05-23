@@ -17,7 +17,10 @@ export default async function Page() {
         <p className="text-sm font-medium uppercase tracking-[0.2em] text-[#F4F0FF]/55">
           Inteligência financeira
         </p>
-        <h1 className="mt-4 font-serif text-5xl leading-tight text-[#F4F0FF]">BullCapital</h1>
+        <h1 className="mt-4 leading-tight text-[#F4F0FF] flex justify-center items-baseline select-none">
+          <span className="font-serif text-5xl font-bold">Bull</span>
+          <span className="font-sans text-2xl font-light tracking-[0.16em] text-[#F4F0FF]/60 uppercase ml-1.5">Capital</span>
+        </h1>
         <p className="mt-5 text-sm leading-6 text-[#F4F0FF]/70">
           Leia o mercado brasileiro com clareza, contexto e calma.
         </p>
