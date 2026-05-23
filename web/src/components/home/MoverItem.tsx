@@ -1,6 +1,6 @@
 import Link from 'next/link'
-import Image from 'next/image'
 import { VariationBadge } from '@/components/atoms/VariationBadge'
+import { CompanyIcon } from '@/components/atoms/CompanyIcon'
 
 interface MoverItemProps {
   ticker: string
@@ -24,15 +24,7 @@ export default function MoverItem({
       href={href}
       className="flex min-h-14 items-center gap-3 rounded-[1.35rem] border border-white/10 bg-white/[0.035] px-4 py-2.5 hover:bg-white/[0.07]"
     >
-      <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-xl border border-white/10 bg-[#09111D]/70">
-        {logoUrl ? (
-          <Image src={logoUrl} alt={ticker} fill className="object-cover" unoptimized />
-        ) : (
-          <span className="flex h-full w-full items-center justify-center text-xs font-bold text-[#8B5CF6]">
-            {ticker.slice(0, 2)}
-          </span>
-        )}
-      </div>
+      <CompanyIcon ticker={ticker} size={36} className="bg-[#09111D]/70 border-white/10" />
 
       <div className="min-w-0 flex-1">
         <p className="font-serif text-sm text-[#F4F0FF]">{ticker}</p>

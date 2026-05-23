@@ -5,10 +5,18 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass
 from datetime import UTC
+from functools import lru_cache
 from typing import Any
 
+import httpx
 import pandas as pd
 import yfinance as yf
+
+from app.core.config import settings
+
+OPENAI_CHAT_COMPLETIONS_URL = "https://api.openai.com/v1/chat/completions"
+OPENROUTER_CHAT_COMPLETIONS_URL = "https://openrouter.ai/api/v1/chat/completions"
+NEWS_TRANSLATION_TIMEOUT_SECONDS = 6
 
 B3_UNIVERSE = [
     "PETR4",
@@ -134,6 +142,103 @@ def _app_symbol(symbol: str) -> str:
 
 def _ticker(symbol: str) -> yf.Ticker:
     return yf.Ticker(_yahoo_symbol(symbol))
+
+
+def _news_translation_messages(title: str) -> list[dict[str, str]]:
+    return [
+        {
+            "role": "system",
+            "content": (
+                "Voce traduz manchetes financeiras para portugues brasileiro. "
+                "Preserve tickers, nomes de empresas, moedas, numeros, percentuais e aspas. "
+                "Retorne apenas a manchete traduzida, sem explicacoes."
+            ),
+        },
+        {"role": "user", "content": title},
+    ]
+
+
+def _chat_completion_text(payload: dict[str, Any]) -> str | None:
+    choices = payload.get("choices")
+    if not isinstance(choices, list) or not choices:
+        return None
+    first = choices[0]
+    if not isinstance(first, dict):
+        return None
+    message = first.get("message")
+    if not isinstance(message, dict):
+        return None
+    content = message.get("content")
+    return content.strip() if isinstance(content, str) and content.strip() else None
+
+
+def _clean_translated_title(title: str) -> str:
+    cleaned = " ".join(title.strip().split())
+    return cleaned.strip("\"'")
+
+
+def _request_news_translation(
+    *,
+    api_url: str,
+    api_key: str,
+    model: str,
+    title: str,
+    extra_headers: dict[str, str] | None = None,
+) -> str | None:
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json",
+        **(extra_headers or {}),
+    }
+    body = {
+        "model": model,
+        "messages": _news_translation_messages(title),
+        "max_tokens": 120,
+        "temperature": 0,
+    }
+
+    try:
+        with httpx.Client(timeout=NEWS_TRANSLATION_TIMEOUT_SECONDS) as client:
+            response = client.post(api_url, headers=headers, json=body)
+            response.raise_for_status()
+            translated = _chat_completion_text(response.json())
+    except Exception:
+        return None
+
+    return _clean_translated_title(translated) if translated else None
+
+
+@lru_cache(maxsize=512)
+def _translate_news_title(title: str) -> str:
+    cleaned = " ".join(title.strip().split())
+    if not cleaned:
+        return cleaned
+
+    if settings.openrouter_api_key:
+        translated = _request_news_translation(
+            api_url=OPENROUTER_CHAT_COMPLETIONS_URL,
+            api_key=settings.openrouter_api_key,
+            model=settings.openrouter_model,
+            title=cleaned,
+            extra_headers={
+                "HTTP-Referer": "https://bullcapital.app",
+                "X-Title": "BullCapital",
+            },
+        )
+        if translated:
+            return translated
+
+    if settings.openai_api_key:
+        translated = _request_news_translation(
+            api_url=OPENAI_CHAT_COMPLETIONS_URL,
+            api_key=settings.openai_api_key,
+            model=settings.openai_model,
+            title=cleaned,
+        )
+        if translated:
+            return translated
+
+    return cleaned
 
 
 def _history_frame(symbol: str, range_name: str) -> pd.DataFrame:
@@ -522,9 +627,11 @@ def get_news(symbol: str, count: int = 3) -> list[dict]:
                 published_at = int(pd.Timestamp(published).timestamp())
             except Exception:
                 published_at = 0
+        translated_title = _translate_news_title(title)
         items.append(
             {
-                "title": title,
+                "title": translated_title,
+                "originalTitle": title if translated_title != title else None,
                 "publisher": provider.get("displayName") or item.get("publisher") or "Yahoo Finance",
                 "link": link,
                 "publishedAt": published_at,

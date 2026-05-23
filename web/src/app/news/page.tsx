@@ -1,5 +1,4 @@
 import { redirect } from 'next/navigation'
-import { Newspaper } from 'lucide-react'
 import { auth } from '@/lib/auth'
 import { getWatchlist } from '@/lib/actions/watchlist'
 import { getNewsRadarItems } from '@/lib/news-radar'
@@ -26,12 +25,6 @@ export default async function NewsPage() {
               Manchetes confirmadas para cruzar fonte, ativo e contexto.
             </p>
           </div>
-          <span
-            aria-hidden="true"
-            className="flex size-11 shrink-0 items-center justify-center rounded-[1rem] border border-[#60A5FA]/20 bg-[#3B82F6]/12 text-[#DBEAFE]/78"
-          >
-            <Newspaper size={19} />
-          </span>
         </div>
 
         <div className="mt-4 flex flex-wrap gap-2">

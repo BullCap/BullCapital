@@ -1,10 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import {
   Area,
   AreaChart,
   CartesianGrid,
+  ReferenceLine,
   ResponsiveContainer,
   XAxis,
   YAxis,
@@ -19,11 +20,9 @@ import { getMockAssetHistory } from '@/lib/market-history.mock'
 
 type Range = '1d' | '1mo' | '3mo'
 
-const RANGE_LABELS: Record<Range, string> = {
-  '1d': '1D',
-  '1mo': '1M',
-  '3mo': '3M',
-}
+const RANGE_LABELS: Record<Range, string> = { '1d': '1D', '1mo': '1M', '3mo': '3M' }
+const COLOR_UP = '#22C55E'
+const COLOR_DOWN = '#EF4444'
 
 interface PriceChartClientProps {
   ticker: string
@@ -43,49 +42,55 @@ function PriceTooltip({
   active,
   payload,
   label,
-  chartTone,
 }: {
   active?: boolean
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   payload?: any[]
   label?: string
-  chartTone: string
 }) {
   if (!active || !payload?.length) return null
 
-  const point = payload[0]?.payload as { close?: number; high?: number; low?: number } | undefined
-  const close = typeof point?.close === 'number' ? point.close : undefined
-  const high = typeof point?.high === 'number' ? point.high : undefined
-  const low = typeof point?.low === 'number' ? point.low : undefined
+  // Resolve data from the first non-null payload entry
+  const raw = (payload.find((p) => p.dataKey === 'close') ?? payload[0])
+    ?.payload as { close?: number; high?: number; low?: number; isUp?: boolean } | undefined
+
+  const close = typeof raw?.close === 'number' ? raw.close : undefined
+  const high = typeof raw?.high === 'number' ? raw.high : undefined
+  const low = typeof raw?.low === 'number' ? raw.low : undefined
+  const color = raw?.isUp ? COLOR_UP : COLOR_DOWN
 
   return (
     <div
       style={{
-        background: '#111827',
+        background: 'rgba(10,8,20,0.96)',
         border: '1px solid rgba(255,255,255,0.1)',
-        borderRadius: '1rem',
+        borderRadius: '0.875rem',
         color: '#F4F0FF',
         fontSize: 12,
-        padding: '10px 12px',
+        padding: '10px 14px',
+        boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
+        minWidth: 148,
       }}
     >
-      <div style={{ color: 'rgba(244,240,255,0.55)', fontSize: 11, marginBottom: 6 }}>{label}</div>
+      <div style={{ color: 'rgba(244,240,255,0.42)', fontSize: 10, marginBottom: 8, letterSpacing: '0.04em' }}>
+        {label}
+      </div>
       {typeof close === 'number' && (
-        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
-          <span style={{ color: 'rgba(244,240,255,0.8)' }}>Preço</span>
-          <span style={{ color: chartTone }}>{formatBRL(close)}</span>
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16 }}>
+          <span style={{ color: 'rgba(244,240,255,0.6)' }}>Fechamento</span>
+          <span style={{ color, fontWeight: 600 }}>{formatBRL(close)}</span>
         </div>
       )}
       {typeof high === 'number' && (
-        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, marginTop: 6 }}>
-          <span style={{ color: 'rgba(244,240,255,0.8)' }}>Máxima</span>
-          <span style={{ color: 'rgba(244,240,255,0.9)' }}>{formatBRL(high)}</span>
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, marginTop: 5 }}>
+          <span style={{ color: 'rgba(244,240,255,0.6)' }}>Máxima</span>
+          <span style={{ color: 'rgba(244,240,255,0.85)' }}>{formatBRL(high)}</span>
         </div>
       )}
       {typeof low === 'number' && (
-        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, marginTop: 6 }}>
-          <span style={{ color: 'rgba(244,240,255,0.8)' }}>Mínima</span>
-          <span style={{ color: 'rgba(244,240,255,0.9)' }}>{formatBRL(low)}</span>
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, marginTop: 5 }}>
+          <span style={{ color: 'rgba(244,240,255,0.6)' }}>Mínima</span>
+          <span style={{ color: 'rgba(244,240,255,0.85)' }}>{formatBRL(low)}</span>
         </div>
       )}
     </div>
@@ -98,16 +103,39 @@ function resolveHistory(
   quotePrice: number | null,
   quoteChangePercent: number | null
 ) {
-  if (history.length >= MIN_SERIES_POINTS) {
-    return { history, isMock: false }
-  }
+  if (history && history.length > 0) return { history, isMock: false }
+  const anchorPrice = quotePrice
+  return { history: getMockAssetHistory(range, anchorPrice, quoteChangePercent), isMock: true }
+}
 
-  const anchorPrice = history[history.length - 1]?.close ?? quotePrice
+function buildDomain(closes: number[]): [number, number] {
+  if (closes.length === 0) return [0, 100]
+  const min = Math.min(...closes)
+  const max = Math.max(...closes)
+  const pad = (max - min) * 0.08 || max * 0.015
+  return [min - pad, max + pad]
+}
 
-  return {
-    history: getMockAssetHistory(range, anchorPrice, quoteChangePercent),
-    isMock: true,
-  }
+function CustomActiveDot(props: {
+  cx?: number
+  cy?: number
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  payload?: any
+}) {
+  const { cx, cy, payload } = props
+  if (typeof cx !== 'number' || typeof cy !== 'number' || !payload) return null
+  const dotColor = payload.isUp ? COLOR_UP : COLOR_DOWN
+
+  return (
+    <circle
+      cx={cx}
+      cy={cy}
+      r={4}
+      fill={dotColor}
+      stroke="#080B12"
+      strokeWidth={2}
+    />
+  )
 }
 
 export default function PriceChartClient({
@@ -153,38 +181,57 @@ export default function PriceChartClient({
           setIsMockHistory(true)
         }
       })
-      .finally(() => {
-        if (!cancelled) {
-          setLoading(false)
-        }
-      })
+      .finally(() => { if (!cancelled) setLoading(false) })
 
-    return () => {
-      cancelled = true
-    }
+    return () => { cancelled = true }
   }, [initialHistory, quoteChangePercent, quotePrice, range, ticker])
 
-  const chartData = history.map((h) => {
-    const d = new Date(h.timestamp * 1000)
-    const date =
-      range === '1d'
-        ? d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
-        : d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
-    return { date, close: h.close, high: h.high, low: h.low }
-  })
-  const priceMove =
-    chartData.length > 1 ? chartData[chartData.length - 1].close - chartData[0].close : 0
-  const chartTone = priceMove >= 0 ? '#4ADE80' : '#FB7185'
-  const chartGradientId = priceMove >= 0 ? 'bull-price-rise' : 'bull-price-dip'
+  const { chartData, refPrice, seriesHigh, seriesLow, maxVal, minVal } = useMemo(() => {
+    const ref = history[0]?.close ?? null
 
-  const highs = history
-    .map((h) => (typeof h.high === 'number' ? h.high : h.close))
-    .filter((value) => Number.isFinite(value) && value > 0)
-  const lows = history
-    .map((h) => (typeof h.low === 'number' ? h.low : h.close))
-    .filter((value) => Number.isFinite(value) && value > 0)
-  const seriesHigh = highs.length > 0 ? Math.max(...highs) : null
-  const seriesLow = lows.length > 0 ? Math.min(...lows) : null
+    const data = history.map((h) => {
+      const d = new Date(h.timestamp * 1000)
+      const date =
+        range === '1d'
+          ? d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+          : d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
+
+      const close = h.close
+      // Clamp datasets for split-color areas, anchored at ref
+      const closeAbove = ref !== null ? Math.max(close, ref) : close
+      const closeBelow = ref !== null ? Math.min(close, ref) : close
+      const isUp = ref !== null ? close >= ref : true
+
+      return { date, close, high: h.high, low: h.low, closeAbove, closeBelow, isUp }
+    })
+
+    const highs = history.map((h) => h.high ?? h.close).filter((v) => Number.isFinite(v) && v > 0)
+    const lows = history.map((h) => h.low ?? h.close).filter((v) => Number.isFinite(v) && v > 0)
+    const closes = history.map((h) => h.close).filter((v) => Number.isFinite(v) && v > 0)
+
+    return {
+      chartData: data,
+      refPrice: ref,
+      seriesHigh: highs.length > 0 ? Math.max(...highs) : null,
+      seriesLow: lows.length > 0 ? Math.min(...lows) : null,
+      maxVal: closes.length > 0 ? Math.max(...closes) : null,
+      minVal: closes.length > 0 ? Math.min(...closes) : null,
+    }
+  }, [history, range])
+
+  const closes = chartData.map((d) => d.close).filter((v): v is number => Number.isFinite(v))
+  const [domainMin, domainMax] = buildDomain(closes)
+
+  const baselinePercent = useMemo(() => {
+    if (refPrice === null || maxVal === null || minVal === null || maxVal === minVal) return 0.5
+    const pct = (maxVal - refPrice) / (maxVal - minVal)
+    return Math.max(0, Math.min(1, pct))
+  }, [refPrice, maxVal, minVal])
+
+  // Last-point trend determines which color the stroke uses
+  const lastClose = chartData[chartData.length - 1]?.close ?? refPrice
+  const overallUp = refPrice !== null && lastClose !== null ? lastClose >= refPrice : true
+  const strokeColor = overallUp ? COLOR_UP : COLOR_DOWN
 
   return (
     <section className="bull-panel p-5">
@@ -195,8 +242,12 @@ export default function PriceChartClient({
           <p className="bull-eyebrow">Histórico de Preço</p>
           <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-[#DBEAFE]/45">
             {isMockHistory && <span>Série modelo</span>}
-            {typeof seriesHigh === 'number' && seriesHigh > 0 && <span>Máxima: {formatBRL(seriesHigh)}</span>}
-            {typeof seriesLow === 'number' && seriesLow > 0 && <span>Mínima: {formatBRL(seriesLow)}</span>}
+            {typeof seriesHigh === 'number' && seriesHigh > 0 && (
+              <span>Máxima: {formatBRL(seriesHigh)}</span>
+            )}
+            {typeof seriesLow === 'number' && seriesLow > 0 && (
+              <span>Mínima: {formatBRL(seriesLow)}</span>
+            )}
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -243,48 +294,98 @@ export default function PriceChartClient({
           <ResponsiveContainer width="100%" height={224}>
             <AreaChart data={chartData} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
               <defs>
-                <linearGradient id={chartGradientId} x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={chartTone} stopOpacity={0.34} />
-                  <stop offset="70%" stopColor={chartTone} stopOpacity={0.08} />
-                  <stop offset="100%" stopColor={chartTone} stopOpacity={0} />
+                {/* Green fill — fades downward from line toward reference */}
+                <linearGradient id="bull-area-up" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={COLOR_UP} stopOpacity={0.28} />
+                  <stop offset="100%" stopColor={COLOR_UP} stopOpacity={0.02} />
+                </linearGradient>
+                {/* Red fill — fades upward from line toward reference */}
+                <linearGradient id="bull-area-down" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={COLOR_DOWN} stopOpacity={0.02} />
+                  <stop offset="100%" stopColor={COLOR_DOWN} stopOpacity={0.28} />
+                </linearGradient>
+                {/* Split stroke line — green above baseline, red below */}
+                <linearGradient id="bull-stroke-split" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={COLOR_UP} />
+                  <stop offset={`${baselinePercent * 100}%`} stopColor={COLOR_UP} />
+                  <stop offset={`${baselinePercent * 100}%`} stopColor={COLOR_DOWN} />
+                  <stop offset="100%" stopColor={COLOR_DOWN} />
                 </linearGradient>
               </defs>
-              <CartesianGrid stroke="rgba(255,255,255,0.05)" vertical={false} />
+
+              <CartesianGrid stroke="rgba(255,255,255,0.042)" vertical={false} />
+
               <XAxis
                 dataKey="date"
-                tick={{ fill: '#F4F0FF', fontSize: 10, opacity: 0.4 }}
+                tick={{ fill: '#F4F0FF', fontSize: 10, opacity: 0.36 }}
                 axisLine={false}
                 tickLine={false}
                 interval="preserveStartEnd"
               />
               <YAxis
-                domain={['auto', 'auto']}
-                tick={{ fill: '#F4F0FF', fontSize: 10, opacity: 0.4 }}
+                domain={[domainMin, domainMax]}
+                tick={{ fill: '#F4F0FF', fontSize: 10, opacity: 0.36 }}
                 axisLine={false}
                 tickLine={false}
                 width={65}
                 tickFormatter={(v: number) =>
-                  v.toLocaleString('pt-BR', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })
+                  v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
                 }
               />
+
+              {/* Reference line — opening price of the selected range */}
+              {refPrice !== null && (
+                <ReferenceLine
+                  y={refPrice}
+                  stroke="rgba(255,255,255,0.18)"
+                  strokeDasharray="4 3"
+                  strokeWidth={1}
+                />
+              )}
+
               <Tooltip
-                cursor={{ stroke: 'rgba(219,234,254,0.18)', strokeDasharray: '4 4' }}
+                cursor={{ stroke: 'rgba(219,234,254,0.14)', strokeWidth: 1, strokeDasharray: '4 3' }}
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                content={(props: any) => <PriceTooltip {...props} chartTone={chartTone} />}
+                content={(props: any) => <PriceTooltip {...props} />}
               />
+
+              {/* Green area: clamped at refPrice from below — only shows above reference */}
+              <Area
+                type="linear"
+                dataKey="closeAbove"
+                baseValue={refPrice ?? undefined}
+                stroke="none"
+                fill="url(#bull-area-up)"
+                dot={false}
+                activeDot={false}
+                isAnimationActive={false}
+                legendType="none"
+              />
+
+              {/* Red area: clamped at refPrice from above — only shows below reference */}
+              <Area
+                type="linear"
+                dataKey="closeBelow"
+                baseValue={refPrice ?? undefined}
+                stroke="none"
+                fill="url(#bull-area-down)"
+                dot={false}
+                activeDot={false}
+                isAnimationActive={false}
+                legendType="none"
+              />
+
+              {/* Price line — rendered on top, dual stroke color by baseline transition */}
               <Area
                 type="linear"
                 dataKey="close"
-                stroke={chartTone}
-                strokeWidth={2.5}
-                fill={`url(#${chartGradientId})`}
+                stroke="url(#bull-stroke-split)"
+                strokeWidth={2}
+                fill="none"
                 dot={false}
-                activeDot={{ r: 4, fill: chartTone, stroke: '#080B12', strokeWidth: 2 }}
+                activeDot={<CustomActiveDot />}
                 isAnimationActive
-                animationDuration={850}
+                animationDuration={700}
               />
             </AreaChart>
           </ResponsiveContainer>

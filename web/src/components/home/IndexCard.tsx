@@ -6,6 +6,7 @@ interface IndexCardProps {
   price: number | null
   changePercent: number | null
   isOpen: boolean
+  historyData?: number[]
 }
 
 const UP_SPARKLINE = [
@@ -34,20 +35,24 @@ function getSparklinePath(values: number[]) {
   }
 }
 
-export default function IndexCard({ name, price, changePercent, isOpen }: IndexCardProps) {
-  const modelSeries = (changePercent ?? 0) >= 0 ? UP_SPARKLINE : DOWN_SPARKLINE
+export default function IndexCard({ name, price, changePercent, isOpen, historyData }: IndexCardProps) {
+  const modelSeries = historyData && historyData.length >= 2
+    ? historyData
+    : ((changePercent ?? 0) >= 0 ? UP_SPARKLINE : DOWN_SPARKLINE)
   const isRelativePositive = modelSeries[modelSeries.length - 1] >= modelSeries[0]
   const sparkline = getSparklinePath(modelSeries)
   const tone = isRelativePositive ? '#4ADE80' : '#FB7185'
 
+  const isUp = (changePercent ?? 0) >= 0
+
   return (
-    <div className="bull-panel flex min-h-[9.5rem] flex-col gap-2 p-5">
+    <div className="bull-panel flex min-h-[10rem] flex-col gap-2 p-6">
       <GlassHighlight widthPercent={80} />
 
       <div className="flex items-center justify-between gap-2">
-        <p className="bull-eyebrow">{name}</p>
+        <p className="bull-eyebrow font-semibold">{name}</p>
         {!isOpen && (
-          <span className="rounded-full border border-[#F43F5E]/30 bg-[#F43F5E]/10 px-2 py-0.5 text-[10px] text-[#F43F5E]">
+          <span className="rounded-full border border-[#F43F5E]/30 bg-[#F43F5E]/10 px-2 py-0.5 text-[9px] uppercase tracking-wider font-semibold text-[#F43F5E]/90">
             Fechado
           </span>
         )}
@@ -57,22 +62,30 @@ export default function IndexCard({ name, price, changePercent, isOpen }: IndexC
         <p className="text-sm text-[#F4F0FF]/40">Dados indisponíveis</p>
       ) : (
         <>
-          <p className="mt-auto font-serif text-2xl font-semibold text-[#F4F0FF]">
+          <p className="mt-auto font-mono text-2xl font-semibold tracking-tight text-white">
             {price.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
           </p>
-          <p className="text-[10px] uppercase text-[#DBEAFE]/35">Tendência</p>
-          <svg viewBox="0 0 120 34" aria-hidden="true" className="h-8 w-full overflow-visible">
-            <path d={sparkline.area} fill={tone} fillOpacity="0.1" />
-            <path
-              d={sparkline.line}
-              fill="none"
-              stroke={tone}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-            />
-          </svg>
-          <VariationBadge variation={changePercent ?? 0} />
+          <div className="flex items-center justify-between gap-4 mt-2">
+            <div className="flex-1 max-w-[120px]">
+              <p className="text-[9px] uppercase tracking-wider font-semibold text-[#DBEAFE]/30 mb-1">Tendência</p>
+              <svg viewBox="0 0 120 34" aria-hidden="true" className="h-7 w-full overflow-visible">
+                <path d={sparkline.area} fill={tone} fillOpacity="0.06" />
+                <path
+                  d={sparkline.line}
+                  fill="none"
+                  stroke={tone}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2.2"
+                  className={isUp ? 'drop-shadow-[0_1px_3px_rgba(74,222,128,0.4)]' : 'drop-shadow-[0_1px_3px_rgba(251,113,133,0.4)]'}
+                />
+              </svg>
+            </div>
+            <div className="flex flex-col items-end">
+              <p className="text-[9px] uppercase tracking-wider font-semibold text-[#DBEAFE]/30 mb-1">Variação</p>
+              <VariationBadge variation={changePercent ?? 0} />
+            </div>
+          </div>
         </>
       )}
     </div>

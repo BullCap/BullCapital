@@ -114,7 +114,22 @@ class MarketAnalysisAgent(BaseAgent):
             f"{analysis_block}"
             f"{history_block}"
             f"Pergunta: {question}\n\n"
-            f"Responda em markdown. Ao final, adicione EXATAMENTE esta linha com 2-3 perguntas de follow-up:\n"
+            f"Responda em markdown curto e claro.\n\n"
+            f"Ferramentas visuais opcionais:\n"
+            f"- Quando a pergunta envolver comparação, setores, critérios, cenários, etapas, matriz, lista tabular, tendência de preços ou múltiplos, "
+            f"não tente alinhar tabelas no markdown. Adicione os dados no bloco de artifacts ao final da resposta.\n"
+            f"- Templates permitidos:\n"
+            f"  table: {{\"template\":\"table\",\"title\":\"...\",\"columns\":[\"Coluna A\",\"Coluna B\"],\"rows\":[[\"...\",\"...\"]],\"note\":\"...\"}}\n"
+            f"  comparison: {{\"template\":\"comparison\",\"title\":\"...\",\"columns\":[\"Critério\",\"Caso A\",\"Caso B\"],\"rows\":[[\"...\",\"...\",\"...\"]]}}\n"
+            f"  flow: {{\"template\":\"flow\",\"title\":\"...\",\"steps\":[\"Etapa 1\",\"Etapa 2\",\"Etapa 3\"]}}\n"
+            f"  metric_grid: {{\"template\":\"metric_grid\",\"title\":\"...\",\"metrics\":[{{\"label\":\"...\",\"value\":\"...\",\"detail\":\"...\",\"tone\":\"neutral\"}}]}}\n"
+            f"  price_chart: {{\"template\":\"price_chart\",\"title\":\"...\",\"range\":\"1mo\",\"chart_note\":\"...\"}}\n"
+            f"  bar_chart: {{\"template\":\"bar_chart\",\"eyebrow\":\"...\",\"title\":\"...\",\"chart_note\":\"...\",\"bars\":[{{\"label\":\"PETR4\",\"value\":4.1}},{{\"label\":\"PRIO3\",\"value\":8.5}}]}}\n"
+            f"  radar_chart: {{\"template\":\"radar_chart\",\"title\":\"...\",\"chart_note\":\"...\",\"radarData\":{{\"dividendos\":80,\"momento\":45,\"segurança\":90,\"valuation\":65,\"crescimento\":50}}}}\n"
+            f"- Limites: até 3 artifacts; tabelas até 5 colunas e 8 linhas; textos curtos.\n"
+            f"- Use artifacts para complementar a resposta, sem repetir a mesma planilha no markdown.\n\n"
+            f"Ao final, adicione EXATAMENTE estas linhas parseáveis:\n"
+            f"[ARTIFACTS]: JSON minificado dos artifacts, ou [] se não houver\n"
             f"[SUGESTÕES]: Pergunta 1? | Pergunta 2? | Pergunta 3?\n"
             f"Se recusar recomendação de investimento, adicione também: [GUARDRAIL]: true"
         )
@@ -202,11 +217,20 @@ class MarketAnalysisAgent(BaseAgent):
         schema = (
             'Responda APENAS com JSON válido:\n'
             '{"answer": "resposta em markdown pt-BR", '
+            '"artifacts": [], '
             '"suggestions": ["pergunta 1?", "pergunta 2?", "pergunta 3?"], '
             '"guardrail_triggered": false}\n\n'
             'Regras:\n'
             '- answer: markdown, português, sem recomendação de compra/venda/alocação\n'
-            '- suggestions: 2-3 perguntas de follow-up, máx 60 chars cada, em português\n'
+            '- artifacts: opcional; use quando houver comparação, planilha, setores, critérios, etapas, cenários ou múltiplos\n'
+            '- templates de artifacts: table, comparison, flow, metric_grid, price_chart, bar_chart, radar_chart\n'
+            '- table/comparison: {"template":"table","title":"...","columns":["..."],"rows":[["..."]]}\n'
+            '- flow: {"template":"flow","title":"...","steps":["..."]}\n'
+            '- metric_grid: {"template":"metric_grid","title":"...","metrics":[{"label":"...","value":"...","detail":"...","tone":"neutral"}]}\n'
+            '- price_chart: {"template":"price_chart","title":"...","range":"1mo","chart_note":"..."}\n'
+            '- bar_chart: {"template":"bar_chart","eyebrow":"...","title":"...","chart_note":"...","bars":[{"label":"...","value":1.5}]}\n'
+            '- radar_chart: {"template":"radar_chart","title":"...","chart_note":"...","radarData":{"Métrica":80}}\n'
+            '- suggestions: 2-3 perguntas de follow-up completas em português, sem cortar no meio\n'
             '- guardrail_triggered: true se o usuário pediu recomendação direta e você recusou\n'
             '- Se a pergunta for fora do escopo, redirecione para o contexto fornecido'
         )
