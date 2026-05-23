@@ -178,7 +178,7 @@
     height: 1.35em;
     width: 1.35em;
     vertical-align: middle;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' fill='none' stroke='%23F4F0FF' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M2 12c3.5-5.5 16.5-5.5 20 0'/%3E%3Cpath d='M2 12c3.5 5.5 16.5 5.5 20 0'/%3E%3Crect x='10' y='9.5' width='4' height='5' rx='0.5' fill='%23F4F0FF' stroke='none'/%3E%3Cpath d='M12 9.5V6'/%3E%3Cpath d='M12 14.5V18'/%3E%3C/svg%3E");
+    background-image: url("/icons/logo-nav.png");
     background-size: contain;
     background-repeat: no-repeat;
     background-position: center;
