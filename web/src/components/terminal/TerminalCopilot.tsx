@@ -8,14 +8,15 @@ import { ConversationInput } from '@/components/analysis/ConversationInput'
 import { ConversationSuggestions } from '@/components/analysis/ConversationSuggestions'
 import { MarkdownBody } from '@/components/atoms/MarkdownBody'
 import { ConversationArtifacts } from '@/components/analysis/ConversationArtifacts'
-import type { ConversationTurn, ConversationHistory } from '@/lib/actions/conversation'
+import type { ConversationTurn, ConversationHistory, ConversationArtifact } from '@/lib/actions/conversation'
+
+type ActiveContext =
+  | { type: 'dividends'; title: string; data: { ticker: string; shares: number; averageCost: number; monthlyAporte: number } }
+  | { type: 'compare'; title: string; data: { tickerA: string; tickerB: string } }
+  | { type: 'savings'; title: string; data: { initialCapital: number; monthlyAporte: number; annualYield: number; periodYears: number; adjustInflation: boolean } }
 
 interface TerminalCopilotProps {
-  activeContext: {
-    type: 'dividends' | 'compare' | 'savings'
-    title: string
-    data: unknown
-  }
+  activeContext: ActiveContext
 }
 
 export default function TerminalCopilot({ activeContext }: TerminalCopilotProps) {
@@ -155,7 +156,7 @@ export default function TerminalCopilot({ activeContext }: TerminalCopilotProps)
               }
               const finalAnswer = String(event.answer ?? fullAnswer)
               const suggestions = Array.isArray(event.suggestions) ? (event.suggestions as string[]) : []
-              const artifacts = Array.isArray(event.artifacts) ? (event.artifacts as unknown[]) : []
+              const artifacts = Array.isArray(event.artifacts) ? (event.artifacts as ConversationArtifact[]) : []
               
               fullAnswer = finalAnswer
               setTurns((prev) =>

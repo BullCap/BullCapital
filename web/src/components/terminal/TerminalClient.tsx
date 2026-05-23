@@ -107,23 +107,23 @@ export default function TerminalClient({ initialQuotes }: TerminalClientProps) {
   }
 
   // Coleta dados resumidos para o Copiloto dependendo da aba ativa
-  const getCopilotContext = (): { type: SimulatorTab; title: string; data: unknown } => {
+  const getCopilotContext = () => {
     switch (activeTab) {
       case 'dividends':
         return {
-          type: 'dividends',
+          type: 'dividends' as const,
           title: 'Calculadora de Dividendos (Viver de Renda)',
           data: dividendState,
         }
       case 'compare':
         return {
-          type: 'compare',
+          type: 'compare' as const,
           title: 'Comparador de Ativos B3',
           data: compareState,
         }
       case 'savings':
         return {
-          type: 'savings',
+          type: 'savings' as const,
           title: 'Simulador de Renda Variável e Juros Compostos',
           data: savingsState,
         }
