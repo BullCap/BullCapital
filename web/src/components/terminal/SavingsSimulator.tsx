@@ -38,7 +38,6 @@ export default function SavingsSimulator({ state, onChange }: SavingsSimulatorPr
   const ESTIMATED_INFLATION_RATE = 4.5 // 4.5% IPCA médio estimado
 
   // Rentabilidade nominal ou real (descontando inflação)
-  // Fórmula de Fisher: (1 + taxa_real) = (1 + taxa_nominal) / (1 + inflação)
   const nominalRate = annualYield / 100
   const inflationRate = ESTIMATED_INFLATION_RATE / 100
   const realRate = adjustInflation ? (1 + nominalRate) / (1 + inflationRate) - 1 : nominalRate
@@ -86,49 +85,38 @@ export default function SavingsSimulator({ state, onChange }: SavingsSimulatorPr
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Cabeçalho */}
-      <div className="flex items-center gap-2">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#8B5CF6]/15 border border-[#8B5CF6]/30 text-[#8B5CF6]">
-          <TrendingUp size={20} />
-        </div>
-        <div>
-          <h2 className="font-serif text-xl font-semibold text-[#F4F0FF]">Simulador de Renda Variável</h2>
-          <p className="text-xs text-[#F4F0FF]/50">Calcule a mágica dos juros compostos com aportes periódicos.</p>
-        </div>
-      </div>
-
-      {/* Formulário de Parâmetros */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+      {/* Formulário de Parâmetros (Adaptivo contra compressão extrema) */}
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-3.5">
         {/* Capital Inicial */}
-        <div className="flex flex-col gap-2">
-          <label className="text-xs font-bold uppercase tracking-wider text-[#F4F0FF]/85">Aporte Inicial (R$)</label>
+        <div className="flex flex-col gap-1.5">
+          <label className="text-[10px] font-extrabold uppercase tracking-wider text-[#F4F0FF]/50">Aporte Inicial (R$)</label>
           <input
             type="number"
             min="0"
             value={initialCapital || ''}
             onChange={(e) => setInitialCapital(Math.max(0, parseInt(e.target.value) || 0))}
-            className="bull-input w-full text-base font-bold"
+            className="bull-input w-full text-xs md:text-sm font-bold bg-[#0A0810]/80"
           />
         </div>
 
         {/* Aporte Mensal */}
-        <div className="flex flex-col gap-2">
-          <label className="text-xs font-bold uppercase tracking-wider text-[#F4F0FF]/85">Aporte Mensal (R$)</label>
+        <div className="flex flex-col gap-1.5">
+          <label className="text-[10px] font-extrabold uppercase tracking-wider text-[#F4F0FF]/50">Aporte Mensal (R$)</label>
           <input
             type="number"
             min="0"
             value={monthlyAporte || ''}
             onChange={(e) => setMonthlyAporte(Math.max(0, parseInt(e.target.value) || 0))}
-            className="bull-input w-full text-base font-bold"
+            className="bull-input w-full text-xs md:text-sm font-bold bg-[#0A0810]/80"
           />
         </div>
 
         {/* Rentabilidade Anual Esperada */}
-        <div className="flex flex-col gap-2">
-          <label className="text-xs font-bold uppercase tracking-wider text-[#F4F0FF]/85 flex items-center gap-1">
+        <div className="flex flex-col gap-1.5">
+          <label className="text-[10px] font-extrabold uppercase tracking-wider text-[#F4F0FF]/50 flex items-center gap-1">
             Retorno Anual (%)
-            <span className="cursor-help" title="Rentabilidade média anual projetada. O Ibovespa rende historicamente ~10% a 12% a.a.">
-              <HelpCircle size={13} className="text-[#8B5CF6]/80" />
+            <span className="cursor-help" title="Rentabilidade média anual projetada.">
+              <HelpCircle size={11} className="text-[#8B5CF6]/80" />
             </span>
           </label>
           <input
@@ -137,17 +125,17 @@ export default function SavingsSimulator({ state, onChange }: SavingsSimulatorPr
             min="0.1"
             value={annualYield || ''}
             onChange={(e) => setAnnualYield(Math.max(0.1, parseFloat(e.target.value) || 0))}
-            className="bull-input w-full text-base font-bold"
+            className="bull-input w-full text-xs md:text-sm font-bold bg-[#0A0810]/80"
           />
         </div>
 
         {/* Período em Anos */}
-        <div className="flex flex-col gap-2">
-          <label className="text-xs font-bold uppercase tracking-wider text-[#F4F0FF]/85">Período (Anos)</label>
+        <div className="flex flex-col gap-1.5">
+          <label className="text-[10px] font-extrabold uppercase tracking-wider text-[#F4F0FF]/50">Período (Anos)</label>
           <select
             value={periodYears}
             onChange={(e) => setPeriodYears(parseInt(e.target.value))}
-            className="bull-select w-full text-base font-bold"
+            className="bull-select w-full text-xs md:text-sm font-bold bg-[#0A0810]/80"
           >
             <option value={5}>5 Anos</option>
             <option value={10}>10 Anos</option>
@@ -159,26 +147,26 @@ export default function SavingsSimulator({ state, onChange }: SavingsSimulatorPr
       </div>
 
       {/* Caixa de Toggle: Desconto da Inflação */}
-      <div className="flex items-center justify-between gap-4 p-4 rounded-2xl border border-white/10 bg-white/[0.02]">
-        <div className="flex items-center gap-2">
-          <Flame size={16} className={cn('transition-all duration-300', adjustInflation ? 'text-[#8B5CF6]' : 'text-[#F4F0FF]/40')} />
+      <div className="flex items-center justify-between gap-4 p-3 rounded-xl border border-white/[0.06] bg-white/[0.01]">
+        <div className="flex items-center gap-2.5">
+          <Flame size={14} className={cn('transition-all duration-300 shrink-0', adjustInflation ? 'text-[#8B5CF6]' : 'text-[#F4F0FF]/30')} />
           <div>
             <h4 className="text-xs font-bold text-[#F4F0FF]">Descontar Inflação Real (IPCA)</h4>
-            <p className="text-[10px] font-semibold text-[#F4F0FF]/50">
-              Desconta 4,5% ao ano das projeções para mostrar o poder de compra real acumulado.
+            <p className="text-[10px] font-semibold text-[#F4F0FF]/45 mt-0.5">
+              Desconta 4,5% ao ano para mostrar o poder de compra real acumulado.
             </p>
           </div>
         </div>
         <button
           onClick={() => setAdjustInflation(!adjustInflation)}
           className={cn(
-            'w-10 h-6 flex items-center rounded-full p-0.5 transition-colors duration-300 focus:outline-none cursor-pointer',
-            adjustInflation ? 'bg-[#8B5CF6]' : 'bg-white/[0.06] border border-white/10'
+            'w-9 h-5 flex items-center rounded-full p-0.5 transition-colors duration-300 focus:outline-none cursor-pointer',
+            adjustInflation ? 'bg-[#8B5CF6]' : 'bg-white/[0.04] border border-white/10'
           )}
         >
           <div
             className={cn(
-              'bg-white w-5 h-5 rounded-full shadow-md transform transition-transform duration-300',
+              'bg-white w-4 h-4 rounded-full shadow-md transform transition-transform duration-300',
               adjustInflation ? 'translate-x-4' : 'translate-x-0'
             )}
           />
@@ -187,70 +175,66 @@ export default function SavingsSimulator({ state, onChange }: SavingsSimulatorPr
 
       {/* Info explicativa se ativo */}
       {adjustInflation && (
-        <div className="flex items-center gap-3 rounded-xl border border-[#8B5CF6]/15 bg-[#8B5CF6]/5 p-4 text-xs font-semibold text-[#F4F0FF]/80">
-          <Info size={15} className="text-[#8B5CF6] shrink-0" />
-          <p>
-            Exibindo **Ganho Real Ajustado**: Sua taxa de retorno nominal de{' '}
-            <span className="font-bold text-[#F4F0FF]">{annualYield.toFixed(1)}%</span> está descontada pelo IPCA
-            médio estimado de <span className="font-bold text-[#F4F0FF]">4,50% ao ano</span>. A taxa de retorno real
-            aplicada é de{' '}
-            <span className="font-bold text-[#8B5CF6]">{(realRate * 100).toFixed(2)}% ao ano</span>.
-          </p>
+        <div className="flex items-center gap-2 text-[11px] font-semibold text-[#F4F0FF]/55 bg-white/[0.01] border border-white/[0.04] p-3 rounded-xl">
+          <Info size={12} className="text-[#8B5CF6] shrink-0" />
+          <span>
+            Exibindo **Ganho Real Ajustado** · Retorno nominal:{' '}
+            <span className="font-bold text-[#F4F0FF]">{annualYield.toFixed(1)}%</span> descontado por IPCA médio (4,50% a.a.) · Retorno real aplicado:{' '}
+            <span className="font-bold text-[#8B5CF6]">{(realRate * 100).toFixed(2)}% a.a.</span>
+          </span>
         </div>
       )}
 
-      {/* Cards de Resultados */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
-        {/* Patrimônio Líquido Acumulado */}
-        <div className="relative rounded-2xl border border-white/5 bg-white/[0.03] p-4 sm:p-5 flex flex-col gap-1 overflow-hidden">
-          <p className="text-xs font-bold text-[#8B5CF6]/95 uppercase tracking-widest">Patrimônio Acumulado</p>
-          <p className="text-xl sm:text-2xl xl:text-3xl font-sans font-black text-[#F4F0FF] tracking-tight leading-tight break-words mt-1.5">
+      {/* Painel Horizontal de Métricas (Premium, Espaçado e sem Overlap/Compressão) */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 border border-white/[0.06] rounded-xl p-4 bg-white/[0.01]">
+        {/* Patrimônio Acumulado */}
+        <div className="flex flex-col">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-[#C4B5FD]/60">Patrimônio Acumulado</span>
+          <span className="text-base md:text-lg lg:text-xl font-sans font-black text-[#F4F0FF] tracking-tight mt-1 whitespace-nowrap">
             {finalTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-          </p>
-          <p className="text-xs font-bold text-[#8B5CF6] mt-1">
-            {adjustInflation ? 'Em poder de compra atual (Ganho Real)' : 'Valor Bruto Nominal'}
-          </p>
+          </span>
+          <span className="text-[10px] font-semibold text-[#8B5CF6] mt-0.5 truncate">
+            {adjustInflation ? 'Poder de compra real' : 'Valor nominal bruto'}
+          </span>
         </div>
-
         {/* Total Investido */}
-        <div className="relative rounded-2xl border border-white/5 bg-white/[0.03] p-4 sm:p-5 flex flex-col gap-1 overflow-hidden">
-          <p className="text-xs font-bold text-[#8B5CF6]/95 uppercase tracking-widest">Total Investido (Principal)</p>
-          <p className="text-xl sm:text-2xl xl:text-3xl font-sans font-black text-[#F4F0FF] tracking-tight leading-tight break-words mt-1.5">
+        <div className="flex flex-col">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-[#C4B5FD]/60">Total Investido</span>
+          <span className="text-base md:text-lg lg:text-xl font-sans font-black text-[#F4F0FF] tracking-tight mt-1 whitespace-nowrap">
             {finalInvested.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-          </p>
-          <p className="text-xs font-bold text-[#F4F0FF]/55 mt-1">
+          </span>
+          <span className="text-[10px] font-semibold text-[#F4F0FF]/40 mt-0.5 truncate">
             Aportes de R$ {monthlyAporte.toLocaleString('pt-BR')} / mês
-          </p>
+          </span>
         </div>
-
-        {/* Total em Juros Compostos */}
-        <div className="relative rounded-2xl border border-white/5 bg-white/[0.03] p-4 sm:p-5 flex flex-col gap-1 overflow-hidden">
-          <p className="text-xs font-bold text-[#8B5CF6]/95 uppercase tracking-widest">Ganho em Juros Compostos</p>
-          <p className="text-xl sm:text-2xl xl:text-3xl font-sans font-black text-[#8B5CF6] tracking-tight leading-tight break-words mt-1.5">
+        {/* Juros Compostos */}
+        <div className="flex flex-col">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-[#C4B5FD]/60">Juros Acumulados</span>
+          <span className="text-base md:text-lg lg:text-xl font-sans font-black text-[#8B5CF6] tracking-tight mt-1 whitespace-nowrap">
             {finalInterest.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-          </p>
-          <p className="text-xs font-bold text-[#F4F0FF]/55 mt-1">
-            Representa {((finalInterest / finalTotal) * 100 || 0).toFixed(1)}% do montante total
-          </p>
+          </span>
+          <span className="text-[10px] font-semibold text-[#F4F0FF]/40 mt-0.5 truncate">
+            Representa {((finalInterest / finalTotal) * 100 || 0).toFixed(1)}% do total
+          </span>
         </div>
       </div>
 
       {/* Gráfico de Barras Estilizadas do Crescimento */}
       <div className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
-          <h4 className="text-xs font-semibold text-[#F4F0FF]/60 uppercase tracking-wider">Curva de Crescimento Anual</h4>
-          <div className="flex items-center gap-4 text-[10px]">
-            <span className="flex items-center gap-1.5 text-[#F4F0FF]/60">
-              <span className="w-2.5 h-2.5 bg-white/[0.1] rounded-sm inline-block" /> Investido
+          <h4 className="text-[10px] font-bold text-[#8B5CF6]/90 uppercase tracking-widest">Curva de Crescimento Anual</h4>
+          <div className="flex items-center gap-4 text-[9px] font-semibold">
+            <span className="flex items-center gap-1.5 text-[#F4F0FF]/60 uppercase tracking-wider">
+              <span className="w-2 h-2 bg-white/[0.1] rounded-sm inline-block" /> Investido
             </span>
-            <span className="flex items-center gap-1.5 text-[#8B5CF6]">
-              <span className="w-2.5 h-2.5 bg-[#8B5CF6] rounded-sm inline-block animate-pulse" /> Juros Acumulados
+            <span className="flex items-center gap-1.5 text-[#8B5CF6] uppercase tracking-wider">
+              <span className="w-2 h-2 bg-[#8B5CF6] rounded-sm inline-block animate-pulse" /> Juros
             </span>
           </div>
         </div>
 
         {/* Área do Gráfico */}
-        <div className="rounded-2xl border border-white/5 bg-black/20 p-5 md:p-6 flex flex-col justify-end min-h-[220px]">
+        <div className="rounded-xl border border-white/[0.06] bg-black/10 p-5 flex flex-col justify-end min-h-[220px]">
           <div className="flex items-end justify-between h-40 gap-1.5 md:gap-3">
             {yearByYearData.map((data) => {
               const investedHeight = (data.invested / maxVal) * 100
@@ -266,8 +250,8 @@ export default function SavingsSimulator({ state, onChange }: SavingsSimulatorPr
                 >
                   {/* Tooltip Hover Ano */}
                   {isHovered && (
-                    <div className="absolute bottom-full mb-3 z-20 w-44 rounded-xl border border-white/10 bg-[#1A1625]/95 p-2 text-[10px] text-[#F4F0FF] shadow-2xl backdrop-blur-md pointer-events-none text-left">
-                      <p className="font-bold text-[#8B5CF6] mb-1">Ano {data.year}</p>
+                    <div className="absolute bottom-full mb-3 z-20 w-40 rounded-xl border border-white/[0.08] bg-[#0A0810]/95 p-2.5 text-[9px] text-[#F4F0FF] shadow-2xl backdrop-blur-md pointer-events-none text-left font-sans">
+                      <p className="font-extrabold text-[#8B5CF6] mb-1">Ano {data.year}</p>
                       <div className="flex justify-between gap-2 text-white/70">
                         <span>Total:</span>
                         <span className="font-bold text-white">{data.total.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}</span>
@@ -284,7 +268,7 @@ export default function SavingsSimulator({ state, onChange }: SavingsSimulatorPr
                   )}
 
                   {/* Barras Empilhadas */}
-                  <div className="w-full flex flex-col justify-end rounded-t-md overflow-hidden bg-white/[0.02] h-full relative transition-all duration-300 group-hover:bg-white/[0.04]">
+                  <div className="w-full flex flex-col justify-end rounded-t bg-white/[0.01] h-full relative transition-all duration-300 group-hover:bg-white/[0.03]">
                     {/* Barra de Juros (Topo) */}
                     <div
                       className={cn(
@@ -295,13 +279,13 @@ export default function SavingsSimulator({ state, onChange }: SavingsSimulatorPr
                     />
                     {/* Barra Investido (Base) */}
                     <div
-                      className="w-full bg-white/[0.12] transition-all duration-300 border-t border-white/5"
+                      className="w-full bg-white/[0.1] transition-all duration-300 border-t border-white/5"
                       style={{ height: `${investedHeight}%` }}
                     />
                   </div>
 
                   {/* Label Ano */}
-                  <span className="text-[10px] text-[#F4F0FF]/40 mt-2 font-mono group-hover:text-[#F4F0FF]/70 transition-colors">
+                  <span className="text-[9px] text-[#F4F0FF]/30 mt-2 font-mono group-hover:text-[#F4F0FF]/60 transition-colors uppercase">
                     A{data.year}
                   </span>
                 </div>

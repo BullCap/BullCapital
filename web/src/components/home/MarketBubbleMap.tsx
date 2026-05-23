@@ -96,11 +96,11 @@ export default function MarketBubbleMap({ assets }: MarketBubbleMapProps) {
         </div>
         <div className="flex shrink-0 gap-2 pt-1 text-[10px] text-[#DBEAFE]/50">
           <span className="inline-flex items-center gap-1">
-            <span className="h-2 w-2 rounded-full bg-[#4ADE80]" />
+            <span className="h-2 w-2 rounded-full bg-[#22C55E]" />
             Alta
           </span>
           <span className="inline-flex items-center gap-1">
-            <span className="h-2 w-2 rounded-full bg-[#FB7185]" />
+            <span className="h-2 w-2 rounded-full bg-[#EF4444]" />
             Baixa
           </span>
         </div>
@@ -115,10 +115,10 @@ export default function MarketBubbleMap({ assets }: MarketBubbleMapProps) {
           <span className="absolute left-5 top-4 text-[10px] uppercase text-[#DBEAFE]/35">
             Mais liquidez
           </span>
-          <span className="absolute bottom-4 left-5 text-[10px] uppercase text-[#FB7185]/60">
+          <span className="absolute bottom-4 left-5 text-[10px] uppercase text-[#EF4444]/60">
             Pressão
           </span>
-          <span className="absolute bottom-4 right-5 text-[10px] uppercase text-[#4ADE80]/60">
+          <span className="absolute bottom-4 right-5 text-[10px] uppercase text-[#22C55E]/60">
             Tração
           </span>
         </div>

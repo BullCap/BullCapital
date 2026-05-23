@@ -130,6 +130,7 @@ export interface AssetNewsItem {
   link: string
   publishedAt: number
   relatedTickers: string[]
+  imageUrl?: string | null
 }
 
 export interface CurrencyData {

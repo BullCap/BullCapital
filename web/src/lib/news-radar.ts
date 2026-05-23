@@ -19,6 +19,7 @@ export interface NewsRadarItem {
   relatedLabel?: string
   scopes: NewsRadarScope[]
   tickers: string[]
+  imageUrl?: string | null
 }
 
 interface NewsRadarSource {
@@ -94,6 +95,9 @@ export function buildNewsRadarItems(sources: NewsRadarSource[]): NewsRadarItem[]
         existing.note = buildNewsNote(existing.tickers)
         existing.reason = buildNewsReason(existing.scopes, existing.tickers)
         existing.rankScore = getRankScore(existing)
+        if (!existing.imageUrl && item.imageUrl) {
+          existing.imageUrl = item.imageUrl
+        }
         continue
       }
 
@@ -113,6 +117,7 @@ export function buildNewsRadarItems(sources: NewsRadarSource[]): NewsRadarItem[]
         relatedLabel: isIndexTicker(source.ticker) ? 'Ler mercado' : `Abrir ${source.ticker}`,
         scopes,
         tickers,
+        imageUrl: item.imageUrl ?? null,
       }
       radarItem.rankScore = getRankScore(radarItem)
       deduped.set(item.link, radarItem)

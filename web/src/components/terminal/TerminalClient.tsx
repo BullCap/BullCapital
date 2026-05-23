@@ -174,8 +174,8 @@ export default function TerminalClient({ initialQuotes }: TerminalClientProps) {
           </button>
         </div>
 
-        {/* Conteúdo Ativo com Efeito Vidro */}
-        <div className="relative rounded-[2rem] border border-white/10 bg-[#1A1625]/40 backdrop-blur-2xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),0_12px_40px_rgba(0,0,0,0.4)] overflow-hidden p-6 md:p-8 min-h-[460px]">
+        {/* Conteúdo Ativo com Efeito Vidro Premium */}
+        <div className="relative rounded-[2rem] border border-white/[0.08] bg-[#0f0c18]/50 backdrop-blur-2xl shadow-[inset_0_1px_0px_rgba(255,255,255,0.08),0_18px_48px_rgba(0,0,0,0.45)] overflow-hidden p-5 md:p-6 min-h-[460px]">
           {/* Brilho Shimmer Superior */}
           <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
 

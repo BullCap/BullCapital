@@ -120,8 +120,7 @@ export default function AssetComparator({ state, onChange, initialQuotes }: Asse
   const assetA = getAssetData(tickerA)
   const assetB = getAssetData(tickerB)
 
-  // Função auxiliar para determinar qual valor é "melhor"
-  // Para radar e DY, maior é melhor. Para P/L (múltiplo de preço/lucro), menor é melhor (indica que está mais descontado/barato).
+  // Determina qual valor é melhor (para radar e DY maior é melhor, para P/L menor é melhor)
   const getWinner = (key: 'rentabilidade' | 'momentum' | 'liquidez' | 'valuation' | 'tendencia' | 'dy' | 'pl') => {
     if (key === 'pl') {
       return assetA.pl < assetB.pl ? 'A' : assetA.pl > assetB.pl ? 'B' : 'draw'
@@ -144,32 +143,32 @@ export default function AssetComparator({ state, onChange, initialQuotes }: Asse
     const valB = key === 'dy' ? assetB.dy : key === 'pl' ? assetB.pl : assetB.radar[key]
 
     return (
-      <tr className="border-b border-white/10 hover:bg-white/[0.01] transition-colors">
-        <td className="p-4 font-bold text-sm text-[#F4F0FF]/80 text-left">{label}</td>
+      <tr className="border-b border-white/[0.04] hover:bg-white/[0.01] transition-colors">
+        <td className="p-3 font-semibold text-xs text-[#F4F0FF]/70 text-left">{label}</td>
         <td
           className={cn(
-            'p-4 text-center transition-all duration-300',
+            'p-3 text-center transition-all duration-300',
             winner === 'A'
-              ? 'bg-[#8B5CF6]/15 text-[#F4F0FF] font-black text-sm border-l-4 border-[#8B5CF6] shadow-[inset_1px_0_0_rgba(255,255,255,0.05)]'
-              : 'text-[#F4F0FF]/75 font-semibold text-sm'
+              ? 'bg-[#8B5CF6]/10 text-[#F4F0FF] font-bold text-xs border-l-2 border-[#8B5CF6]'
+              : 'text-[#F4F0FF]/50 font-medium text-xs'
           )}
         >
-          <div className="flex items-center justify-center gap-1.5">
+          <div className="flex items-center justify-center gap-1.5 whitespace-nowrap">
             {formatter(valA)}
-            {winner === 'A' && <Trophy size={12} className="text-[#8B5CF6] shrink-0" />}
+            {winner === 'A' && <Trophy size={11} className="text-[#8B5CF6] shrink-0" />}
           </div>
         </td>
         <td
           className={cn(
-            'p-4 text-center transition-all duration-300',
+            'p-3 text-center transition-all duration-300',
             winner === 'B'
-              ? 'bg-[#8B5CF6]/15 text-[#F4F0FF] font-black text-sm border-r-4 border-[#8B5CF6] shadow-[inset_-1px_0_0_rgba(255,255,255,0.05)]'
-              : 'text-[#F4F0FF]/75 font-semibold text-sm'
+              ? 'bg-[#8B5CF6]/10 text-[#F4F0FF] font-bold text-xs border-r-2 border-[#8B5CF6]'
+              : 'text-[#F4F0FF]/50 font-medium text-xs'
           )}
         >
-          <div className="flex items-center justify-center gap-1.5">
+          <div className="flex items-center justify-center gap-1.5 whitespace-nowrap">
             {formatter(valB)}
-            {winner === 'B' && <Trophy size={12} className="text-[#8B5CF6] shrink-0" />}
+            {winner === 'B' && <Trophy size={11} className="text-[#8B5CF6] shrink-0" />}
           </div>
         </td>
       </tr>
@@ -178,26 +177,15 @@ export default function AssetComparator({ state, onChange, initialQuotes }: Asse
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Cabeçalho */}
-      <div className="flex items-center gap-2.5">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#8B5CF6]/15 border border-[#8B5CF6]/30 text-[#8B5CF6]">
-          <ArrowLeftRight size={20} />
-        </div>
-        <div>
-          <h2 className="font-serif text-xl font-semibold text-[#F4F0FF]">Comparador de Ativos B3</h2>
-          <p className="text-xs text-[#F4F0FF]/50">Compare indicadores de radar, múltiplos e dividendos de 2 ativos.</p>
-        </div>
-      </div>
-
       {/* Selects de Ativos */}
-      <div className="grid grid-cols-2 gap-5">
+      <div className="grid grid-cols-2 gap-4">
         {/* Ativo A */}
-        <div className="flex flex-col gap-2">
-          <label className="text-xs font-bold uppercase tracking-wider text-[#F4F0FF]/85">Ativo A (Primário)</label>
+        <div className="flex flex-col gap-1.5">
+          <label className="text-[10px] font-extrabold uppercase tracking-wider text-[#F4F0FF]/50">Ativo A (Primário)</label>
           <select
             value={tickerA}
             onChange={(e) => setTickerA(e.target.value.toUpperCase())}
-            className="bull-select w-full text-base font-bold"
+            className="bull-select w-full text-xs md:text-sm font-bold bg-[#0A0810]/80"
           >
             <option value="PETR4">PETR4 (Petrobras)</option>
             <option value="VALE3">VALE3 (Vale)</option>
@@ -209,15 +197,12 @@ export default function AssetComparator({ state, onChange, initialQuotes }: Asse
         </div>
 
         {/* Ativo B */}
-        <div className="flex flex-col gap-2">
-          <label className="text-xs font-bold uppercase tracking-wider text-[#F4F0FF]/85">Ativo B (Secundário)</label>
+        <div className="flex flex-col gap-1.5">
+          <label className="text-[10px] font-extrabold uppercase tracking-wider text-[#F4F0FF]/50">Ativo B (Secundário)</label>
           <select
             value={tickerB}
-            onChange={(e) => {
-              const val = e.target.value.toUpperCase()
-              setTickerB(val)
-            }}
-            className="bull-select w-full text-base font-bold"
+            onChange={(e) => setTickerB(e.target.value.toUpperCase())}
+            className="bull-select w-full text-xs md:text-sm font-bold bg-[#0A0810]/80"
           >
             <option value="VALE3">VALE3 (Vale)</option>
             <option value="PETR4">PETR4 (Petrobras)</option>
@@ -231,49 +216,49 @@ export default function AssetComparator({ state, onChange, initialQuotes }: Asse
 
       {/* Alerta se forem idênticos */}
       {tickerA === tickerB && (
-        <div className="rounded-xl border border-yellow-500/10 bg-yellow-500/5 p-3.5 text-xs font-bold text-yellow-300/80 text-center">
+        <div className="rounded-xl border border-yellow-500/10 bg-yellow-500/5 p-3 text-[10px] font-bold text-yellow-300/80 text-center">
           Você selecionou o mesmo ativo para ambas as colunas. Altere um deles para ver a comparação de métricas.
         </div>
       )}
 
-      {/* Bloco de Destaque / Cotação */}
-      <div className="grid grid-cols-2 gap-5">
+      {/* Bloco de Destaque / Cotação (Mais leve e simétrico) */}
+      <div className="grid grid-cols-2 gap-4">
         {/* Ativo A Card */}
-        <div className="relative rounded-2xl border border-white/5 bg-white/[0.02] p-6 flex flex-col items-center text-center overflow-hidden">
-          <p className="text-lg font-sans font-extrabold text-[#F4F0FF]">{assetA.symbol}</p>
-          <p className="text-xs font-bold text-[#F4F0FF]/60 mt-0.5 truncate max-w-full">{assetA.name}</p>
-          <p className="text-2xl font-black mt-2 text-[#F4F0FF]">
+        <div className="relative rounded-xl border border-white/[0.06] bg-white/[0.01] p-4 flex flex-col items-center text-center overflow-hidden">
+          <p className="text-sm font-extrabold tracking-wide text-[#8B5CF6] uppercase">{assetA.symbol}</p>
+          <p className="text-[10px] font-semibold text-[#F4F0FF]/50 mt-0.5 truncate max-w-full">{assetA.name}</p>
+          <p className="text-lg md:text-xl font-sans font-black mt-2 text-[#F4F0FF] whitespace-nowrap">
             {assetA.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
           </p>
-          <div className="mt-2.5">
+          <div className="mt-2 shrink-0">
             <VariationBadge variation={assetA.change} />
           </div>
         </div>
 
         {/* Ativo B Card */}
-        <div className="relative rounded-2xl border border-white/5 bg-white/[0.02] p-6 flex flex-col items-center text-center overflow-hidden">
-          <p className="text-lg font-sans font-extrabold text-[#F4F0FF]">{assetB.symbol}</p>
-          <p className="text-xs font-bold text-[#F4F0FF]/60 mt-0.5 truncate max-w-full">{assetB.name}</p>
-          <p className="text-2xl font-black mt-2 text-[#F4F0FF]">
+        <div className="relative rounded-xl border border-white/[0.06] bg-white/[0.01] p-4 flex flex-col items-center text-center overflow-hidden">
+          <p className="text-sm font-extrabold tracking-wide text-[#8B5CF6] uppercase">{assetB.symbol}</p>
+          <p className="text-[10px] font-semibold text-[#F4F0FF]/50 mt-0.5 truncate max-w-full">{assetB.name}</p>
+          <p className="text-lg md:text-xl font-sans font-black mt-2 text-[#F4F0FF] whitespace-nowrap">
             {assetB.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
           </p>
-          <div className="mt-2.5">
+          <div className="mt-2 shrink-0">
             <VariationBadge variation={assetB.change} />
           </div>
         </div>
       </div>
 
-      {/* Tabela de Comparação */}
-      <div className="overflow-x-auto rounded-xl border border-white/5 bg-black/15 bull-scroll">
-        <table className="w-full text-center text-sm">
-          <thead className="border-b border-white/10 bg-white/[0.03] text-xs font-bold uppercase tracking-wider text-[#F4F0FF]/90">
+      {/* Tabela de Comparação Minimalista */}
+      <div className="overflow-x-auto rounded-xl border border-white/[0.06] bg-transparent bull-scroll">
+        <table className="w-full text-center text-xs">
+          <thead className="border-b border-white/[0.08] bg-white/[0.01] text-[10px] font-bold uppercase tracking-wider text-[#F4F0FF]/50">
             <tr>
-              <th className="p-4 text-left">Critério de Análise</th>
-              <th className="p-4">{assetA.symbol}</th>
-              <th className="p-4">{assetB.symbol}</th>
+              <th className="p-3 text-left">Critério de Análise</th>
+              <th className="p-3">{assetA.symbol}</th>
+              <th className="p-3">{assetB.symbol}</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="divide-y divide-white/[0.04]">
             {/* Dividend Yield */}
             {renderComparisonRow('Dividend Yield (Histórico)', 'dy', (v) => `${v.toFixed(2)}%`)}
             {/* Preço sobre Lucro (P/L) */}
@@ -293,10 +278,10 @@ export default function AssetComparator({ state, onChange, initialQuotes }: Asse
       </div>
 
       {/* Nota sobre P/L */}
-      <div className="flex gap-2 text-[11px] font-semibold text-[#F4F0FF]/45 italic justify-center">
-        <HelpCircle size={12} className="mt-0.5 shrink-0" />
+      <div className="flex gap-2 text-[10px] font-semibold text-[#F4F0FF]/40 italic justify-center text-center">
+        <HelpCircle size={11} className="mt-0.5 shrink-0 text-[#8B5CF6]" />
         <span>
-          Nota: Para o indicador &quot;Preço / Lucro (P/L)&quot;, o menor múltiplo é considerado vencedor (destacado em ametista), pois sinaliza que a ação está sendo negociada com maior desconto em relação aos seus lucros.
+          Nota: Para o P/L, o menor múltiplo é o vencedor (destacado em Ametista), pois sinaliza desconto em relação aos lucros.
         </span>
       </div>
     </div>

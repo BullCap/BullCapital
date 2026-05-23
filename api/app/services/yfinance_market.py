@@ -627,6 +627,17 @@ def get_news(symbol: str, count: int = 3) -> list[dict]:
                 published_at = int(pd.Timestamp(published).timestamp())
             except Exception:
                 published_at = 0
+
+        # Extract news thumbnail/image
+        thumbnail = content.get("thumbnail") if isinstance(content.get("thumbnail"), dict) else None
+        image_url = None
+        if thumbnail:
+            image_url = thumbnail.get("originalUrl")
+            if not image_url and thumbnail.get("resolutions"):
+                res = thumbnail.get("resolutions")
+                if isinstance(res, list) and len(res) > 0:
+                    image_url = res[0].get("url")
+
         translated_title = _translate_news_title(title)
         items.append(
             {
@@ -635,6 +646,7 @@ def get_news(symbol: str, count: int = 3) -> list[dict]:
                 "publisher": provider.get("displayName") or item.get("publisher") or "Yahoo Finance",
                 "link": link,
                 "publishedAt": published_at,
+                "imageUrl": image_url,
                 "relatedTickers": [_app_symbol(yahoo_symbol)],
             }
         )
