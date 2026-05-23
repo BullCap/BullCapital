@@ -1,11 +1,13 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'motion/react'
 import { X, Lightbulb, TrendingUp, Table, BookOpen, Send } from 'lucide-react'
 import { Area, AreaChart, ResponsiveContainer, Tooltip, YAxis, XAxis } from 'recharts'
 import { GlassHighlight } from '@/components/atoms/GlassHighlight'
 import { getMetricStory, type MetricStory } from '@/lib/metric-stories'
+import { MarkdownBody } from '@/components/atoms/MarkdownBody'
 
 interface MetricStoryModalProps {
   metricLabel: string
@@ -25,6 +27,7 @@ export default function MetricStoryModal({
   onAskAdvisor,
 }: MetricStoryModalProps) {
   const [activeTab, setActiveTab] = useState<TabType>('concept')
+  const [mounted, setMounted] = useState(false)
   const story = getMetricStory(metricLabel)
 
   // Reset tab when modal opens for a new metric
@@ -43,7 +46,12 @@ export default function MetricStoryModal({
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [onClose])
 
-  if (!isOpen) return null
+  // Mount logic to prevent SSR hydration mismatches in Next.js
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  if (!mounted) return null
 
   // Fallback if no matching pre-defined story exists
   const fallbackStory: MetricStory = {
@@ -68,26 +76,27 @@ export default function MetricStoryModal({
     onAskAdvisor(promptText)
   }
 
-  return (
-    <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        {/* Glassmorphic Backdrop */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          onClick={onClose}
-          className="absolute inset-0 bg-black/70 backdrop-blur-md"
-        />
+  return createPortal(
+    <AnimatePresence mode="wait">
+      {isOpen && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+          {/* Glassmorphic Backdrop */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+            className="absolute inset-0 bg-black/75 backdrop-blur-md"
+          />
 
-        {/* Modal Window Container */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95, y: 30 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: 30 }}
-          transition={{ type: 'spring', damping: 25, stiffness: 350 }}
-          className="relative w-full max-w-2xl overflow-hidden rounded-[2.5rem] border border-white/10 bg-[#1A1625]/95 shadow-2xl backdrop-blur-2xl"
-        >
+          {/* Modal Window Container */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 30 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 30 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 350 }}
+            className="relative w-full max-w-2xl overflow-hidden rounded-[2.5rem] border border-white/10 bg-[#1A1625]/95 shadow-2xl backdrop-blur-2xl"
+          >
           {/* Subtle Ambient Glowing Orbs */}
           <div className="absolute -left-12 -top-12 -z-10 h-48 w-48 rounded-full bg-[#8B5CF6]/15 blur-[60px]" />
           <div className="absolute -bottom-12 -right-12 -z-10 h-48 w-48 rounded-full bg-[#F43F5E]/10 blur-[60px]" />
@@ -178,7 +187,7 @@ export default function MetricStoryModal({
           </div>
 
           {/* Modal Tab Content Area */}
-          <div className="h-[280px] overflow-y-auto px-6 py-5">
+          <div className="bull-scroll h-[280px] overflow-y-auto px-6 py-5">
             {activeTab === 'concept' && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
@@ -187,15 +196,15 @@ export default function MetricStoryModal({
               >
                 <div>
                   <h4 className="font-semibold text-white">O que é?</h4>
-                  <p className="mt-1.5 leading-relaxed text-[#F4F0FF]/70">
-                    {activeStory.whatItIs}
-                  </p>
+                  <div className="mt-1.5">
+                    <MarkdownBody>{activeStory.whatItIs}</MarkdownBody>
+                  </div>
                 </div>
                 <div className="pt-2">
                   <h4 className="font-semibold text-white">Como funciona?</h4>
-                  <p className="mt-1.5 leading-relaxed text-[#F4F0FF]/70">
-                    {activeStory.howItWorks}
-                  </p>
+                  <div className="mt-1.5">
+                    <MarkdownBody>{activeStory.howItWorks}</MarkdownBody>
+                  </div>
                 </div>
               </motion.div>
             )}
@@ -327,8 +336,8 @@ export default function MetricStoryModal({
                     <Lightbulb size={15} />
                     Como isso afeta os seus investimentos?
                   </h4>
-                  <div className="mt-3 space-y-2 whitespace-pre-line text-sm leading-relaxed text-[#F4F0FF]/75">
-                    {activeStory.pocketImpact}
+                  <div className="mt-3">
+                    <MarkdownBody>{activeStory.pocketImpact}</MarkdownBody>
                   </div>
                 </div>
               </motion.div>
@@ -351,6 +360,8 @@ export default function MetricStoryModal({
           </div>
         </motion.div>
       </div>
-    </AnimatePresence>
+      )}
+    </AnimatePresence>,
+    document.body
   )
 }
