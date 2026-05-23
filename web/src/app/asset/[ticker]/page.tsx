@@ -10,6 +10,8 @@ import PriceChartClient from '@/components/asset/PriceChartClient'
 import RadarSection from '@/components/asset/RadarSection'
 import AssetAnalysisCTA from '@/components/asset/AssetAnalysisCTA'
 import AssetNewsSection from '@/components/asset/AssetNewsSection'
+import AssetProfileCard from '@/components/asset/AssetProfileCard'
+import AssetQuotesTable from '@/components/asset/AssetQuotesTable'
 import { isFollowing } from '@/lib/actions/watchlist'
 import { GlassHighlight } from '@/components/atoms/GlassHighlight'
 import AppShell from '@/components/navigation/AppShell'
@@ -40,9 +42,10 @@ export default async function AssetPage({ params }: AssetPageProps) {
   const changePercent = quote?.changePercent ?? null
   const name = quote?.name ?? null
 
-  // Radar scores only
+  // Radar scores and company profile
   const radarData = radarResult.status === 'fulfilled' ? radarResult.value : null
   const radarPoints = radarData?.data ?? null
+  const profile = radarData?.profile ?? null
 
   const historyData = historyResult.status === 'fulfilled' ? historyResult.value : null
   const initialHistory = historyData?.results?.[0]?.history ?? []
@@ -91,7 +94,13 @@ export default async function AssetPage({ params }: AssetPageProps) {
         />
       </ScrollFocus>
       <ScrollFocus>
+        <AssetProfileCard ticker={ticker} profile={profile} />
+      </ScrollFocus>
+      <ScrollFocus>
         <RadarSection data={radarPoints} />
+      </ScrollFocus>
+      <ScrollFocus>
+        <AssetQuotesTable ticker={ticker} history={initialHistory} />
       </ScrollFocus>
       <ScrollFocus>
         <AssetNewsSection news={news} />

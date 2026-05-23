@@ -351,8 +351,9 @@ def get_quote(symbol: str) -> dict | None:
         "website": info.get("website"),
         "longBusinessSummary": info.get("longBusinessSummary"),
         "fullTimeEmployees": _int_or_none(info.get("fullTimeEmployees")),
-        "trailingPE": _finite(info.get("trailingPE"), 15),
-        "profitMargins": _finite(info.get("profitMargins"), 0.15),
+        "trailingPE": _finite(info.get("trailingPE"), 0),
+        "profitMargins": _finite(info.get("profitMargins"), 0),
+        "dividendYield": _finite(info.get("trailingAnnualDividendYield") or info.get("dividendYield"), 0),
         "averageVolume": _finite(info.get("averageVolume") or fast_info.get("threeMonthAverageVolume"), volume),
     }
 
@@ -381,6 +382,47 @@ def get_status() -> dict:
     return {"indices": indices}
 
 
+def _momentum_score(history: pd.DataFrame, current_price: float) -> float:
+    """5-day return mapped to 0-100. -10% → 0, 0% → 50, +10% → 100."""
+    closes = history.dropna(subset=["Close"])
+    if closes.empty or current_price <= 0:
+        return 50.0
+    first_close = _finite(closes.head(1)["Close"].iloc[0], current_price)
+    five_day_return = ((current_price - first_close) / first_close * 100) if first_close > 0 else 0
+    return max(0, min(100, (five_day_return + 10) / 20 * 100))
+
+
+def _liquidity_score(volume: float, avg_volume: float) -> float:
+    """Log2 of volume/avg ratio mapped to 0-100. 0.5× → 0, 1× → 50, 2× → 100."""
+    if avg_volume <= 0 or volume <= 0:
+        return 30.0
+    import math
+    ratio = volume / avg_volume
+    return max(0, min(100, 50 + 50 * math.log2(ratio)))
+
+
+def _valuation_score(pe: float) -> float:
+    """Lower PE → higher score. PE ≤ 8 → 90+, PE 15 → 65, PE 25 → 35, PE > 40 → 10."""
+    if pe <= 0:
+        return 40.0
+    if pe <= 8:
+        return 90.0
+    if pe <= 15:
+        return 90 - (pe - 8) / 7 * 25
+    if pe <= 25:
+        return 65 - (pe - 15) / 10 * 30
+    if pe <= 40:
+        return 35 - (pe - 25) / 15 * 25
+    return 10.0
+
+
+def _rentability_score(margin: float, dividend_yield: float) -> float:
+    """Blend profit margin (70%) and dividend yield (30%). Each normalized to 0-100."""
+    margin_score = max(0, min(100, margin / 0.30 * 100))
+    dy_score = max(0, min(100, dividend_yield / 0.10 * 100))
+    return margin_score * 0.70 + dy_score * 0.30
+
+
 def get_radar(symbol: str) -> dict | None:
     quote = get_quote(symbol)
     if not quote:
@@ -389,16 +431,19 @@ def get_radar(symbol: str) -> dict | None:
     current_price = _finite(quote["regularMarketPrice"])
     high52 = _finite(quote.get("fiftyTwoWeekHigh"), current_price)
     low52 = _finite(quote.get("fiftyTwoWeekLow"), current_price)
-    change = _finite(quote.get("regularMarketChangePercent"))
-    volume = _finite(quote.get("averageVolume") or quote.get("regularMarketVolume"))
-    pe = _finite(quote.get("trailingPE"), 15)
-    margin = _finite(quote.get("profitMargins"), 0.15)
+    volume = _finite(quote.get("regularMarketVolume"))
+    avg_volume = _finite(quote.get("averageVolume"), volume)
+    pe = _finite(quote.get("trailingPE"), 0)
+    margin = _finite(quote.get("profitMargins"), 0)
+    dividend_yield = _finite(quote.get("dividendYield"), 0)
 
-    valuation = 100 - ((pe - 5) / 20) * 100
-    momentum = ((change + 5) / 10) * 100
-    liquidity = ((volume - 1_000_000) / 49_000_000) * 100
-    trend = ((current_price - low52) / (high52 - low52) * 100) if high52 > low52 else 50
-    rentability = (margin / 0.3) * 100
+    history = _history_frame(symbol, "5d")
+
+    momentum = _momentum_score(history, current_price)
+    liquidity = _liquidity_score(volume, avg_volume)
+    valuation = _valuation_score(pe)
+    trend = ((current_price - low52) / (high52 - low52) * 100) if high52 > low52 else 50.0
+    rentability = _rentability_score(margin, dividend_yield)
 
     return {
         "timestamp": pd.Timestamp.utcnow().isoformat(),
@@ -419,11 +464,14 @@ def get_radar(symbol: str) -> dict | None:
         },
         "quote": {
             "regularMarketPrice": current_price,
-            "regularMarketChangePercent": change,
+            "regularMarketChangePercent": _finite(quote.get("regularMarketChangePercent")),
             "fiftyTwoWeekHigh": high52,
             "fiftyTwoWeekLow": low52,
             "marketCap": quote.get("marketCap"),
             "longName": quote.get("longName"),
+            "volume": int(volume),
+            "averageVolume": int(avg_volume),
+            "dividendYield": round(dividend_yield * 100, 2),
         },
     }
 

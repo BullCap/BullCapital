@@ -51,9 +51,31 @@ def _build_prompt(
         parts.append(f"Preço atual: R$ {float(context['price']):.2f}")
     if "change" in context:
         parts.append(f"Variação no dia: {float(context['change']):+.2f}%")
+    if "high52" in context and "low52" in context:
+        parts.append(
+            f"Faixa 52 semanas: R$ {float(context['low52']):.2f} – R$ {float(context['high52']):.2f}"
+        )
+    if "marketCap" in context:
+        mc = int(context["marketCap"])
+        if mc >= 1_000_000_000:
+            parts.append(f"Market cap: R$ {mc / 1_000_000_000:.1f} bi")
+        else:
+            parts.append(f"Market cap: R$ {mc / 1_000_000:.0f} mi")
+    if "sector" in context:
+        industry = context.get("industry", "")
+        label = f"{context['sector']} — {industry}" if industry else context["sector"]
+        parts.append(f"Setor: {label}")
     if "radar" in context:
         score_str = ", ".join(f"{k}: {v}/100" for k, v in context["radar"].items())
         parts.append(f"Scores de qualidade: {score_str}")
+    if "news" in context and isinstance(context["news"], list):
+        headlines = "; ".join(
+            f'"{item["title"]}" ({item.get("publisher", "")})'
+            for item in context["news"]
+            if isinstance(item, dict) and item.get("title")
+        )
+        if headlines:
+            parts.append(f"Manchetes recentes: {headlines}")
     if "indices" in context and isinstance(context["indices"], list):
         for index in context["indices"]:
             if not isinstance(index, dict):
@@ -65,6 +87,14 @@ def _build_prompt(
                 parts.append(f"{name}: {price:.2f} ({change:+.2f}% no dia)")
     if "selic" in context:
         parts.append(f"SELIC: {context['selic']}")
+    if "fx" in context and isinstance(context["fx"], list):
+        for pair in context["fx"]:
+            if not isinstance(pair, dict):
+                continue
+            name = pair.get("pair") or "FX"
+            rate = pair.get("rate")
+            if isinstance(rate, (int, float)):
+                parts.append(f"{name}: {rate:.4f}")
 
     context_str = "\n".join(parts) if parts else "Dados de contexto limitados."
     if source == "market":

@@ -1,6 +1,6 @@
 'use server'
 
-import { getMarketRadarData, getMarketStatus } from '@/lib/services/market'
+import { getMarketRadarData, getMarketStatus, getAssetNews, getCurrencyRates } from '@/lib/services/market'
 import { fetchIndexFromYfinance, fetchSELIC } from '@/lib/market-utils'
 import { normalizeTicker } from '@/lib/market-routing'
 
@@ -61,12 +61,14 @@ export async function requestAnalysis(
     const isMarketAnalysis = normalizedTicker === 'MERCADO'
 
     if (isMarketAnalysis) {
-      const [statusResult, selicResult] = await Promise.allSettled([
+      const [statusResult, selicResult, fxResult] = await Promise.allSettled([
         getMarketStatus(),
         fetchSELIC(),
+        getCurrencyRates(['USD-BRL', 'EUR-BRL']),
       ])
       const status = statusResult.status === 'fulfilled' ? statusResult.value : null
       const selic = selicResult.status === 'fulfilled' ? selicResult.value : null
+      const fx = fxResult.status === 'fulfilled' ? fxResult.value : null
 
       if (status?.indices.length) {
         context.indices = status.indices.map((index) => ({
@@ -77,19 +79,42 @@ export async function requestAnalysis(
         }))
       }
       if (selic?.rate) context.selic = selic.rate
+      if (fx?.currencies?.length) {
+        context.fx = fx.currencies.map((c) => ({
+          pair: c.name,
+          rate: c.bidPrice,
+          change: c.askPrice > 0
+            ? +((c.bidPrice - c.lowPrice) / c.lowPrice * 100).toFixed(2)
+            : 0,
+        }))
+      }
     } else {
-      const [quoteResult, radarResult] = await Promise.allSettled([
-        fetchIndexFromYfinance(normalizedTicker),
+      const [radarResult, newsResult] = await Promise.allSettled([
         getMarketRadarData(normalizedTicker),
+        getAssetNews(normalizedTicker, 3),
       ])
 
-      const quote = quoteResult.status === 'fulfilled' ? quoteResult.value : null
       const radar = radarResult.status === 'fulfilled' ? radarResult.value : null
+      const news = newsResult.status === 'fulfilled' ? newsResult.value : []
 
-      if (quote?.price != null) context.price = quote.price
-      if (quote?.changePercent != null) context.change = quote.changePercent
+      // Price + change from the richer radar quote (avoids a double fetch)
+      const rq = radar?.quote
+      if (rq?.regularMarketPrice != null) context.price = rq.regularMarketPrice
+      if (rq?.regularMarketChangePercent != null) context.change = rq.regularMarketChangePercent
+      if (rq?.fiftyTwoWeekHigh != null) context.high52 = rq.fiftyTwoWeekHigh
+      if (rq?.fiftyTwoWeekLow != null) context.low52 = rq.fiftyTwoWeekLow
+      if (rq?.marketCap) context.marketCap = rq.marketCap
+
+      const profile = radar?.profile
+      if (profile?.sector) context.sector = profile.sector
+      if (profile?.industry) context.industry = profile.industry
+
       if (radar?.data?.length) {
         context.radar = Object.fromEntries(radar.data.map((d) => [d.metric, d.value]))
+      }
+
+      if (news.length > 0) {
+        context.news = news.map((n) => ({ title: n.title, publisher: n.publisher }))
       }
     }
 

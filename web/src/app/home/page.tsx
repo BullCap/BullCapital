@@ -1,11 +1,12 @@
 import { redirect } from 'next/navigation'
 import { auth } from '@/lib/auth'
 import { buildAssetHref } from '@/lib/market-routing'
-import { getMarketListings, getAssetHistory } from '@/lib/services/market'
+import { getMarketListings, getAssetHistory, getCurrencyRates } from '@/lib/services/market'
 import { getNewsRadarItems } from '@/lib/news-radar'
 import {
   computeTemperature,
   fetchSELIC,
+  fetchIPCA,
   fetchIndexFromYfinance,
   isMarketOpen,
 } from '@/lib/market-utils'
@@ -149,25 +150,36 @@ export default async function HomePage() {
     sp500Result,
     vixResult,
     selicResult,
+    ipcaResult,
     gainersResult,
     losersResult,
     storyResult,
     historyResult,
+    fxResult,
   ] =
     await Promise.allSettled([
       fetchIndexFromYfinance('^BVSP'),
       fetchIndexFromYfinance('^GSPC'),
       fetchIndexFromYfinance('^VIX'),
       fetchSELIC(),
+      fetchIPCA(),
       getMarketListings({ sortBy: 'change', sortOrder: 'desc', limit: 6, type: 'stock' }),
       getMarketListings({ sortBy: 'change', sortOrder: 'asc', limit: 6, type: 'stock' }),
       getNewsRadarItems(),
       getAssetHistory(['^BVSP', '^GSPC'], '1mo'),
+      getCurrencyRates(['USD-BRL', 'EUR-BRL']),
     ])
 
   const ibov = ibovResult.status === 'fulfilled' ? ibovResult.value : null
   const sp500 = sp500Result.status === 'fulfilled' ? sp500Result.value : null
   const vix = vixResult.status === 'fulfilled' ? (vixResult.value?.price ?? null) : null
+  const fxData = fxResult.status === 'fulfilled' ? fxResult.value : null
+  const usdBrl = fxData?.currencies?.find((c) => c.name === 'USD/BRL') ?? null
+  const usdBrlChange = usdBrl
+    ? usdBrl.lowPrice > 0
+      ? +((usdBrl.bidPrice - usdBrl.lowPrice) / usdBrl.lowPrice * 100).toFixed(2)
+      : null
+    : null
 
   const historyData = historyResult.status === 'fulfilled' ? historyResult.value : null
   const ibovHistory = historyData?.results?.find((r) => r.symbol === '^BVSP')?.history ?? []
@@ -175,12 +187,20 @@ export default async function HomePage() {
   const ibovCloses = ibovHistory.map((h) => h.close).filter(Number.isFinite)
   const sp500Closes = sp500History.map((h) => h.close).filter(Number.isFinite)
 
-  const temperature = ibov ? computeTemperature(ibov.changePercent, vix) : null
-
   const selicData = selicResult.status === 'fulfilled' ? selicResult.value : null
+  const ipcaData = ipcaResult.status === 'fulfilled' ? ipcaResult.value : null
 
   const gainersRaw = gainersResult.status === 'fulfilled' ? (gainersResult.value?.stocks ?? []) : []
   const losersRaw = losersResult.status === 'fulfilled' ? (losersResult.value?.stocks ?? []) : []
+
+  // Market breadth: % of visible movers with positive change (approx from top-6 each side)
+  const allVisible = [...gainersRaw, ...losersRaw]
+  const gainersCount = allVisible.filter((s) => s.change > 0).length
+  const marketBreadth = allVisible.length > 0 ? (gainersCount / allVisible.length) * 100 : null
+
+  const temperature = ibov
+    ? computeTemperature({ ibovChange: ibov.changePercent, vix, usdBrlChange, marketBreadth })
+    : null
 
   const gainers = gainersRaw.map((s) => ({
     ticker: s.stock,
@@ -321,7 +341,7 @@ export default async function HomePage() {
               />
             </ScrollFocus>
             <ScrollFocus className="md:col-span-2">
-              <SELICCard selic={selicData} />
+              <SELICCard selic={selicData} ipca={ipcaData} />
             </ScrollFocus>
             <ScrollFocus className="md:col-span-2 xl:hidden">
               <VixCard value={vix} />
