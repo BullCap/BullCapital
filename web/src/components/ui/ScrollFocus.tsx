@@ -10,8 +10,8 @@ interface ScrollFocusProps extends React.HTMLAttributes<HTMLDivElement> {
 
 export default function ScrollFocus({
   className,
-  threshold = 0.55,
-  rootMargin = '-25% 0px -25% 0px',
+  threshold = 0,
+  rootMargin = '0px 0px -12% 0px',
   ...props
 }: ScrollFocusProps) {
   const ref = React.useRef<HTMLDivElement | null>(null)
@@ -28,10 +28,13 @@ export default function ScrollFocus({
 
     const observer = new IntersectionObserver(
       ([entry]) => {
-        setActive(entry.intersectionRatio >= threshold)
+        if (entry.isIntersecting) {
+          setActive(true)
+          observer.disconnect()
+        }
       },
       {
-        threshold: [0, threshold, 1],
+        threshold,
         rootMargin,
       }
     )

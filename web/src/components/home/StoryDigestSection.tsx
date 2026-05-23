@@ -38,10 +38,10 @@ export default function StoryDigestSection({ stories }: StoryDigestSectionProps)
           <h2 className="mt-2 font-serif text-xl text-[#F4F0FF]">O que mudou no radar</h2>
         </div>
         <Link
-          href="/search"
+          href="/news"
           className="inline-flex min-h-9 items-center gap-1 rounded-full border border-white/10 bg-white/[0.05] px-3 text-xs text-[#F4F0FF]/75 transition hover:bg-white/[0.1] hover:text-[#F4F0FF]"
         >
-          Ver mais
+          Abrir radar
           <ArrowRight size={13} />
         </Link>
       </div>

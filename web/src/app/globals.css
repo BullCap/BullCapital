@@ -241,21 +241,18 @@
   }
 
   .scroll-focus {
-    transform-origin: center;
-    opacity: 0.9;
-    transform: scale(0.98);
+    opacity: 0.94;
+    transform: translate3d(0, 0.5rem, 0);
     transition:
       transform 520ms cubic-bezier(0.16, 1, 0.3, 1),
-      opacity 420ms ease,
-      filter 420ms ease;
-    filter: saturate(0.98) brightness(0.98);
-    will-change: transform;
+      opacity 420ms ease;
+    will-change: opacity, transform;
   }
 
   .scroll-focus[data-scroll-focus='active'] {
     opacity: 1;
-    transform: scale(1.02);
-    filter: saturate(1.03) brightness(1.02);
+    transform: translate3d(0, 0, 0);
+    will-change: auto;
   }
 
 

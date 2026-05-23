@@ -1,6 +1,7 @@
-from functools import lru_cache
 import json
+from functools import lru_cache
 
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -16,7 +17,7 @@ class Settings(BaseSettings):
     # App
     app_name: str = "BullCapital AI Service"
     app_version: str = "0.0.0"
-    debug: bool = False
+    debug: bool = Field(default=False, validation_alias="APP_DEBUG")
 
     # API
     api_prefix: str = "/api/v1"

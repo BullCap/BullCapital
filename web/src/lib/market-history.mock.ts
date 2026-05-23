@@ -1,25 +1,25 @@
 import type { AssetHistoricalPrice } from '@/types/market'
 
-export type PriceHistoryRange = '1d' | '1mo' | '1y'
+export type PriceHistoryRange = '1d' | '1mo' | '3mo'
 
 const MOCK_END_TIMESTAMP = Date.parse('2026-05-21T18:00:00-03:00') / 1000
 
 const MOCK_HISTORY_STEPS: Record<PriceHistoryRange, number> = {
   '1d': 10 * 60,
   '1mo': 24 * 60 * 60,
-  '1y': 6 * 24 * 60 * 60,
+  '3mo': 2 * 24 * 60 * 60,
 }
 
 const MOCK_NOISE_AMPLITUDE: Record<PriceHistoryRange, number> = {
   '1d': 0.012,
   '1mo': 0.018,
-  '1y': 0.026,
+  '3mo': 0.026,
 }
 
 const MOCK_HIGH_LOW_SPREAD: Record<PriceHistoryRange, number> = {
   '1d': 0.006,
   '1mo': 0.011,
-  '1y': 0.015,
+  '3mo': 0.015,
 }
 
 // Ratios give each range a legible trend before noise and direction are applied.
@@ -35,7 +35,7 @@ const MOCK_HISTORY_RATIOS: Record<PriceHistoryRange, number[]> = {
     1.027, 1.044, 1.038, 1.052, 1.067, 1.058, 1.081, 1.094, 1.087, 1.101, 1.118, 1.109, 1.125,
     1.142, 1.136, 1.151, 1.165, 1.157, 1.173,
   ],
-  '1y': [
+  '3mo': [
     0.702, 0.714, 0.731, 0.725, 0.749, 0.772, 0.763, 0.784, 0.803, 0.794, 0.821, 0.845, 0.833,
     0.857, 0.879, 0.867, 0.892, 0.918, 0.904, 0.927, 0.946, 0.932, 0.958, 0.981, 0.973, 0.997,
     1.018, 1.004, 1.026, 1.047, 1.034, 1.059, 1.083, 1.069, 1.093, 1.118, 1.102, 1.129, 1.151,

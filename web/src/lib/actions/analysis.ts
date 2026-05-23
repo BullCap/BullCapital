@@ -1,7 +1,7 @@
 'use server'
 
-import { getMarketRadarData } from '@/lib/services/market'
-import { fetchIndexFromBrapi } from '@/lib/market-utils'
+import { getMarketRadarData, getMarketStatus } from '@/lib/services/market'
+import { fetchIndexFromYfinance, fetchSELIC } from '@/lib/market-utils'
 import { normalizeTicker } from '@/lib/market-routing'
 
 const ANALYSIS_API_URL = process.env.ANALYSIS_API_URL ?? 'http://localhost:8001/api/v1'
@@ -23,7 +23,7 @@ export interface AnalysisArtifact {
   bullets?: string[]
   metrics?: Array<{ label: string; value: string }>
   // chart-specific
-  range?: '1d' | '1mo' | '1y'
+  range?: '1d' | '1mo' | '3mo' | '1y'
   chart_note?: string
   bars?: Array<{ label: string; value: number; color?: 'positive' | 'negative' | 'neutral' }>
 }
@@ -56,32 +56,54 @@ export async function requestAnalysis(
   try {
     const normalizedTicker = normalizeTicker(ticker)
     if (!normalizedTicker) return null
-    const [quoteResult, radarResult] = await Promise.allSettled([
-      fetchIndexFromBrapi(normalizedTicker),
-      getMarketRadarData(normalizedTicker),
-    ])
-
-    const quote = quoteResult.status === 'fulfilled' ? quoteResult.value : null
-    const radar = radarResult.status === 'fulfilled' ? radarResult.value : null
 
     const context: Record<string, unknown> = {}
-    if (quote?.price != null) context.price = quote.price
-    if (quote?.changePercent != null) context.change = quote.changePercent
-    if (radar?.data?.length) {
-      context.radar = Object.fromEntries(radar.data.map((d) => [d.metric, d.value]))
+    const isMarketAnalysis = normalizedTicker === 'MERCADO'
+
+    if (isMarketAnalysis) {
+      const [statusResult, selicResult] = await Promise.allSettled([
+        getMarketStatus(),
+        fetchSELIC(),
+      ])
+      const status = statusResult.status === 'fulfilled' ? statusResult.value : null
+      const selic = selicResult.status === 'fulfilled' ? selicResult.value : null
+
+      if (status?.indices.length) {
+        context.indices = status.indices.map((index) => ({
+          name: index.name,
+          symbol: index.symbol,
+          price: index.regularMarketPrice,
+          change: index.regularMarketChangePercent,
+        }))
+      }
+      if (selic?.rate) context.selic = selic.rate
+    } else {
+      const [quoteResult, radarResult] = await Promise.allSettled([
+        fetchIndexFromYfinance(normalizedTicker),
+        getMarketRadarData(normalizedTicker),
+      ])
+
+      const quote = quoteResult.status === 'fulfilled' ? quoteResult.value : null
+      const radar = radarResult.status === 'fulfilled' ? radarResult.value : null
+
+      if (quote?.price != null) context.price = quote.price
+      if (quote?.changePercent != null) context.change = quote.changePercent
+      if (radar?.data?.length) {
+        context.radar = Object.fromEntries(radar.data.map((d) => [d.metric, d.value]))
+      }
     }
 
     const res = await fetch(`${ANALYSIS_API_URL}/analysis`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        subject: normalizedTicker,
-        source: 'asset',
+        subject: isMarketAnalysis ? 'mercado' : normalizedTicker,
+        source: isMarketAnalysis ? 'market' : 'asset',
         context,
         template: template?.trim() || null,
       }),
       cache: 'no-store',
-      signal: AbortSignal.timeout(30000),
+      signal: AbortSignal.timeout(60000),
     })
 
     if (!res.ok) return null

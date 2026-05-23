@@ -17,12 +17,12 @@ import type { AssetHistoricalPrice } from '@/types/market'
 import { GlassHighlight } from '@/components/atoms/GlassHighlight'
 import { getMockAssetHistory } from '@/lib/market-history.mock'
 
-type Range = '1d' | '1mo' | '1y'
+type Range = '1d' | '1mo' | '3mo'
 
 const RANGE_LABELS: Record<Range, string> = {
   '1d': '1D',
   '1mo': '1M',
-  '1y': '1A',
+  '3mo': '3M',
 }
 
 interface PriceChartClientProps {

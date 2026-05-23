@@ -105,11 +105,14 @@ class MarketAnalysisAgent(BaseAgent):
                 turns.append(f"{role}: {entry.get('content', '')[:200]}")
             history_str = "\n".join(turns)
 
+        analysis_block = f"Análise:\n{analysis_str}\n\n" if analysis_str else ""
+        history_block = f"Histórico:\n{history_str}\n\n" if history_str else ""
+
         return (
             f"Contexto em análise: {subject}\n\n"
             f"Dados:\n{context_str}\n\n"
-            f"{'Análise:\n' + analysis_str + chr(10) + chr(10) if analysis_str else ''}"
-            f"{'Histórico:\n' + history_str + chr(10) + chr(10) if history_str else ''}"
+            f"{analysis_block}"
+            f"{history_block}"
             f"Pergunta: {question}\n\n"
             f"Responda em markdown. Ao final, adicione EXATAMENTE esta linha com 2-3 perguntas de follow-up:\n"
             f"[SUGESTÕES]: Pergunta 1? | Pergunta 2? | Pergunta 3?\n"
@@ -162,8 +165,6 @@ class MarketAnalysisAgent(BaseAgent):
             return '{"answer": "Serviço de IA não configurado.", "suggestions": [], "guardrail_triggered": false}'
 
         import asyncio
-        import json
-
         context_lines = []
         if "price" in context:
             context_lines.append(f"Preço: R$ {float(context['price']):.2f}")
@@ -210,11 +211,14 @@ class MarketAnalysisAgent(BaseAgent):
             '- Se a pergunta for fora do escopo, redirecione para o contexto fornecido'
         )
 
+        analysis_block = f"Análise gerada:\n{analysis_str}\n\n" if analysis_str else ""
+        history_block = f"Histórico da conversa:\n{history_str}\n\n" if history_str else ""
+
         prompt = (
             f"Contexto em análise: {subject}\n\n"
             f"Dados de mercado:\n{context_str}\n\n"
-            f"{'Análise gerada:\n' + analysis_str + chr(10) + chr(10) if analysis_str else ''}"
-            f"{'Histórico da conversa:\n' + history_str + chr(10) + chr(10) if history_str else ''}"
+            f"{analysis_block}"
+            f"{history_block}"
             f"Pergunta atual: {question}\n\n"
             f"{schema}"
         )

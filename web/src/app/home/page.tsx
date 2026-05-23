@@ -1,11 +1,12 @@
 import { redirect } from 'next/navigation'
 import { auth } from '@/lib/auth'
 import { buildAssetHref } from '@/lib/market-routing'
-import { getAssetNews, getMarketListings } from '@/lib/services/market'
+import { getMarketListings } from '@/lib/services/market'
+import { getNewsRadarItems } from '@/lib/news-radar'
 import {
   computeTemperature,
   fetchSELIC,
-  fetchIndexFromBrapi,
+  fetchIndexFromYfinance,
   isMarketOpen,
 } from '@/lib/market-utils'
 import TemperatureCard from '@/components/home/TemperatureCard'
@@ -19,7 +20,8 @@ import MarketBubbleMap from '@/components/home/MarketBubbleMap'
 import MarketPlaybookSection from '@/components/home/MarketPlaybookSection'
 import WatchlistRadarSection from '@/components/home/WatchlistRadarSection'
 import type { RadarPulseItem } from '@/components/home/RadarPulseSection'
-import StoryDigestSection, { type StoryDigestItem } from '@/components/home/StoryDigestSection'
+import StoryDigestSection from '@/components/home/StoryDigestSection'
+import type { NewsRadarItem } from '@/lib/news-radar'
 import AppShell from '@/components/navigation/AppShell'
 import ScrollFocus from '@/components/ui/ScrollFocus'
 import { Suspense } from 'react'
@@ -47,15 +49,6 @@ function formatPercent(value: number | null) {
   if (value === null) return 'n/d'
   return `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`
 }
-
-
-function buildAskHref(headline: string, tickers: string[]): string {
-  const anchor = tickers.find((t) => !t.startsWith('^')) ?? tickers[0]
-  const q = `Explique o impacto desta notícia: "${headline.slice(0, 120)}"`
-  if (!anchor) return `/analysis?q=${encodeURIComponent(q)}&source=news`
-  return `/analysis?ticker=${encodeURIComponent(anchor)}&q=${encodeURIComponent(q)}&source=news`
-}
-
 function buildSuggestedPrompts(
   ibovChange: number | null,
   vix: number | null,
@@ -106,55 +99,10 @@ function buildSuggestedPrompts(
   return prompts.slice(0, 3)
 }
 
-function buildStoryNote(tickers: string[]) {
-  if (tickers.includes('^BVSP')) return 'Use esta manchete para entender o clima geral do mercado brasileiro antes de entrar nos nomes individuais.'
-  if (tickers.includes('PETR4')) return 'Se a historia ganhar tracao, PETR4 pode contaminar humor de indice e nomes ligados a commodities.'
-  if (tickers.includes('VALE3')) return 'Vale funciona como leitura de fluxo global e ajuda a testar apetite por exportadoras.'
-  if (tickers.includes('ITUB4')) return 'Bancos costumam ajudar a confirmar se o movimento do indice e amplo ou concentrado.'
-  return 'Vale acompanhar como essa historia conversa com os sinais de preco e risco do dia.'
-}
-
-function buildTopStories(
-  storiesByTicker: Array<{ items: Awaited<ReturnType<typeof getAssetNews>>; ticker: string }>
-): StoryDigestItem[] {
-  const deduped = new Map<string, StoryDigestItem>()
-
-  for (const source of storiesByTicker) {
-    for (const item of source.items) {
-      if (!item.link) continue
-      const existing = deduped.get(item.link)
-      if (existing) {
-        if (!existing.tickers.includes(source.ticker)) existing.tickers.push(source.ticker)
-        continue
-      }
-
-      deduped.set(item.link, {
-        headline: item.title,
-        href: item.link,
-        note: buildStoryNote([source.ticker]),
-        publishedAt: item.publishedAt,
-        publisher: item.publisher,
-        relatedHref: source.ticker.startsWith('^') ? '/analysis' : buildAssetHref(source.ticker),
-        relatedLabel: source.ticker.startsWith('^') ? 'Ler mercado' : `Abrir ${source.ticker}`,
-        tickers: [source.ticker],
-        askHref: buildAskHref(item.title, [source.ticker]),
-      })
-    }
-  }
-
-  return Array.from(deduped.values())
-    .map((story) => ({
-      ...story,
-      note: buildStoryNote(story.tickers),
-    }))
-    .sort((left, right) => right.publishedAt - left.publishedAt)
-    .slice(0, 4)
-}
-
 function buildRadarItems(
   gainers: Array<{ ticker: string; changePercent: number }>,
   losers: Array<{ ticker: string; changePercent: number }>,
-  stories: StoryDigestItem[]
+  stories: NewsRadarItem[]
 ): RadarPulseItem[] {
   const items: RadarPulseItem[] = []
 
@@ -204,8 +152,6 @@ export default async function HomePage() {
   const session = await auth()
   if (!session?.user) redirect('/auth/sign-in')
 
-  const storyTickers = ['^BVSP', 'PETR4', 'VALE3', 'ITUB4'] as const
-
   const [
     ibovResult,
     sp500Result,
@@ -213,22 +159,16 @@ export default async function HomePage() {
     selicResult,
     gainersResult,
     losersResult,
-    ibovNews,
-    petrNews,
-    valeNews,
-    itubNews,
+    storyResult,
   ] =
     await Promise.allSettled([
-      fetchIndexFromBrapi('^BVSP'),
-      fetchIndexFromBrapi('^GSPC'),
-      fetchIndexFromBrapi('^VIX'),
+      fetchIndexFromYfinance('^BVSP'),
+      fetchIndexFromYfinance('^GSPC'),
+      fetchIndexFromYfinance('^VIX'),
       fetchSELIC(),
       getMarketListings({ sortBy: 'change', sortOrder: 'desc', limit: 6, type: 'stock' }),
       getMarketListings({ sortBy: 'change', sortOrder: 'asc', limit: 6, type: 'stock' }),
-      getAssetNews(storyTickers[0], 4),
-      getAssetNews(storyTickers[1], 3),
-      getAssetNews(storyTickers[2], 3),
-      getAssetNews(storyTickers[3], 3),
+      getNewsRadarItems(),
     ])
 
   const ibov = ibovResult.status === 'fulfilled' ? ibovResult.value : null
@@ -258,12 +198,7 @@ export default async function HomePage() {
     new Map([...gainersRaw, ...losersRaw].map((asset) => [asset.stock, asset])).values()
   )
 
-  const topStories = buildTopStories([
-    { ticker: storyTickers[0], items: ibovNews.status === 'fulfilled' ? ibovNews.value : [] },
-    { ticker: storyTickers[1], items: petrNews.status === 'fulfilled' ? petrNews.value : [] },
-    { ticker: storyTickers[2], items: valeNews.status === 'fulfilled' ? valeNews.value : [] },
-    { ticker: storyTickers[3], items: itubNews.status === 'fulfilled' ? itubNews.value : [] },
-  ])
+  const topStories = storyResult.status === 'fulfilled' ? storyResult.value.slice(0, 4) : []
 
   const radarItems = buildRadarItems(gainers, losers, topStories)
   const marketOpen = isMarketOpen()

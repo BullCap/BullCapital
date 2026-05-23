@@ -99,11 +99,30 @@ function extractInitialSuggestions(result: AnalysisResult): string[] {
   return candidates.slice(0, 3)
 }
 
+function hasRenderableAnalysis(result: AnalysisResult): boolean {
+  return Boolean(
+    result.summary?.trim() ||
+      result.artifacts?.length ||
+      SECTIONS.some(({ key }) => result.sections?.[key]?.trim())
+  )
+}
+
 interface AnalysisClientProps {
   ticker?: string
   focusLabel: string
   initialQuestion?: string
   source?: 'news'
+}
+
+function buildQuestionTemplate(question: string | undefined): AnalysisTemplate | undefined {
+  const prompt = question?.trim()
+  if (!prompt) return undefined
+
+  return {
+    id: 'deep-link-question',
+    label: 'Pergunta enviada',
+    prompt,
+  }
 }
 
 export default function AnalysisClient({ ticker, focusLabel, initialQuestion, source }: AnalysisClientProps) {
@@ -124,6 +143,7 @@ export default function AnalysisClient({ ticker, focusLabel, initialQuestion, so
 
   // Auto-scroll ref — points to first result element
   const resultsRef = useRef<HTMLDivElement>(null)
+  const pendingTemplate = source === 'news' ? undefined : buildQuestionTemplate(pendingQuestion)
 
   async function run(t: string, template?: AnalysisTemplate) {
     setActiveMode('asset')
@@ -135,16 +155,10 @@ export default function AnalysisClient({ ticker, focusLabel, initialQuestion, so
     setHistory([])
     setCurrentSuggestions([])
     const data = await requestAnalysis(t, template?.prompt)
-    if (data) {
+    if (data && hasRenderableAnalysis(data)) {
       setResult(data)
       const seedSuggestions = extractInitialSuggestions(data)
       setCurrentSuggestions(seedSuggestions)
-      // Auto-scroll to results after paint
-      requestAnimationFrame(() => {
-        setTimeout(() => {
-          resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-        }, 120)
-      })
     } else {
       setError(true)
     }
@@ -281,9 +295,19 @@ export default function AnalysisClient({ ticker, focusLabel, initialQuestion, so
       setActiveMode(source === 'news' ? 'news' : 'asset')
       return
     }
-    run(ticker)
+    run(ticker, buildQuestionTemplate(initialQuestion))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ticker])
+
+  useEffect(() => {
+    if (!result) return
+
+    const timer = setTimeout(() => {
+      resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 120)
+
+    return () => clearTimeout(timer)
+  }, [result])
 
   const focusSubject = ticker ?? focusLabel
 
@@ -325,7 +349,7 @@ export default function AnalysisClient({ ticker, focusLabel, initialQuestion, so
             </div>
             {ticker && (
               <button
-                onClick={() => run(ticker)}
+                onClick={() => run(ticker, pendingTemplate)}
                 className="inline-flex shrink-0 min-h-9 items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.05] px-3 text-xs text-[#F4F0FF]/65 transition hover:bg-white/[0.09] hover:text-[#F4F0FF]"
               >
                 <Compass size={13} />
@@ -364,14 +388,12 @@ export default function AnalysisClient({ ticker, focusLabel, initialQuestion, so
                 <p className="mt-1.5 text-sm leading-5 text-[#F4F0FF]/70">{pendingQuestion}</p>
               </div>
             )}
-            {ticker && (
-              <button
-                onClick={() => run(ticker)}
-                className="mt-5 inline-flex min-h-10 items-center rounded-2xl border border-white/10 bg-white/[0.05] px-5 py-2 text-sm text-[#F4F0FF]/70 transition hover:bg-white/[0.09]"
-              >
-                Tentar novamente
-              </button>
-            )}
+            <button
+              onClick={() => run(focusSubject, pendingTemplate)}
+              className="mt-5 inline-flex min-h-10 items-center rounded-2xl border border-white/10 bg-white/[0.05] px-5 py-2 text-sm text-[#F4F0FF]/70 transition hover:bg-white/[0.09]"
+            >
+              Tentar novamente
+            </button>
           </div>
         ) : result ? (
           <div className="my-auto flex flex-col items-center px-4 py-6 text-center">
@@ -382,6 +404,11 @@ export default function AnalysisClient({ ticker, focusLabel, initialQuestion, so
             <h2 className="mt-2 max-w-[18rem] font-serif text-2xl leading-tight text-[#F4F0FF]">
               Análise concluída
             </h2>
+            {result.summary && (
+              <MarkdownBody className="bull-recap-surface mt-5 w-full max-w-lg px-4 py-3 text-left text-sm text-[#F4F0FF]/72">
+                {result.summary}
+              </MarkdownBody>
+            )}
           </div>
         ) : (
           <>
@@ -432,7 +459,7 @@ export default function AnalysisClient({ ticker, focusLabel, initialQuestion, so
       {loading && <AnalysisSkeleton />}
 
       {/* Results anchor for auto-scroll */}
-      <div ref={resultsRef} />
+      <div ref={resultsRef} className="scroll-mt-4" />
 
       {result?.artifacts?.length ? (
         <>
@@ -475,6 +502,10 @@ export default function AnalysisClient({ ticker, focusLabel, initialQuestion, so
                   />
                 </ScrollFocus>
               )
+            }
+
+            if (artifact.template === 'price_chart' || artifact.template === 'radar_chart') {
+              return null
             }
 
             return (
