@@ -78,6 +78,26 @@ class MarketAnalysisAgent(BaseAgent):
     ) -> str:
         """Build a streaming-friendly prompt that outputs plain text + parseable footer."""
         context_lines = []
+        if "simulator" in context:
+            sim_type = context["simulator"]
+            sim_data = context.get("simulationData", {})
+            if sim_type == "dividends":
+                context_lines.append(f"Simulador Ativo: Calculadora de Dividendos (Viver de Renda B3)")
+                context_lines.append(f"Ativo B3 Simulado: {sim_data.get('ticker')}")
+                context_lines.append(f"Quantidade de Cotas: {sim_data.get('shares')} cotas")
+                context_lines.append(f"Preço Médio Pago: R$ {sim_data.get('averageCost')}")
+                context_lines.append(f"Aporte Mensal Planejado: {sim_data.get('monthlyAporte')} cotas")
+            elif sim_type == "compare":
+                context_lines.append(f"Simulador Ativo: Comparador de Ativos B3")
+                context_lines.append(f"Ativo A (Primário): {sim_data.get('tickerA')}")
+                context_lines.append(f"Ativo B (Secundário): {sim_data.get('tickerB')}")
+            elif sim_type == "savings":
+                context_lines.append(f"Simulador Ativo: Renda Variável e Juros Compostos")
+                context_lines.append(f"Capital Inicial Investido: R$ {sim_data.get('initialCapital')}")
+                context_lines.append(f"Aporte Mensal Adicional: R$ {sim_data.get('monthlyAporte')}")
+                context_lines.append(f"Taxa de Retorno Anual Esperada: {sim_data.get('annualYield')}% a.a.")
+                context_lines.append(f"Período de Investimento: {sim_data.get('periodYears')} anos")
+                context_lines.append(f"Desconto de Inflação Real (IPCA): {'Ativado' if sim_data.get('adjustInflation') else 'Desativado'}")
         if "price" in context:
             context_lines.append(f"Preço: R$ {float(context['price']):.2f}")
         if "change" in context:
@@ -181,6 +201,26 @@ class MarketAnalysisAgent(BaseAgent):
 
         import asyncio
         context_lines = []
+        if "simulator" in context:
+            sim_type = context["simulator"]
+            sim_data = context.get("simulationData", {})
+            if sim_type == "dividends":
+                context_lines.append(f"Simulador Ativo: Calculadora de Dividendos (Viver de Renda B3)")
+                context_lines.append(f"Ativo B3 Simulado: {sim_data.get('ticker')}")
+                context_lines.append(f"Quantidade de Cotas: {sim_data.get('shares')} cotas")
+                context_lines.append(f"Preço Médio Pago: R$ {sim_data.get('averageCost')}")
+                context_lines.append(f"Aporte Mensal Planejado: {sim_data.get('monthlyAporte')} cotas")
+            elif sim_type == "compare":
+                context_lines.append(f"Simulador Ativo: Comparador de Ativos B3")
+                context_lines.append(f"Ativo A (Primário): {sim_data.get('tickerA')}")
+                context_lines.append(f"Ativo B (Secundário): {sim_data.get('tickerB')}")
+            elif sim_type == "savings":
+                context_lines.append(f"Simulador Ativo: Renda Variável e Juros Compostos")
+                context_lines.append(f"Capital Inicial Investido: R$ {sim_data.get('initialCapital')}")
+                context_lines.append(f"Aporte Mensal Adicional: R$ {sim_data.get('monthlyAporte')}")
+                context_lines.append(f"Taxa de Retorno Anual Esperada: {sim_data.get('annualYield')}% a.a.")
+                context_lines.append(f"Período de Investimento: {sim_data.get('periodYears')} anos")
+                context_lines.append(f"Desconto de Inflação Real (IPCA): {'Ativado' if sim_data.get('adjustInflation') else 'Desativado'}")
         if "price" in context:
             context_lines.append(f"Preço: R$ {float(context['price']):.2f}")
         if "change" in context:
