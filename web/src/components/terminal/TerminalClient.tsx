@@ -107,7 +107,7 @@ export default function TerminalClient({ initialQuotes }: TerminalClientProps) {
   }
 
   // Coleta dados resumidos para o Copiloto dependendo da aba ativa
-  const getCopilotContext = (): { type: SimulatorTab; title: string; data: any } => {
+  const getCopilotContext = (): { type: SimulatorTab; title: string; data: unknown } => {
     switch (activeTab) {
       case 'dividends':
         return {

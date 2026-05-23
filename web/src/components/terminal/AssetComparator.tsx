@@ -296,7 +296,7 @@ export default function AssetComparator({ state, onChange, initialQuotes }: Asse
       <div className="flex gap-2 text-[11px] font-semibold text-[#F4F0FF]/45 italic justify-center">
         <HelpCircle size={12} className="mt-0.5 shrink-0" />
         <span>
-          Nota: Para o indicador "Preço / Lucro (P/L)", o menor múltiplo é considerado vencedor (destacado em ametista), pois sinaliza que a ação está sendo negociada com maior desconto em relação aos seus lucros.
+          Nota: Para o indicador &quot;Preço / Lucro (P/L)&quot;, o menor múltiplo é considerado vencedor (destacado em ametista), pois sinaliza que a ação está sendo negociada com maior desconto em relação aos seus lucros.
         </span>
       </div>
     </div>

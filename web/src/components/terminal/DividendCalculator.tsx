@@ -243,7 +243,7 @@ export default function DividendCalculator({ state, onChange, initialQuotes }: D
           <div className="flex items-center gap-2.5">
             <Zap size={18} className="text-[#8B5CF6] animate-pulse" />
             <div>
-              <h4 className="text-base font-bold text-[#F4F0FF]">Efeito "Número Mágico"</h4>
+              <h4 className="text-base font-bold text-[#F4F0FF]">Efeito &quot;Número Mágico&quot;</h4>
               <p className="text-xs font-semibold text-[#F4F0FF]/70">
                 Você precisa de <span className="font-bold text-[#F4F0FF]">{magicNumber} cotas</span> de {ticker} para gerar dividendos que compram 1 nova cota mensalmente.
               </p>

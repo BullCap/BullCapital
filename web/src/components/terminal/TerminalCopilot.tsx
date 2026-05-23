@@ -14,7 +14,7 @@ interface TerminalCopilotProps {
   activeContext: {
     type: 'dividends' | 'compare' | 'savings'
     title: string
-    data: any
+    data: unknown
   }
 }
 
@@ -140,7 +140,7 @@ export default function TerminalCopilot({ activeContext }: TerminalCopilotProps)
         for (const line of lines) {
           if (!line.startsWith('data: ')) continue
           try {
-            const event = JSON.parse(line.slice(6)) as Record<string, any>
+            const event = JSON.parse(line.slice(6)) as Record<string, unknown>
             if (event.type === 'text') {
               receivedText = String(event.text ?? '')
               fullAnswer = receivedText
@@ -155,7 +155,7 @@ export default function TerminalCopilot({ activeContext }: TerminalCopilotProps)
               }
               const finalAnswer = String(event.answer ?? fullAnswer)
               const suggestions = Array.isArray(event.suggestions) ? (event.suggestions as string[]) : []
-              const artifacts = Array.isArray(event.artifacts) ? (event.artifacts as any[]) : []
+              const artifacts = Array.isArray(event.artifacts) ? (event.artifacts as unknown[]) : []
               
               fullAnswer = finalAnswer
               setTurns((prev) =>

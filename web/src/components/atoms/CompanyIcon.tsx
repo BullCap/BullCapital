@@ -37,6 +37,7 @@ export function CompanyIcon({ ticker, size = 36, className }: CompanyIconProps) 
 
   if (imgSrc) {
     return (
+      {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={imgSrc}
         alt={`Logo da ${cleanTicker}`}
