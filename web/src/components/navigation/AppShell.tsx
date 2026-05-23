@@ -18,7 +18,7 @@ export default function AppShell({ active, children, contentClassName }: AppShel
             <span className="bull-brand-mark" />
             <span className="flex items-baseline">
               <span className="font-serif font-bold text-[#F4F0FF] text-[22px]">B</span>
-              <span className="font-sans font-light tracking-[0.14em] text-[#F4F0FF]/60 text-sm uppercase ml-0.5">cap</span>
+              <span className="font-sans font-bold tracking-[0.14em] text-[#F4F0FF] text-sm uppercase ml-0.5">cap</span>
             </span>
           </Link>
         </header>
