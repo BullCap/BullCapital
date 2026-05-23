@@ -33,7 +33,12 @@ export default function SignUpForm() {
 
   return (
     <div className="w-full max-w-sm">
-      <div className="mb-8 text-center">
+      <div className="mb-8 text-center flex flex-col items-center">
+        <img
+          src="/icons/icon-192.png"
+          alt="Logo BCAP"
+          className="h-16 w-16 rounded-[1.25rem] border border-white/10 shadow-[0_10px_20px_rgba(0,0,0,0.4)] mb-4"
+        />
         <p className="bull-eyebrow">BullCapital</p>
         <h1 className="mt-3 font-serif text-4xl text-[#F4F0FF]">Inteligência de mercado</h1>
         <p className="mt-2 text-sm text-[#DBEAFE]/55">Radar do mercado brasileiro, explicado por IA</p>
