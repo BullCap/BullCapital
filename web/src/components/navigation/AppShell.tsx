@@ -14,9 +14,9 @@ export default function AppShell({ active, children, contentClassName }: AppShel
     <main className="min-h-screen px-4 pb-40 pt-5 sm:px-6 md:pb-10 lg:px-8 lg:pt-6">
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-5">
         <header className="flex min-h-14 items-center px-1">
-          <Link href="/home" className="bull-wordmark" aria-label="Bull home">
+          <Link href="/home" className="bull-wordmark" aria-label="BullCapital home">
             <span className="bull-brand-mark" />
-            <span>Bull</span>
+            <span>BullCapital</span>
           </Link>
         </header>
 
