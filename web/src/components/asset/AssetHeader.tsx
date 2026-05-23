@@ -18,24 +18,29 @@ export default function AssetHeader({ ticker, name, price, changePercent, follow
     <section className="bull-asset-hero p-5">
       <GlassHighlight widthPercent={70} />
 
-      <div className="relative flex items-center justify-between gap-3">
+      <div className="relative flex items-center justify-between min-h-9">
         <Link
           href="/home"
           aria-label="Voltar ao mercado"
-          className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/[0.05] text-[#F4F0FF]/70 transition hover:bg-white/[0.09] hover:text-[#F4F0FF]"
+          className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/[0.05] text-[#F4F0FF]/70 transition hover:bg-white/[0.09] hover:text-[#F4F0FF] z-10"
         >
           <ArrowLeft size={15} />
         </Link>
 
-        <span className="bull-wordmark">
-          <span className="bull-brand-mark" />
-          <span className="flex items-baseline">
-            <span className="font-serif font-bold text-[#F4F0FF] text-[20px]">B</span>
-            <span className="font-sans font-bold tracking-[0.14em] text-[#F4F0FF] text-xs uppercase ml-0.5">cap</span>
+        {/* Perfectly centered absolute-positioned brand logo */}
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none flex items-center">
+          <span className="bull-wordmark flex items-center">
+            <span className="bull-brand-mark" />
+            <span className="flex items-baseline">
+              <span className="font-serif font-bold text-[#F4F0FF] text-[20px]">B</span>
+              <span className="font-sans font-bold tracking-[0.14em] text-[#F4F0FF] text-xs uppercase ml-0.5">cap</span>
+            </span>
           </span>
-        </span>
+        </div>
 
-        {followButton ?? <span className="h-9 w-9" aria-hidden="true" />}
+        <div className="z-10">
+          {followButton ?? <span className="h-9 w-9" aria-hidden="true" />}
+        </div>
       </div>
 
       <div className="relative mt-8 flex flex-col items-center text-center">
