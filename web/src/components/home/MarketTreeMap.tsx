@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { buildAssetHref } from '@/lib/market-routing'
 import type { MarketListingItem } from '@/types/market'
@@ -65,6 +66,20 @@ const TREEMAP_COLUMNS: TreeAsset[][] = [
 ]
 
 export default function MarketTreeMap({ assets, showHeader = true }: MarketTreeMapProps) {
+  const [isMobile, setIsMobile] = useState(false)
+
+  // Responsive state logic
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 640)
+    }
+    handleResize()
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
+
+  const visibleColumns = isMobile ? TREEMAP_COLUMNS.slice(0, 4) : TREEMAP_COLUMNS
+
   // Map live dynamic variations from assets if available
   const getAssetChangeAndWeight = (ticker: string, defaultChange: number, weight: number) => {
     // Standardise and search in homepage list
@@ -93,7 +108,7 @@ export default function MarketTreeMap({ assets, showHeader = true }: MarketTreeM
   }
 
   // Column weights total sums
-  const colWeights = TREEMAP_COLUMNS.map((col) =>
+  const colWeights = visibleColumns.map((col) =>
     col.reduce((acc, asset) => acc + asset.weight, 0)
   )
   const totalWeight = colWeights.reduce((acc, w) => acc + w, 0)
@@ -101,7 +116,7 @@ export default function MarketTreeMap({ assets, showHeader = true }: MarketTreeM
   const mapContent = (
     <div className="relative h-[340px] rounded-[1.75rem] border border-white/[0.08] overflow-hidden bg-[#080B12] shadow-2xl p-1">
       <div className="flex h-full w-full gap-[3px]">
-        {TREEMAP_COLUMNS.map((column, colIdx) => {
+        {visibleColumns.map((column, colIdx) => {
           const colWeightPercent = (colWeights[colIdx]! / totalWeight) * 100
           const colTotalWeightVal = column.reduce((acc, a) => acc + a.weight, 0)
 
