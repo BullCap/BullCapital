@@ -32,6 +32,7 @@ import { AnalysisSkeleton } from './AnalysisSkeleton'
 import { PriceChartArtifact } from './artifacts/PriceChartArtifact'
 import { RadarChartArtifact } from './artifacts/RadarChartArtifact'
 import { BarChartArtifact } from './artifacts/BarChartArtifact'
+import MetricStoryModal from './MetricStoryModal'
 
 interface SectionConfig {
   key: keyof AnalysisSections
@@ -134,6 +135,7 @@ export default function AnalysisClient({ ticker, focusLabel, initialQuestion, so
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(false)
   const [activeTemplate, setActiveTemplate] = useState<string | null>(null)
+  const [selectedMetric, setSelectedMetric] = useState<{ label: string; value: string } | null>(null)
 
   // Conversation state
   const [turns, setTurns] = useState<ConversationTurn[]>([])
@@ -555,13 +557,17 @@ export default function AnalysisClient({ ticker, focusLabel, initialQuestion, so
                   {artifact.template === 'metrics' && artifact.metrics?.length ? (
                     <div className="mt-4 grid gap-3">
                       {artifact.metrics.map((metric, i) => (
-                        <div
+                        <button
                           key={`${metric.label}-${i}`}
-                          className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3"
+                          onClick={() => setSelectedMetric({ label: metric.label, value: metric.value })}
+                          className="flex w-full items-center justify-between rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 cursor-pointer hover:bg-white/[0.08] hover:border-[#8B5CF6]/30 active:scale-[0.98] transition-all duration-300 text-left group"
                         >
-                          <span className="text-xs uppercase tracking-[0.2em] text-[#F4F0FF]/40">{metric.label}</span>
-                          <span className="text-sm text-[#F4F0FF]">{metric.value}</span>
-                        </div>
+                          <span className="text-xs uppercase tracking-[0.2em] text-[#F4F0FF]/40 group-hover:text-[#A78BFA] transition-colors">{metric.label}</span>
+                          <span className="text-sm font-semibold text-[#F4F0FF] flex items-center gap-1.5">
+                            {metric.value}
+                            <span className="text-xs opacity-40 group-hover:opacity-100 group-hover:text-[#8B5CF6] transition-all duration-300">↗</span>
+                          </span>
+                        </button>
                       ))}
                     </div>
                   ) : null}
@@ -633,6 +639,14 @@ export default function AnalysisClient({ ticker, focusLabel, initialQuestion, so
           <ConversationDisclaimer variant="footer" />
         </>
       )}
+
+      <MetricStoryModal
+        metricLabel={selectedMetric?.label ?? ''}
+        metricValue={selectedMetric?.value ?? ''}
+        isOpen={!!selectedMetric}
+        onClose={() => setSelectedMetric(null)}
+        onAskAdvisor={handleQuestion}
+      />
     </>
   )
 }

@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { Inter, Playfair_Display } from 'next/font/google'
 import { NavigationProgress } from '@/components/navigation/NavigationProgress'
+import { PWARegister } from '@/components/PWARegister'
 import './globals.css'
 
 const inter = Inter({
@@ -35,6 +36,7 @@ export default function RootLayout({
     <html lang="pt-BR" className="dark">
       <body className={`${inter.variable} ${playfair.variable} ${inter.className}`}>
         <NavigationProgress />
+        <PWARegister />
         {children}
       </body>
     </html>

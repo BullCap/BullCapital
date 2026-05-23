@@ -7,6 +7,7 @@ import { buildAssetHref } from '@/lib/market-routing'
 
 interface MarketBubbleMapProps {
   assets: MarketListingItem[]
+  showHeader?: boolean
 }
 
 interface BubbleAsset extends MarketListingItem {
@@ -82,31 +83,11 @@ function buildBubbleAssets(assets: MarketListingItem[]): BubbleAsset[] {
   })
 }
 
-export default function MarketBubbleMap({ assets }: MarketBubbleMapProps) {
+export default function MarketBubbleMap({ assets, showHeader = true }: MarketBubbleMapProps) {
   const bubbles = buildBubbleAssets(assets)
 
-  return (
-    <section className="bull-panel bull-bubble-stage p-5">
-      <GlassHighlight widthPercent={68} />
-
-      <div className="mb-4 flex items-start justify-between gap-3">
-        <div>
-          <p className="bull-eyebrow">Mapa de Impacto</p>
-          <h2 className="mt-2 font-serif text-xl text-[#F4F0FF]">Ativos em movimento</h2>
-        </div>
-        <div className="flex shrink-0 gap-2 pt-1 text-[10px] text-[#DBEAFE]/50">
-          <span className="inline-flex items-center gap-1">
-            <span className="h-2 w-2 rounded-full bg-[#22C55E]" />
-            Alta
-          </span>
-          <span className="inline-flex items-center gap-1">
-            <span className="h-2 w-2 rounded-full bg-[#EF4444]" />
-            Baixa
-          </span>
-        </div>
-      </div>
-
-      <div className="relative h-[314px] rounded-[1.75rem] border border-white/[0.07]">
+  const mapContent = (
+    <div className="relative h-[314px] rounded-[1.75rem] border border-white/[0.07]">
         {/* Background layer — overflow-hidden mantém bordas arredondadas e clipa a grade */}
         <div className="absolute inset-0 overflow-hidden rounded-[1.75rem] bg-[#080B12]/75 shadow-[inset_0_1px_16px_rgba(0,0,0,0.5)]">
           <div className="bull-bubble-grid absolute inset-0" />
@@ -166,6 +147,34 @@ export default function MarketBubbleMap({ assets }: MarketBubbleMapProps) {
           )}
         </div>
       </div>
+  )
+
+  if (!showHeader) {
+    return mapContent
+  }
+
+  return (
+    <section className="bull-panel bull-bubble-stage p-5">
+      <GlassHighlight widthPercent={68} />
+
+      <div className="mb-4 flex items-start justify-between gap-3">
+        <div>
+          <p className="bull-eyebrow">Mapa de Impacto</p>
+          <h2 className="mt-2 font-serif text-xl text-[#F4F0FF]">Ativos em movimento</h2>
+        </div>
+        <div className="flex shrink-0 gap-2 pt-1 text-[10px] text-[#DBEAFE]/50">
+          <span className="inline-flex items-center gap-1">
+            <span className="h-2.5 w-2.5 rounded-full bg-[#22C55E]" />
+            Alta
+          </span>
+          <span className="inline-flex items-center gap-1">
+            <span className="h-2.5 w-2.5 rounded-full bg-[#EF4444]" />
+            Baixa
+          </span>
+        </div>
+      </div>
+
+      {mapContent}
     </section>
   )
 }

@@ -16,7 +16,7 @@ import VixCard from '@/components/home/VixCard'
 import MoversSection from '@/components/home/MoversSection'
 import { DailyBriefContent, DailyBriefSkeleton } from '@/components/home/DailyBriefContent'
 import type { SuggestedPrompt } from '@/components/home/DailyBriefHero'
-import MarketBubbleMap from '@/components/home/MarketBubbleMap'
+import MarketMapSection from '@/components/home/MarketMapSection'
 import MarketPlaybookSection from '@/components/home/MarketPlaybookSection'
 import WatchlistRadarSection from '@/components/home/WatchlistRadarSection'
 import type { RadarPulseItem } from '@/components/home/RadarPulseSection'
@@ -298,7 +298,7 @@ export default async function HomePage() {
             <TemperatureCard temperature={temperature} />
           </ScrollFocus>
           <ScrollFocus>
-            <MarketBubbleMap assets={bubbleAssets} />
+            <MarketMapSection assets={bubbleAssets} />
           </ScrollFocus>
 
           <div className="grid gap-5 md:grid-cols-2">
