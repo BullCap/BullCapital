@@ -1,6 +1,7 @@
 export type TemperatureLevel = 'panico' | 'medo' | 'neutro' | 'ganancia' | 'euforia'
 
-const MARKET_FETCH_TIMEOUT_MS = 8000
+const MARKET_FETCH_TIMEOUT_MS = 20000
+const MARKET_API_URL = process.env.ANALYSIS_API_URL ?? 'http://localhost:8001/api/v1'
 
 export interface ComputedTemperature {
   value: number
@@ -27,51 +28,64 @@ export function computeTemperature(
   return { value, label, level }
 }
 
-// Banco Central do Brasil API — free, no key required
 export async function fetchSELIC(): Promise<{ rate: string; date: string } | null> {
   try {
-    const res = await fetch(
-      'https://api.bcb.gov.br/dados/serie/bcdata.sgs.432/dados/ultimos/1?formato=json',
-      {
-        next: { revalidate: 86400 },
-        signal: AbortSignal.timeout(MARKET_FETCH_TIMEOUT_MS),
-      }
-    )
+    const today = new Date()
+    const start = new Date(today)
+    start.setDate(start.getDate() - 45)
+    const formatDate = (date: Date) =>
+      new Intl.DateTimeFormat('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        timeZone: 'America/Sao_Paulo',
+      }).format(date)
+    const url = new URL('https://api.bcb.gov.br/dados/serie/bcdata.sgs.432/dados')
+    url.searchParams.set('formato', 'json')
+    url.searchParams.set('dataInicial', formatDate(start))
+    url.searchParams.set('dataFinal', formatDate(today))
+
+    const res = await fetch(url, {
+      next: { revalidate: 86400 },
+      signal: AbortSignal.timeout(MARKET_FETCH_TIMEOUT_MS),
+    })
     if (!res.ok) return null
+
     const data: Array<{ data: string; valor: string }> = await res.json()
-    if (!data[0]) return null
-    const value = parseFloat(data[0].valor.replace(',', '.'))
-    const rate =
-      value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) +
-      '% a.a.'
-    return { rate, date: data[0].data }
+    const latest = data.at(-1)
+    if (!latest) return null
+
+    const value = Number(latest.valor.replace(',', '.'))
+    if (!Number.isFinite(value)) return null
+
+    return {
+      rate: `${value.toLocaleString('pt-BR', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}% a.a.`,
+      date: latest.data,
+    }
   } catch {
     return null
   }
 }
 
-// Single-ticker fetch from Brapi — works on free plan (1 ticker per request).
-export async function fetchIndexFromBrapi(
+// Single-symbol fetch from the local yfinance-backed API.
+export async function fetchIndexFromYfinance(
   symbol: string
 ): Promise<{ price: number; changePercent: number; name: string | null } | null> {
-  const apiKey = process.env.BRAPI_KEY
-  if (!apiKey) return null
   try {
-    const res = await fetch(
-      `https://brapi.dev/api/quote/${encodeURIComponent(symbol)}?token=${apiKey}`,
-      {
-        next: { revalidate: 300 },
-        signal: AbortSignal.timeout(MARKET_FETCH_TIMEOUT_MS),
-      }
-    )
+    const res = await fetch(`${MARKET_API_URL}/market/quote/${encodeURIComponent(symbol)}`, {
+      cache: 'no-store',
+      signal: AbortSignal.timeout(MARKET_FETCH_TIMEOUT_MS),
+    })
     if (!res.ok) return null
     const data = await res.json()
-    const item = data.results?.[0]
-    if (!item) return null
+    if (!data?.symbol) return null
     return {
-      price: Number(item.regularMarketPrice ?? 0),
-      changePercent: Number(item.regularMarketChangePercent ?? 0),
-      name: (item.longName ?? item.shortName ?? null) as string | null,
+      price: Number(data.regularMarketPrice ?? 0),
+      changePercent: Number(data.regularMarketChangePercent ?? 0),
+      name: (data.longName ?? data.shortName ?? null) as string | null,
     }
   } catch {
     return null

@@ -94,11 +94,11 @@ export default function DailyBriefHero({
             Abrir leitura do mercado
           </Link>
           <Link
-            href="/search"
+            href="/news"
             className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.06] px-5 text-sm text-[#F4F0FF]/78 transition hover:bg-white/[0.1] hover:text-[#F4F0FF]"
           >
             <Newspaper size={16} />
-            Procurar um ativo
+            Abrir radar de notícias
             <ArrowRight size={15} />
           </Link>
         </div>

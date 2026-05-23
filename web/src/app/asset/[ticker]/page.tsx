@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { auth } from '@/lib/auth'
 import { getMarketRadarData, getAssetHistory, getAssetNews } from '@/lib/services/market'
-import { fetchIndexFromBrapi, isMarketOpen } from '@/lib/market-utils'
+import { fetchIndexFromYfinance, isMarketOpen } from '@/lib/market-utils'
 import { normalizeTicker } from '@/lib/market-routing'
 import AssetHeader from '@/components/asset/AssetHeader'
 import FollowButton from '@/components/asset/FollowButton'
@@ -27,7 +27,7 @@ export default async function AssetPage({ params }: AssetPageProps) {
   const ticker = normalizeTicker(rawTicker) || rawTicker
 
   const [quoteResult, historyResult, radarResult, newsResult, followingResult] = await Promise.allSettled([
-    fetchIndexFromBrapi(ticker),
+    fetchIndexFromYfinance(ticker),
     getAssetHistory([ticker], '1mo'),
     getMarketRadarData(ticker),
     getAssetNews(ticker),

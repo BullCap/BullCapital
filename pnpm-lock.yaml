@@ -44,9 +44,6 @@ importers:
       bcryptjs:
         specifier: ^3.0.3
         version: 3.0.3
-      brapi:
-        specifier: ^1.0.1
-        version: 1.0.1
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -2212,9 +2209,6 @@ packages:
   braces@3.0.3:
     resolution: {integrity: sha512-yQbXgO/OSZVD2IsiLlro+7Hf6Q18EJrKSEsdoMzKePKXct3gvD8oLcOQdIzGupr5Fj+EDe8gO/lxc1BzfMpxvA==}
     engines: {node: '>=8'}
-
-  brapi@1.0.1:
-    resolution: {integrity: sha512-FKDFsO6b5kKHi1XeY1BneGCAgQ4XTOo95wpkNw2FWaoF/sRdMZNH92oxuYuVdQd5EhplhZOAG+/pFKp/ARwRZA==}
 
   browserslist@4.28.2:
     resolution: {integrity: sha512-48xSriZYYg+8qXna9kwqjIVzuQxi+KYWp2+5nCYnYKPTr0LvD89Jqk2Or5ogxz0NUMfIjhh2lIUX/LyX9B4oIg==}
@@ -6642,8 +6636,6 @@ snapshots:
   braces@3.0.3:
     dependencies:
       fill-range: 7.1.1
-
-  brapi@1.0.1: {}
 
   browserslist@4.28.2:
     dependencies:
