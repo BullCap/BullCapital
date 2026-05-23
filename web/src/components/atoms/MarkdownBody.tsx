@@ -63,6 +63,28 @@ export function MarkdownBody({ children, className }: MarkdownBodyProps) {
             {children}
           </a>
         ),
+        table: ({ children }) => (
+          <div className="mt-3 overflow-x-auto first:mt-0">
+            <table className="w-full border-collapse text-sm">{children}</table>
+          </div>
+        ),
+        thead: ({ children }) => (
+          <thead className="border-b border-white/10">{children}</thead>
+        ),
+        tbody: ({ children }) => (
+          <tbody className="divide-y divide-white/[0.05]">{children}</tbody>
+        ),
+        tr: ({ children }) => (
+          <tr className="transition-colors hover:bg-white/[0.03]">{children}</tr>
+        ),
+        th: ({ children }) => (
+          <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-[#8B5CF6]/70">
+            {children}
+          </th>
+        ),
+        td: ({ children }) => (
+          <td className="px-3 py-2.5 leading-relaxed text-[#F4F0FF]/70">{children}</td>
+        ),
       }}
         >
           {children}

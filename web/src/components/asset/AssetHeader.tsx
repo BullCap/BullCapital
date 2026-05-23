@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import { VariationBadge } from '@/components/atoms/VariationBadge'
 import { GlassHighlight } from '@/components/atoms/GlassHighlight'
+import { CompanyIcon } from '@/components/atoms/CompanyIcon'
 
 interface AssetHeaderProps {
   ticker: string
@@ -35,7 +36,7 @@ export default function AssetHeader({ ticker, name, price, changePercent, follow
       </div>
 
       <div className="relative mt-8 flex flex-col items-center text-center">
-        <span className="bull-asset-emblem">{ticker.slice(0, 2).toUpperCase()}</span>
+        <CompanyIcon ticker={ticker} size={64} className="bull-asset-emblem p-1.5 bg-[#09111D]/80 border-white/20" />
         <p className="mt-4 max-w-[15rem] truncate text-sm text-[#DBEAFE]/60">{name ?? ticker}</p>
         <h1 className="mt-1 font-serif text-3xl text-[#F4F0FF]">{ticker.toUpperCase()}</h1>
       </div>

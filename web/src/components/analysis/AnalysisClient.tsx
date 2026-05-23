@@ -19,7 +19,11 @@ import {
   type AnalysisResult,
   type AnalysisSections,
 } from '@/lib/actions/analysis'
-import type { ConversationHistory, ConversationTurn } from '@/lib/actions/conversation'
+import type {
+  ConversationArtifact,
+  ConversationHistory,
+  ConversationTurn,
+} from '@/lib/actions/conversation'
 import { ConversationDisclaimer } from './ConversationDisclaimer'
 import { ConversationInput } from './ConversationInput'
 import { ConversationSuggestions } from './ConversationSuggestions'
@@ -134,6 +138,7 @@ export default function AnalysisClient({ ticker, focusLabel, initialQuestion, so
   // Conversation state
   const [turns, setTurns] = useState<ConversationTurn[]>([])
   const [sending, setSending] = useState(false)
+  const [loadingArtifacts, setLoadingArtifacts] = useState(false)
   const [currentSuggestions, setCurrentSuggestions] = useState<string[]>([])
   const [history, setHistory] = useState<ConversationHistory>([])
   const [pendingQuestion, setPendingQuestion] = useState(initialQuestion ?? '')
@@ -146,6 +151,7 @@ export default function AnalysisClient({ ticker, focusLabel, initialQuestion, so
   const pendingTemplate = source === 'news' ? undefined : buildQuestionTemplate(pendingQuestion)
 
   async function run(t: string, template?: AnalysisTemplate) {
+    const startTime = Date.now()
     setActiveMode('asset')
     setLoading(true)
     setError(false)
@@ -162,6 +168,14 @@ export default function AnalysisClient({ ticker, focusLabel, initialQuestion, so
     } else {
       setError(true)
     }
+    
+    // Garantir duração mínima de 800ms para evitar flicker e fazer a transição premium
+    const elapsed = Date.now() - startTime
+    const minDuration = 800
+    if (elapsed < minDuration) {
+      await new Promise((resolve) => setTimeout(resolve, minDuration - elapsed))
+    }
+    
     setLoading(false)
   }
 
@@ -170,10 +184,11 @@ export default function AnalysisClient({ ticker, focusLabel, initialQuestion, so
     setSending(true)
 
     const turnId = crypto.randomUUID()
-    setTurns((prev) => [...prev, { id: turnId, question, answer: '', suggestions: [] }])
+    setTurns((prev) => [...prev, { id: turnId, question, answer: '', artifacts: [], suggestions: [] }])
     setCurrentSuggestions([])
 
     let fullAnswer = ''
+    setLoadingArtifacts(false)
 
     // Word-by-word display — o stream alimenta receivedText, o intervalo
     // consome uma palavra por tick independente da velocidade do LLM
@@ -233,17 +248,23 @@ export default function AnalysisClient({ ticker, focusLabel, initialQuestion, so
               receivedText = String(event.text ?? '')
               fullAnswer = receivedText
               startWordInterval()
+            } else if (event.type === 'loading') {
+              setLoadingArtifacts(true)
             } else if (event.type === 'done') {
+              setLoadingArtifacts(false)
               // Para o intervalo e exibe o texto final completo
               if (displayInterval) { clearInterval(displayInterval); displayInterval = 0 }
               const finalAnswer = String(event.answer ?? fullAnswer)
               const suggestions = Array.isArray(event.suggestions)
                 ? (event.suggestions as string[])
                 : []
+              const artifacts = Array.isArray(event.artifacts)
+                ? (event.artifacts as ConversationArtifact[])
+                : []
               fullAnswer = finalAnswer
               setTurns((prev) =>
                 prev.map((t) =>
-                  t.id === turnId ? { ...t, answer: finalAnswer, suggestions } : t
+                  t.id === turnId ? { ...t, answer: finalAnswer, artifacts, suggestions } : t
                 )
               )
               setCurrentSuggestions(suggestions)
@@ -318,7 +339,7 @@ export default function AnalysisClient({ ticker, focusLabel, initialQuestion, so
         {turns.length === 0 ? (
           // First answer still loading
           <div className="my-auto flex flex-col items-center px-4 py-8 text-center">
-            <span className="bull-advisor-orb animate-pulse">
+            <span className="bull-advisor-orb animate-pulse-glow">
               <span className="bull-brand-mark scale-[1.65]" />
             </span>
             <p className="mt-5 text-sm text-[#DBEAFE]/60">{focusLabel}</p>
@@ -368,7 +389,7 @@ export default function AnalysisClient({ ticker, focusLabel, initialQuestion, so
       <section className="bull-advisor-stage flex min-h-[28rem] flex-col p-5">
         {loading ? (
           <div className="my-auto flex flex-col items-center px-4 py-8 text-center">
-            <span className="bull-advisor-orb animate-pulse">
+            <span className="bull-advisor-orb animate-pulse-glow">
               <span className="bull-brand-mark scale-[1.65]" />
             </span>
             <p className="mt-5 text-sm text-[#DBEAFE]/60">Analisando {focusLabel}</p>
@@ -397,7 +418,7 @@ export default function AnalysisClient({ ticker, focusLabel, initialQuestion, so
           </div>
         ) : result ? (
           <div className="my-auto flex flex-col items-center px-4 py-6 text-center">
-            <span className="bull-advisor-orb">
+            <span className="bull-advisor-orb animate-float">
               <span className="bull-brand-mark scale-[1.65]" />
             </span>
             <p className="mt-6 text-sm text-[#DBEAFE]/60">{result.subject}</p>
@@ -413,7 +434,7 @@ export default function AnalysisClient({ ticker, focusLabel, initialQuestion, so
         ) : (
           <>
             <div className="my-auto flex flex-col items-center px-4 py-10 text-center">
-              <span className="bull-advisor-orb">
+              <span className="bull-advisor-orb animate-float">
                 <span className="bull-brand-mark scale-[1.65]" />
               </span>
               <p className="mt-6 text-sm text-[#DBEAFE]/60">Advisor BullCapital</p>
@@ -433,11 +454,11 @@ export default function AnalysisClient({ ticker, focusLabel, initialQuestion, so
                   type="button"
                   onClick={() => run(focusSubject, template)}
                   disabled={loading}
-                  className={`bull-suggestion-pill w-full snap-start px-5 py-2 text-sm font-extrabold tracking-wide transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8B5CF6]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0B14] ${
+                  className={`w-full snap-start px-5 py-3 rounded-xl border text-sm font-semibold tracking-wide transition-all duration-300 ${
                     activeTemplate === template.id
-                      ? 'border-white/25 bg-white/[0.12] text-[#F4F0FF] shadow-[0_10px_26px_rgba(139,92,246,0.18)]'
-                      : 'border-white/15 text-[#F4F0FF]/85 hover:border-white/25 hover:text-[#F4F0FF] hover:shadow-[0_10px_24px_rgba(139,92,246,0.12)]'
-                  } ${loading ? 'cursor-not-allowed opacity-60' : ''}`}
+                      ? 'border-[#8B5CF6]/45 bg-[#8b5cf6]/14 text-white shadow-[0_4px_16px_rgba(139,92,246,0.15),inset_0_1px_0px_rgba(255,255,255,0.12)]'
+                      : 'border-white/[0.06] bg-white/[0.03] text-[#F4F0FF]/80 hover:border-[#8B5CF6]/25 hover:bg-[#8b5cf6]/5 hover:text-[#C4B5FD] hover:-translate-y-0.5'
+                  } ${loading ? 'cursor-not-allowed opacity-50' : ''}`}
                 >
                   {template.label}
                 </button>
@@ -587,24 +608,26 @@ export default function AnalysisClient({ ticker, focusLabel, initialQuestion, so
       ── */}
       {(activeMode === 'news' || result) && (
         <>
-          <ConversationSuggestions
-            suggestions={currentSuggestions}
-            onSelect={handleQuestion}
-            disabled={sending}
-          />
-
-          <ConversationThread turns={turns} sending={sending} />
+          <ConversationThread turns={turns} sending={sending} loadingArtifacts={loadingArtifacts} ticker={ticker} />
 
           {/* In news mode only show input once first answer has arrived */}
           {(activeMode !== 'news' || !initialQuestion || turns.length > 0) && (
-            <ConversationInput
-              onSubmit={handleQuestion}
-              disabled={sending}
-              subjectLabel={
-                ticker ?? (activeMode === 'news' ? 'este evento' : (result?.subject ?? focusLabel))
-              }
-              initialValue={activeMode === 'news' ? '' : pendingQuestion}
-            />
+            <>
+              <ConversationSuggestions
+                suggestions={currentSuggestions}
+                onSelect={handleQuestion}
+                disabled={sending}
+              />
+
+              <ConversationInput
+                onSubmit={handleQuestion}
+                disabled={sending}
+                subjectLabel={
+                  ticker ?? (activeMode === 'news' ? 'este evento' : (result?.subject ?? focusLabel))
+                }
+                initialValue={activeMode === 'news' ? '' : pendingQuestion}
+              />
+            </>
           )}
 
           <ConversationDisclaimer variant="footer" />

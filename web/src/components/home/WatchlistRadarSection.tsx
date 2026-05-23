@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { ArrowRight, Bookmark, Sparkles } from 'lucide-react'
 import { GlassHighlight } from '@/components/atoms/GlassHighlight'
 import { VariationBadge } from '@/components/atoms/VariationBadge'
+import { CompanyIcon } from '@/components/atoms/CompanyIcon'
 import { getWatchlist } from '@/lib/actions/watchlist'
 import { getMultipleQuotes } from '@/lib/services/market'
 import { buildAssetHref } from '@/lib/market-routing'
@@ -52,12 +53,13 @@ export default async function WatchlistRadarSection({ fallbackItems }: Watchlist
             return (
               <div key={q.symbol} className="bull-panel-quiet flex items-center gap-3 px-3.5 py-3">
                 <Link href={assetHref} className="flex min-w-0 flex-1 items-center gap-3 group">
-                  <span className={`inline-flex min-h-8 shrink-0 items-center rounded-full border px-3 text-[11px] font-medium transition group-hover:opacity-80 ${q.regularMarketChangePercent >= 0 ? TONE_STYLES.up : TONE_STYLES.down}`}>
-                    {q.symbol}
-                  </span>
+                  <CompanyIcon ticker={q.symbol} size={32} className="bg-[#09111D]/70 border-white/10" />
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-xs text-[#F4F0FF]/55">{q.shortName}</p>
-                    <p className="mt-0.5 text-sm font-medium text-[#F4F0FF]">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-sm font-semibold text-[#F4F0FF] group-hover:text-[#C4B5FD] transition">{q.symbol}</span>
+                      <span className="truncate text-[10px] text-[#F4F0FF]/40 max-w-[5rem]">{q.shortName}</span>
+                    </div>
+                    <p className="mt-0.5 text-xs text-[#F4F0FF]/55">
                       {q.regularMarketPrice.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2 })}
                     </p>
                   </div>
@@ -111,16 +113,17 @@ function FallbackRadar({ items }: { items: RadarPulseItem[] }) {
           <Link
             key={`${item.ticker}-${item.label}`}
             href={item.href}
-            className="bull-panel-quiet flex items-start gap-3 p-3.5 transition hover:-translate-y-0.5 hover:bg-white/[0.06]"
+            className="bull-panel-quiet flex items-start gap-3 p-3.5 transition hover:-translate-y-0.5 hover:bg-white/[0.06] group"
           >
-            <span className={`inline-flex min-h-8 shrink-0 items-center rounded-full border px-3 text-[11px] font-medium ${TONE_STYLES[item.tone]}`}>
-              {item.ticker}
-            </span>
+            <CompanyIcon ticker={item.ticker} size={32} className="bg-[#09111D]/70 border-white/10" />
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium text-[#F4F0FF]">{item.label}</p>
-              <p className="mt-1 text-sm leading-5 text-[#F4F0FF]/62">{item.description}</p>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[11px] font-bold text-[#C4B5FD]">{item.ticker}</span>
+                <span className="text-xs font-semibold text-[#F4F0FF] truncate max-w-[8rem] group-hover:text-[#C4B5FD] transition">{item.label}</span>
+              </div>
+              <p className="mt-1 text-[11px] leading-5 text-[#F4F0FF]/62">{item.description}</p>
             </div>
-            <ArrowRight size={15} className="mt-1 shrink-0 text-[#F4F0FF]/28" />
+            <ArrowRight size={15} className="mt-1 shrink-0 text-[#F4F0FF]/28 group-hover:text-[#C4B5FD] transition" />
           </Link>
         ))}
       </div>

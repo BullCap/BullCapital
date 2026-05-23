@@ -29,16 +29,16 @@ export default function DailyBriefHero({
   summary,
 }: DailyBriefHeroProps) {
   return (
-    <section className="bull-panel-focus p-6 md:p-7">
+    <section className="bull-panel-focus p-8 md:p-10">
       <GlassHighlight widthPercent={74} />
 
-      <div className="flex flex-col gap-5">
+      <div className="flex flex-col gap-6">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="bull-chip">{dateLabel}</span>
-          <span className="bull-chip">{storiesCount} historias no radar</span>
+          <span className="bull-chip text-[11px] px-3.5 py-1.5 bg-white/[0.04] border-white/[0.06]">{dateLabel}</span>
+          <span className="bull-chip text-[11px] px-3.5 py-1.5 bg-white/[0.04] border-white/[0.06]">{storiesCount} histórias no radar</span>
           {aiGenerated && (
-            <span className="inline-flex items-center gap-1 rounded-full border border-[#8B5CF6]/20 bg-[#8B5CF6]/8 px-2.5 py-1 text-[10px] uppercase tracking-[0.12em] text-[#8B5CF6]/60">
-              <Sparkles size={9} />
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-[#8B5CF6]/30 bg-[#8B5CF6]/10 px-3 py-1 text-[10px] uppercase tracking-[0.14em] text-[#C4B5FD] font-semibold">
+              <Sparkles size={9} className="animate-pulse" />
               IA
             </span>
           )}
@@ -46,36 +46,36 @@ export default function DailyBriefHero({
 
         <div className="max-w-3xl">
           <p className="bull-eyebrow">Daily brief</p>
-          <h2 className="mt-3 font-serif text-[2rem] leading-tight text-[#F4F0FF] md:text-[2.35rem]">
+          <h2 className="mt-3 font-serif text-[2.5rem] leading-tight text-white tracking-tight md:text-[3.15rem]">
             {headline}
           </h2>
-          <p className="mt-3 max-w-2xl text-sm leading-6 text-[#F4F0FF]/68 md:text-[15px]">
+          <p className="mt-4 max-w-2xl text-base font-semibold leading-relaxed text-[#F4F0FF]/85 md:text-[17px]">
             {summary}
           </p>
-          <p className="mt-3 text-xs uppercase tracking-[0.14em] text-[#DBEAFE]/46">
+          <p className="mt-4 text-[10px] uppercase tracking-[0.16em] font-extrabold text-[#DBEAFE]/40">
             {contextLine}
           </p>
         </div>
 
-        <div className="grid gap-3 md:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-3">
           {focusPoints.map((point) => (
-            <div key={point} className="bull-panel-quiet px-4 py-3">
-              <p className="text-sm leading-6 text-[#F4F0FF]/74">{point}</p>
+            <div key={point} className="bull-panel-quiet px-5 py-4.5 flex items-center">
+              <p className="text-[15px] font-bold leading-relaxed text-white">{point}</p>
             </div>
           ))}
         </div>
 
         {suggestedPrompts && suggestedPrompts.length > 0 && (
-          <div className="flex flex-col gap-2">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-[#DBEAFE]/42">
+          <div className="flex flex-col gap-3 mt-2">
+            <p className="text-[10px] uppercase tracking-[0.16em] font-semibold text-[#DBEAFE]/35">
               Perguntas do dia
             </p>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2.5">
               {suggestedPrompts.map((prompt) => (
                 <Link
                   key={prompt.href}
                   href={prompt.href}
-                  className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-[#8B5CF6]/25 bg-[#8B5CF6]/10 px-4 text-xs font-medium text-[#C4B5FD] transition hover:bg-[#8B5CF6]/18 hover:text-[#DDD6FE]"
+                  className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-[#8B5CF6]/15 bg-[#8b5cf6]/5 px-4 py-1 text-[11px] font-medium text-[#C4B5FD] transition-all duration-300 hover:bg-[#8B5CF6]/14 hover:border-[#8B5CF6]/35 active:scale-[0.97]"
                 >
                   <Sparkles size={11} />
                   {prompt.label}
@@ -85,17 +85,17 @@ export default function DailyBriefHero({
           </div>
         )}
 
-        <div className="flex flex-col gap-3 sm:flex-row">
+        <div className="flex flex-col gap-3.5 sm:flex-row mt-3">
           <Link
             href="/analysis"
-            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl border border-[#60A5FA]/25 bg-[#3B82F6]/16 px-5 text-sm font-medium text-[#F4F0FF] transition hover:-translate-y-0.5 hover:bg-[#3B82F6]/24"
+            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-[#8B5CF6]/30 bg-gradient-to-b from-[#8B5CF6]/20 to-[#8B5CF6]/8 px-6 text-sm font-semibold tracking-wide text-white transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_12px_24px_rgba(139,92,246,0.18),inset_0_1px_1px_rgba(255,255,255,0.18)] active:translate-y-0 active:scale-[0.98]"
           >
             <Sparkles size={16} />
             Abrir leitura do mercado
           </Link>
           <Link
             href="/news"
-            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.06] px-5 text-sm text-[#F4F0FF]/78 transition hover:bg-white/[0.1] hover:text-[#F4F0FF]"
+            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-6 text-sm font-medium text-[#F4F0FF]/85 transition-all duration-300 hover:-translate-y-0.5 hover:bg-white/[0.08] hover:shadow-[0_12px_24px_rgba(0,0,0,0.35)] active:translate-y-0 active:scale-[0.98]"
           >
             <Newspaper size={16} />
             Abrir radar de notícias

@@ -44,13 +44,13 @@ export function PriceChartArtifact({ ticker, title, range = '1mo', chartNote }: 
         if (cancelled) return
 
         const history = result?.history ?? []
-        if (history.length >= MIN_SERIES_POINTS) {
+        if (history.length > 0) {
           setData(history)
           setIsMockHistory(false)
           return
         }
 
-        setData(getMockAssetHistory(activeRange, history.at(-1)?.close))
+        setData(getMockAssetHistory(activeRange, undefined))
         setIsMockHistory(true)
       })
       .catch(() => {

@@ -125,6 +125,7 @@ export interface AssetHistoricalPrice {
 
 export interface AssetNewsItem {
   title: string
+  originalTitle?: string | null
   publisher: string
   link: string
   publishedAt: number

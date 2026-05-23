@@ -6,6 +6,7 @@ import { Search, ArrowUpRight } from 'lucide-react'
 import { GlassHighlight } from '@/components/atoms/GlassHighlight'
 import type { AssetNewsItem, AssetSearchResult } from '@/types/market'
 import { buildAssetHref } from '@/lib/market-routing'
+import { CompanyIcon } from '@/components/atoms/CompanyIcon'
 
 const TYPE_LABELS: Record<string, string> = {
   stock: 'Ação',
@@ -65,30 +66,30 @@ export default function SearchClient({ news }: SearchClientProps) {
   return (
     <div className="flex flex-col gap-3">
       {/* Search input + results — mesmo card, sem gap */}
-      <div className="bull-panel overflow-hidden p-0">
+      <div className="bull-panel overflow-hidden p-0 group/portal focus-within:border-[#8B5CF6]/55 focus-within:shadow-[inset_0_2px_4px_rgba(0,0,0,0.55),0_0_24px_rgba(139,92,246,0.22)] focus-within:bg-[#0f0c18]/95 focus-within:scale-[0.995] focus-within:-translate-y-0">
         <GlassHighlight widthPercent={60} />
 
-        <div className="flex items-center gap-3 px-4 py-4">
-          <Search size={16} className="shrink-0 text-[#F4F0FF]/40" />
+        <div className="flex items-center gap-3.5 pl-7 pr-5 py-[22px]">
+          <Search size={20} className="shrink-0 text-[#F4F0FF]/35 transition-colors duration-300 group-focus-within/portal:text-[#8B5CF6] group-focus-within/portal:filter group-focus-within/portal:drop-shadow-[0_0_8px_#8B5CF6]" />
           <input
             autoFocus
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="PETR4, Vale, Itaú…"
-            className="flex-1 bg-transparent text-sm text-[#F4F0FF] placeholder:text-[#F4F0FF]/35 focus:outline-none"
+            className="flex-1 bg-transparent text-[17px] font-bold text-white placeholder:text-[#F4F0FF]/25 focus:outline-none"
           />
           {loading && (
-            <span className="text-[11px] text-[#DBEAFE]/45">Buscando…</span>
+            <span className="text-xs text-[#8B5CF6] font-mono font-bold animate-pulse">Buscando…</span>
           )}
         </div>
 
         {showList && (
           <>
-            <div className="mx-4 h-px bg-white/[0.07]" />
+            <div className="mx-4 h-px bg-white/[0.06]" />
             {isEmpty ? (
               <div className="flex h-20 items-center justify-center">
-                <p className="text-sm text-[#F4F0FF]/40">Nenhum ativo encontrado</p>
+                <p className="text-sm font-semibold text-[#F4F0FF]/40">Nenhum ativo encontrado</p>
               </div>
             ) : (
               <div className="bull-scroll max-h-72 overflow-y-auto p-2">
@@ -96,26 +97,26 @@ export default function SearchClient({ news }: SearchClientProps) {
                   <Link
                     key={item.symbol}
                     href={buildAssetHref(item.symbol)}
-                    className="group flex items-center gap-3 rounded-[1.25rem] px-3 py-3 transition hover:bg-white/[0.05]"
+                    className="group flex items-center gap-3.5 rounded-[1.25rem] px-4 py-3.5 transition-all duration-300 hover:bg-white/[0.05] hover:shadow-[inset_0_1px_0px_rgba(255,255,255,0.06)]"
                   >
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-[#111827]/60">
-                      <span className="text-xs font-bold text-[#8B5CF6]">
-                        {item.symbol.slice(0, 2)}
-                      </span>
-                    </div>
+                    <CompanyIcon
+                      ticker={item.symbol}
+                      size={44}
+                      className="rounded-[0.95rem] bg-[#0A0810]/60 border border-white/10 group-hover:border-[#8B5CF6]/50 group-hover:bg-[#8B5CF6]/15 group-hover:shadow-[0_0_12px_rgba(139,92,246,0.15)] transition-all duration-300"
+                    />
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-[#F4F0FF]">{item.symbol}</p>
-                      <p className="truncate text-xs text-[#DBEAFE]/50">{item.name}</p>
+                      <p className="text-base font-bold text-[#F4F0FF] group-hover:text-white transition-colors">{item.symbol}</p>
+                      <p className="truncate text-xs font-semibold text-[#DBEAFE]/45 group-hover:text-[#DBEAFE]/60 transition-colors">{item.name}</p>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-3">
                       {item.type && TYPE_LABELS[item.type] && (
-                        <span className="rounded-full border border-white/10 bg-white/[0.05] px-2 py-0.5 text-[10px] text-[#F4F0FF]/50">
+                        <span className="rounded-full border border-[#8B5CF6]/30 bg-[#8B5CF6]/8 px-3 py-0.5 text-[10px] uppercase tracking-wider font-extrabold text-[#C4B5FD]">
                           {TYPE_LABELS[item.type]}
                         </span>
                       )}
                       <ArrowUpRight
-                        size={14}
-                        className="text-[#F4F0FF]/25 group-hover:text-[#F4F0FF]/55 transition"
+                        size={16}
+                        className="text-[#F4F0FF]/35 group-hover:text-[#8B5CF6] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all duration-300"
                       />
                     </div>
                   </Link>

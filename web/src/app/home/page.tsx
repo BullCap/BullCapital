@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import { auth } from '@/lib/auth'
 import { buildAssetHref } from '@/lib/market-routing'
-import { getMarketListings } from '@/lib/services/market'
+import { getMarketListings, getAssetHistory } from '@/lib/services/market'
 import { getNewsRadarItems } from '@/lib/news-radar'
 import {
   computeTemperature,
@@ -26,14 +26,6 @@ import AppShell from '@/components/navigation/AppShell'
 import ScrollFocus from '@/components/ui/ScrollFocus'
 import { Suspense } from 'react'
 
-function getGreeting(name: string | null, email: string | null): string {
-  const brt = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }))
-  const hour = brt.getHours()
-  const firstName = name?.trim().split(/\s+/)[0] ?? email?.split('@')[0] ?? 'você'
-  if (hour < 12) return `Bom dia, ${firstName}.`
-  if (hour < 18) return `Boa tarde, ${firstName}.`
-  return `Boa noite, ${firstName}.`
-}
 
 function getInitials(name: string | null, email: string | null): string {
   if (name) {
@@ -160,6 +152,7 @@ export default async function HomePage() {
     gainersResult,
     losersResult,
     storyResult,
+    historyResult,
   ] =
     await Promise.allSettled([
       fetchIndexFromYfinance('^BVSP'),
@@ -169,11 +162,18 @@ export default async function HomePage() {
       getMarketListings({ sortBy: 'change', sortOrder: 'desc', limit: 6, type: 'stock' }),
       getMarketListings({ sortBy: 'change', sortOrder: 'asc', limit: 6, type: 'stock' }),
       getNewsRadarItems(),
+      getAssetHistory(['^BVSP', '^GSPC'], '1mo'),
     ])
 
   const ibov = ibovResult.status === 'fulfilled' ? ibovResult.value : null
   const sp500 = sp500Result.status === 'fulfilled' ? sp500Result.value : null
   const vix = vixResult.status === 'fulfilled' ? (vixResult.value?.price ?? null) : null
+
+  const historyData = historyResult.status === 'fulfilled' ? historyResult.value : null
+  const ibovHistory = historyData?.results?.find((r) => r.symbol === '^BVSP')?.history ?? []
+  const sp500History = historyData?.results?.find((r) => r.symbol === '^GSPC')?.history ?? []
+  const ibovCloses = ibovHistory.map((h) => h.close).filter(Number.isFinite)
+  const sp500Closes = sp500History.map((h) => h.close).filter(Number.isFinite)
 
   const temperature = ibov ? computeTemperature(ibov.changePercent, vix) : null
 
@@ -244,7 +244,10 @@ export default async function HomePage() {
     },
   ]
 
-  const greeting = getGreeting(session.user.name ?? null, session.user.email ?? null)
+  const brt = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }))
+  const hour = brt.getHours()
+  const firstName = session.user.name?.trim().split(/\s+/)[0] ?? session.user.email?.split('@')[0] ?? 'você'
+  const greetingStart = hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite'
   const initials = getInitials(session.user.name ?? null, session.user.email ?? null)
   const storyLine = topStories.length > 0
     ? `${topStories.length} históri${topStories.length === 1 ? 'a relevante' : 'as relevantes'} no radar de hoje.`
@@ -252,15 +255,17 @@ export default async function HomePage() {
 
   return (
     <AppShell active="market" contentClassName="md:max-w-none">
-      <header className="flex items-start justify-between gap-4 px-1">
+      <header className="flex items-start justify-between gap-4 px-1 pb-2">
         <div>
           <p className="bull-eyebrow">{dateLabel}</p>
-          <h1 className="mt-2 font-serif text-3xl text-[#F4F0FF]">{greeting}</h1>
+          <h1 className="mt-2 font-serif text-3xl md:text-4xl tracking-tight text-[#F4F0FF]">
+            {greetingStart}, <span className="text-gradient-amethyst font-semibold">{firstName}</span>.
+          </h1>
           <p className="mt-1 text-sm text-[#DBEAFE]/55">{storyLine}</p>
         </div>
         <span
           aria-hidden="true"
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#8B5CF6]/35 bg-[#8B5CF6]/15 text-sm font-semibold tracking-wide text-[#C4B5FD]"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/[0.06] text-xs font-semibold tracking-wide text-[#F4F0FF] shadow-[inset_0_1px_1px_rgba(255,255,255,0.12),0_4px_12px_rgba(0,0,0,0.3)] backdrop-blur-xl"
         >
           {initials}
         </span>
@@ -303,6 +308,7 @@ export default async function HomePage() {
                 price={ibov?.price ?? null}
                 changePercent={ibov?.changePercent ?? null}
                 isOpen={marketOpen}
+                historyData={ibovCloses}
               />
             </ScrollFocus>
             <ScrollFocus>
@@ -311,6 +317,7 @@ export default async function HomePage() {
                 price={sp500?.price ?? null}
                 changePercent={sp500?.changePercent ?? null}
                 isOpen={marketOpen}
+                historyData={sp500Closes}
               />
             </ScrollFocus>
             <ScrollFocus className="md:col-span-2">
