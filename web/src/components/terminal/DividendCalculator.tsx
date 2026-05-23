@@ -128,19 +128,19 @@ export default function DividendCalculator({ state, onChange, initialQuotes }: D
       </div>
 
       {/* Formulário de Parâmetros */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
         {/* Ativo Ticker */}
-        <div className="flex flex-col gap-1.5">
-          <label className="text-xs font-semibold text-[#F4F0FF]/60 flex items-center gap-1">
+        <div className="flex flex-col gap-2">
+          <label className="text-xs font-bold uppercase tracking-wider text-[#F4F0FF]/85 flex items-center gap-1">
             Ativo (B3)
             <span className="cursor-help" title="Selecione um ativo popular ou digite um ticker customizado da B3.">
-              <HelpCircle size={12} className="text-[#F4F0FF]/40" />
+              <HelpCircle size={13} className="text-[#8B5CF6]/80" />
             </span>
           </label>
           <select
             value={ticker}
             onChange={(e) => setTicker(e.target.value.toUpperCase())}
-            className="h-10 rounded-xl border border-white/10 bg-[#1A1625]/60 px-3 text-sm text-[#F4F0FF] focus:outline-none focus:ring-1 focus:ring-[#8B5CF6] transition"
+            className="bull-select w-full text-base font-bold"
           >
             <option value="TAEE11">TAEE11 (Taesa)</option>
             <option value="BBAS3">BBAS3 (Banco do Brasil)</option>
@@ -152,106 +152,106 @@ export default function DividendCalculator({ state, onChange, initialQuotes }: D
         </div>
 
         {/* Quantidade de Cotas */}
-        <div className="flex flex-col gap-1.5">
-          <label className="text-xs font-semibold text-[#F4F0FF]/60">Quantidade de Cotas</label>
+        <div className="flex flex-col gap-2">
+          <label className="text-xs font-bold uppercase tracking-wider text-[#F4F0FF]/85">Quantidade de Cotas</label>
           <input
             type="number"
             min="1"
             value={shares || ''}
             onChange={(e) => setShares(Math.max(1, parseInt(e.target.value) || 0))}
-            className="h-10 rounded-xl border border-white/10 bg-[#1A1625]/60 px-3 text-sm text-[#F4F0FF] focus:outline-none focus:ring-1 focus:ring-[#8B5CF6] transition"
+            className="bull-input w-full text-base font-bold"
           />
         </div>
 
         {/* Preço Médio */}
-        <div className="flex flex-col gap-1.5">
-          <label className="text-xs font-semibold text-[#F4F0FF]/60">Preço Médio (R$)</label>
+        <div className="flex flex-col gap-2">
+          <label className="text-xs font-bold uppercase tracking-wider text-[#F4F0FF]/85">Preço Médio (R$)</label>
           <input
             type="number"
             step="0.01"
             min="0.01"
             value={averageCost || ''}
             onChange={(e) => setAverageCost(Math.max(0.01, parseFloat(e.target.value) || 0))}
-            className="h-10 rounded-xl border border-white/10 bg-[#1A1625]/60 px-3 text-sm text-[#F4F0FF] focus:outline-none focus:ring-1 focus:ring-[#8B5CF6] transition"
+            className="bull-input w-full text-base font-bold"
           />
         </div>
 
         {/* Aporte Mensal (Cotas) */}
-        <div className="flex flex-col gap-1.5">
-          <label className="text-xs font-semibold text-[#F4F0FF]/60">Aporte Mensal (Cotas)</label>
+        <div className="flex flex-col gap-2">
+          <label className="text-xs font-bold uppercase tracking-wider text-[#F4F0FF]/85">Aporte Mensal (Cotas)</label>
           <input
             type="number"
             min="0"
             value={monthlyAporte}
             onChange={(e) => setMonthlyAporte(Math.max(0, parseInt(e.target.value) || 0))}
-            className="h-10 rounded-xl border border-white/10 bg-[#1A1625]/60 px-3 text-sm text-[#F4F0FF] focus:outline-none focus:ring-1 focus:ring-[#8B5CF6] transition"
+            className="bull-input w-full text-base font-bold"
           />
         </div>
       </div>
 
       {/* Caixa de Info do Ativo Ativo */}
-      <div className="flex items-center gap-3 rounded-xl border border-white/5 bg-white/[0.02] p-3 text-xs text-[#F4F0FF]/70">
-        <Info size={14} className="text-[#8B5CF6] shrink-0" />
+      <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.03] p-4 text-xs font-semibold text-[#F4F0FF]/80">
+        <Info size={15} className="text-[#8B5CF6] shrink-0" />
         <p>
-          Mapeado: <span className="font-semibold text-[#F4F0FF]">{asset.name} ({ticker})</span>. Preço de Mercado estimado:{' '}
-          <span className="font-semibold text-[#F4F0FF]">
+          Mapeado: <span className="font-bold text-[#F4F0FF]">{asset.name} ({ticker})</span>. Preço de Mercado estimado:{' '}
+          <span className="font-bold text-[#F4F0FF]">
             {currentPrice.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
           </span>
           . Dividend Yield histórico mapeado:{' '}
-          <span className="font-semibold text-[#8B5CF6]">{dyPercentage.toFixed(2)}% ao ano</span>.
+          <span className="font-bold text-[#8B5CF6]">{dyPercentage.toFixed(2)}% ao ano</span>.
         </p>
       </div>
 
       {/* Grid de Resultados Primários */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
         {/* Renda Passiva Mensal */}
-        <div className="relative rounded-2xl border border-white/5 bg-white/[0.03] p-4 flex flex-col gap-1 overflow-hidden">
-          <p className="text-xs font-semibold text-[#F4F0FF]/50 uppercase tracking-wider">Renda Mensal Estimada</p>
-          <p className="text-2xl font-serif font-bold text-[#F4F0FF] mt-1">
+        <div className="relative rounded-2xl border border-white/5 bg-white/[0.03] p-4 sm:p-5 flex flex-col gap-1 overflow-hidden">
+          <p className="text-xs font-bold text-[#8B5CF6]/95 uppercase tracking-widest">Renda Mensal Estimada</p>
+          <p className="text-xl sm:text-2xl xl:text-3xl font-sans font-black text-[#F4F0FF] tracking-tight leading-tight break-words mt-1.5">
             {currentMonthlyPassiveIncome.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
           </p>
-          <p className="text-xs text-[#F4F0FF]/40">
+          <p className="text-xs font-bold text-[#F4F0FF]/55 mt-1">
             Equivale a {currentAnnualPassiveIncome.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} / ano
           </p>
         </div>
 
         {/* Yield On Cost */}
-        <div className="relative rounded-2xl border border-white/5 bg-white/[0.03] p-4 flex flex-col gap-1 overflow-hidden">
-          <p className="text-xs font-semibold text-[#F4F0FF]/50 uppercase tracking-wider">Yield on Cost (YOC)</p>
-          <p className="text-2xl font-serif font-bold text-[#8B5CF6] mt-1">{yieldOnCost.toFixed(2)}%</p>
-          <p className="text-xs text-[#F4F0FF]/40">Retorno sobre o preço médio investido</p>
+        <div className="relative rounded-2xl border border-white/5 bg-white/[0.03] p-4 sm:p-5 flex flex-col gap-1 overflow-hidden">
+          <p className="text-xs font-bold text-[#8B5CF6]/95 uppercase tracking-widest">Yield on Cost (YOC)</p>
+          <p className="text-xl sm:text-2xl xl:text-3xl font-sans font-black text-[#8B5CF6] tracking-tight leading-tight break-words mt-1.5">{yieldOnCost.toFixed(2)}%</p>
+          <p className="text-xs font-bold text-[#F4F0FF]/55 mt-1">Retorno sobre o preço médio investido</p>
         </div>
 
         {/* Custo Total vs Patrimônio */}
-        <div className="relative rounded-2xl border border-white/5 bg-white/[0.03] p-4 flex flex-col gap-1 overflow-hidden">
-          <p className="text-xs font-semibold text-[#F4F0FF]/50 uppercase tracking-wider">Patrimônio Alocado</p>
-          <p className="text-2xl font-serif font-bold text-[#F4F0FF] mt-1">
+        <div className="relative rounded-2xl border border-white/5 bg-white/[0.03] p-4 sm:p-5 flex flex-col gap-1 overflow-hidden">
+          <p className="text-xs font-bold text-[#8B5CF6]/95 uppercase tracking-widest">Patrimônio Alocado</p>
+          <p className="text-xl sm:text-2xl xl:text-3xl font-sans font-black text-[#F4F0FF] tracking-tight leading-tight break-words mt-1.5">
             {(shares * currentPrice).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
           </p>
-          <p className="text-xs text-[#F4F0FF]/40">
+          <p className="text-xs font-bold text-[#F4F0FF]/55 mt-1">
             Custo total de compra: {(shares * averageCost).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
           </p>
         </div>
       </div>
 
       {/* Número Mágico */}
-      <div className="rounded-2xl border border-white/10 bg-[#8B5CF6]/5 p-5 flex flex-col gap-3 relative overflow-hidden">
+      <div className="rounded-2xl border border-white/10 bg-[#8B5CF6]/5 p-6 flex flex-col gap-3.5 relative overflow-hidden">
         {/* Glow de fundo */}
         <div className="absolute right-0 top-0 w-24 h-24 bg-[#8B5CF6]/10 blur-2xl pointer-events-none rounded-full" />
 
         <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <Zap size={16} className="text-[#8B5CF6] animate-pulse" />
+          <div className="flex items-center gap-2.5">
+            <Zap size={18} className="text-[#8B5CF6] animate-pulse" />
             <div>
-              <h4 className="text-sm font-semibold text-[#F4F0FF]">Efeito "Número Mágico"</h4>
-              <p className="text-xs text-[#F4F0FF]/50">
+              <h4 className="text-base font-bold text-[#F4F0FF]">Efeito "Número Mágico"</h4>
+              <p className="text-xs font-semibold text-[#F4F0FF]/70">
                 Você precisa de <span className="font-bold text-[#F4F0FF]">{magicNumber} cotas</span> de {ticker} para gerar dividendos que compram 1 nova cota mensalmente.
               </p>
             </div>
           </div>
           <div className="text-right shrink-0">
-            <p className="text-xs font-semibold text-[#F4F0FF]/40">Progresso da Meta</p>
-            <p className="text-lg font-bold font-serif text-[#8B5CF6]">{progressToMagicNumber.toFixed(0)}%</p>
+            <p className="text-xs font-bold text-[#F4F0FF]/50">Progresso da Meta</p>
+            <p className="text-xl font-black text-[#8B5CF6]">{progressToMagicNumber.toFixed(0)}%</p>
           </div>
         </div>
 
@@ -262,65 +262,65 @@ export default function DividendCalculator({ state, onChange, initialQuotes }: D
             style={{ width: `${progressToMagicNumber}%` }}
           />
         </div>
-        <p className="text-[11px] text-[#F4F0FF]/40 text-center">
+        <p className="text-xs font-bold text-[#F4F0FF]/55 text-center">
           Você tem {shares} cotas. Faltam {Math.max(0, magicNumber - shares)} cotas para ativar a bola de neve!
         </p>
       </div>
 
       {/* Tabela de Projeções Futuras */}
-      <div className="flex flex-col gap-3">
-        <h4 className="text-xs font-semibold text-[#F4F0FF]/60 uppercase tracking-wider">
+      <div className="flex flex-col gap-4">
+        <h4 className="text-xs font-bold text-[#8B5CF6]/95 uppercase tracking-widest">
           Projeções Futuras (Com Reinvestimento + Aportes)
         </h4>
-        <div className="overflow-x-auto rounded-xl border border-white/5 bg-black/15">
-          <table className="w-full text-left text-xs">
-            <thead className="border-b border-white/5 bg-white/[0.02] text-[#F4F0FF]/60 font-semibold">
+        <div className="overflow-x-auto rounded-xl border border-white/5 bg-black/15 bull-scroll">
+          <table className="w-full text-left text-sm">
+            <thead className="border-b border-white/10 bg-white/[0.03] text-xs font-bold uppercase tracking-wider text-[#F4F0FF]/90">
               <tr>
-                <th className="p-3">Período</th>
-                <th className="p-3">Total de Cotas</th>
-                <th className="p-3">Renda Passiva Mensal</th>
-                <th className="p-3">Patrimônio Estimado</th>
-                <th className="p-3">Total Investido</th>
+                <th className="p-4">Período</th>
+                <th className="p-4">Total de Cotas</th>
+                <th className="p-4">Renda Passiva Mensal</th>
+                <th className="p-4">Patrimônio Estimado</th>
+                <th className="p-4">Total Investido</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5 text-[#F4F0FF]/80">
-              <tr>
-                <td className="p-3 font-semibold text-[#F4F0FF]">1 Ano</td>
-                <td className="p-3">{proj1Yr.shares} cotas</td>
-                <td className="p-3 text-[#8B5CF6] font-semibold">
+              <tr className="hover:bg-white/[0.01] transition-colors">
+                <td className="p-4 font-extrabold text-[#F4F0FF]">1 Ano</td>
+                <td className="p-4 font-bold">{proj1Yr.shares} cotas</td>
+                <td className="p-4 text-[#8B5CF6] font-black text-sm">
                   {proj1Yr.monthlyIncome.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                 </td>
-                <td className="p-3">{proj1Yr.equityValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
-                <td className="p-3 text-[#F4F0FF]/40">{proj1Yr.totalInvested.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
+                <td className="p-4 font-bold">{proj1Yr.equityValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
+                <td className="p-4 font-semibold text-[#F4F0FF]/50">{proj1Yr.totalInvested.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
               </tr>
-              <tr>
-                <td className="p-3 font-semibold text-[#F4F0FF]">3 Anos</td>
-                <td className="p-3">{proj3Yr.shares} cotas</td>
-                <td className="p-3 text-[#8B5CF6] font-semibold">
+              <tr className="hover:bg-white/[0.01] transition-colors">
+                <td className="p-4 font-extrabold text-[#F4F0FF]">3 Anos</td>
+                <td className="p-4 font-bold">{proj3Yr.shares} cotas</td>
+                <td className="p-4 text-[#8B5CF6] font-black text-sm">
                   {proj3Yr.monthlyIncome.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                 </td>
-                <td className="p-3">{proj3Yr.equityValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
-                <td className="p-3 text-[#F4F0FF]/40">{proj3Yr.totalInvested.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
+                <td className="p-4 font-bold">{proj3Yr.equityValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
+                <td className="p-4 font-semibold text-[#F4F0FF]/50">{proj3Yr.totalInvested.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
               </tr>
-              <tr>
-                <td className="p-3 font-semibold text-[#F4F0FF]">5 Anos</td>
-                <td className="p-3">{proj5Yr.shares} cotas</td>
-                <td className="p-3 text-[#8B5CF6] font-semibold">
+              <tr className="hover:bg-white/[0.01] transition-colors">
+                <td className="p-4 font-extrabold text-[#F4F0FF]">5 Anos</td>
+                <td className="p-4 font-bold">{proj5Yr.shares} cotas</td>
+                <td className="p-4 text-[#8B5CF6] font-black text-sm">
                   {proj5Yr.monthlyIncome.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                 </td>
-                <td className="p-3">{proj5Yr.equityValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
-                <td className="p-3 text-[#F4F0FF]/40">{proj5Yr.totalInvested.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
+                <td className="p-4 font-bold">{proj5Yr.equityValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
+                <td className="p-4 font-semibold text-[#F4F0FF]/50">{proj5Yr.totalInvested.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
               </tr>
-              <tr>
-                <td className="p-3 font-semibold text-[#F4F0FF]">10 Anos</td>
-                <td className="p-3">{proj10Yr.shares} cotas</td>
-                <td className="p-3 text-[#8B5CF6] font-semibold text-base">
+              <tr className="hover:bg-white/[0.01] transition-colors">
+                <td className="p-4 font-extrabold text-[#F4F0FF]">10 Anos</td>
+                <td className="p-4 font-bold">{proj10Yr.shares} cotas</td>
+                <td className="p-4 text-[#8B5CF6] font-black text-base">
                   {proj10Yr.monthlyIncome.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                 </td>
-                <td className="p-3 font-semibold text-[#F4F0FF]">
+                <td className="p-4 font-extrabold text-[#F4F0FF]">
                   {proj10Yr.equityValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                 </td>
-                <td className="p-3 text-[#F4F0FF]/40">{proj10Yr.totalInvested.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
+                <td className="p-4 font-semibold text-[#F4F0FF]/50">{proj10Yr.totalInvested.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
               </tr>
             </tbody>
           </table>

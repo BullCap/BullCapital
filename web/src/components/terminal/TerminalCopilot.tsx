@@ -321,7 +321,7 @@ export default function TerminalCopilot({ activeContext }: TerminalCopilotProps)
         <ConversationInput
           onSubmit={handleQuestion}
           disabled={sending}
-          subjectLabel={activeContext.title}
+          subjectLabel={activeContext.type === 'dividends' ? 'dividendos' : activeContext.type === 'compare' ? 'comparação' : 'simulação'}
         />
 
         <ConversationDisclaimer variant="footer" className="mt-1" />
