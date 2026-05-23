@@ -17,9 +17,8 @@ export default async function Page() {
         <p className="text-sm font-medium uppercase tracking-[0.2em] text-[#F4F0FF]/55">
           Inteligência financeira
         </p>
-        <h1 className="mt-4 leading-tight text-[#F4F0FF] flex justify-center items-baseline select-none">
-          <span className="font-serif text-6xl font-bold">B</span>
-          <span className="font-sans text-3xl font-bold tracking-[0.16em] text-[#F4F0FF] uppercase ml-1">cap</span>
+        <h1 className="mt-4 leading-tight text-[#F4F0FF] flex justify-center items-baseline select-none font-serif text-6xl font-bold tracking-wide">
+          BCAP
         </h1>
         <p className="mt-5 text-sm leading-6 text-[#F4F0FF]/70">
           Leia o mercado brasileiro com clareza, contexto e calma.

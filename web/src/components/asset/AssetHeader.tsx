@@ -31,9 +31,8 @@ export default function AssetHeader({ ticker, name, price, changePercent, follow
         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none flex items-center">
           <span className="bull-wordmark flex items-center">
             <span className="bull-brand-mark" />
-            <span className="flex items-baseline">
-              <span className="font-serif font-bold text-[#F4F0FF] text-[20px]">B</span>
-              <span className="font-sans font-bold tracking-[0.14em] text-[#F4F0FF] text-xs uppercase ml-0.5">cap</span>
+            <span className="flex items-baseline font-serif font-bold text-[#F4F0FF] text-[20px] tracking-wide">
+              BCAP
             </span>
           </span>
         </div>
