@@ -1,251 +1,216 @@
-# BullCapital — Agent Knowledge Base
+# CLAUDE.md — Operação do Claude Code na Bull
 
-## What This Is
-
-BullCapital is a Brazilian market intelligence PWA (Progressive Web App). It combines real-time Brazilian market data, visual dashboards, and AI-generated contextual analysis so users can monitor assets, macro indicators, and trends without depending on a generic conversation surface.
-
-The current product thesis: BullCapital is not an AI that tells users where to invest. It is a radar that detects relevant market signals and translates them into clear, source-grounded analysis cards, briefings, and report-ready explanations. This keeps the product in the safer territory of market intelligence and education while preserving room for professional/reporting workflows later.
-
-**The moat direction**: a calm, beautiful UI (not fintech-generic) + Brazilian market context + opinionated monitoring workflows + AI that explains market movements in plain Portuguese, always tied to a specific asset, trend, event, or indicator.
+> **Fonte primária de contexto**: [AGENTS.md](AGENTS.md). Este arquivo complementa o AGENTS.md com **operação específica do Claude Code** (slash commands, modo de comunicação, uso de ferramentas, memória). Leia AGENTS.md primeiro; depois leia este arquivo.
 
 ---
 
-## Architecture
+## 1. Como começar uma sessão neste repo
+
+Quando uma sessão de Claude Code começa, faça (em ordem):
+
+1. Verifique [AGENTS.md](AGENTS.md) §1 e §13 — TL;DR + sprint ativo do MVP.
+2. Cheque `git status` e `git log -5` para entender o estado.
+3. Leia a `spec.md` da feature da branch atual se houver (`specs/<id>-<nome>/spec.md`).
+4. Só então proponha mudanças.
+
+Se a tarefa do usuário não cabe em nenhum sprint ativo do roadmap ([AGENTS.md §13](AGENTS.md)), **pare e confirme** o escopo antes de codar.
+
+---
+
+## 2. Idioma da comunicação
+
+- **Com o usuário (chat)**: português brasileiro, sempre. O dono do repo é brasileiro e escreve em pt-BR.
+- **Em código (variáveis, funções, comentários internos)**: inglês.
+- **Em UI voltada ao usuário final**: pt-BR exclusivo, sem exceções.
+- **Em commit messages, PR titles, spec.md**: pt-BR ou inglês consistente dentro do PR (preferência: pt-BR).
+- **Em logs, erros técnicos, nomes de arquivos**: inglês.
+
+---
+
+## 3. Tom e formato de resposta
+
+- **Conciso por padrão.** O usuário lê o diff; não recite o que mudou.
+- **Sem narrativa de pensamento.** Não escreva "Vou agora ler o arquivo X para entender Y" — apenas leia.
+- **Atualizações curtas durante trabalho longo** (1 linha): quando descobrir algo relevante, quando mudar direção, quando travar.
+- **Resumo final**: 1-2 sentenças. O que mudou + o que falta.
+- **Sem emojis**, exceto se o usuário pedir.
+- **Sem títulos genéricos** ("Resumo", "Conclusão") em respostas curtas.
+- **Refs clicáveis**: use `[arquivo.tsx:42](web/src/.../arquivo.tsx#L42)` para o VSCode abrir o trecho.
+
+---
+
+## 4. Ferramentas — quando usar cada uma
+
+| Situação | Ferramenta |
+|---|---|
+| Achar arquivo por nome/padrão | `Bash` com `find` ou `Glob` |
+| Buscar string/símbolo no código | `Bash` com `grep -r` ou `Grep` |
+| Exploração ampla (>3 buscas, vários ângulos) | `Agent` com `subagent_type=Explore` |
+| Ler arquivo conhecido | `Read` (não `cat`) |
+| Editar arquivo | `Edit` (preserve indentação) |
+| Criar arquivo novo | `Write` (raro — prefira editar) |
+| Múltiplas tarefas (>3 passos) | `TodoWrite` para rastrear |
+| Planejar mudança grande | Plan mode (`ExitPlanMode` ao confirmar) |
+
+**Paralelize tool calls** sempre que não houver dependência. Múltiplas leituras de arquivos diferentes = um único turno com várias `Read` simultâneas.
+
+---
+
+## 5. Slash commands ativos neste repo
+
+O repo usa **Spec Kit**. Os comandos abaixo aparecem no Claude Code:
+
+| Comando | Quando usar |
+|---|---|
+| `/speckit-specify` | Criar/atualizar `spec.md` de uma feature nova |
+| `/speckit-clarify` | Perguntar ao usuário até 5 dúvidas para fechar lacunas do spec |
+| `/speckit-plan` | Gerar `plan.md` com decisões técnicas |
+| `/speckit-tasks` | Gerar `tasks.md` dependency-ordered |
+| `/speckit-analyze` | Auditar consistência spec/plan/tasks |
+| `/speckit-implement` | Executar as tasks da feature |
+| `/speckit-checklist` | Checklist customizado para a feature |
+| `/speckit-git-feature` | Criar branch numerada `008-...` |
+| `/speckit-git-commit` | Auto-commit após comando spec terminar |
+
+**Fluxo padrão para feature nova do roadmap** ([AGENTS.md §13](AGENTS.md)):
 
 ```
-Browser / Mobile (PWA)
-    └── Next.js 15 (App Router, Server Components, PWA)
-            ├── Auth: NextAuth v5 (email/password, JWT)
-            ├── Market Data: Brapi SDK → Brazilian equities, indices, forex
-            └── AI Analysis: FastAPI (api/) ← contextual analysis + briefings
-                    └── PostgreSQL + pgVector
-                            ├── Users / sessions (Prisma)
-                            └── Analyses / optional follow-up context + embeddings (SQLAlchemy async)
-```
-
-**Key decisions:**
-- PWA over native app: zero app store friction, instant deploy, share via WhatsApp link, Android-dominant Brazilian market (Chrome PWA support is excellent)
-- Single backend (FastAPI): Brapi market data calls moved here, one service, one database
-- Next.js stays as BFF: handles auth, serves the PWA, calls FastAPI for contextual analysis
-- No Turborepo: previous project had it, unnecessary overhead for solo/small team
-
----
-
-## Tech Stack
-
-| Layer | Choice | Why |
-|---|---|---|
-| Frontend | Next.js 15 + React 19 | App Router, Server Components, PWA support |
-| Language | TypeScript 5.7 (strict) | Existing codebase, strong typing |
-| Styling | Tailwind CSS + shadcn/ui | Utility-first, consistent with design system |
-| Auth | NextAuth v5 | Already configured, JWT + Prisma adapter |
-| ORM (web) | Prisma 7 + pg adapter | Auth schema already written |
-| Backend | FastAPI (Python) | AI analysis work, async, Agno framework |
-| ORM (api) | SQLAlchemy 2 async | pgVector support |
-| Vectors | pgVector | Conversation history embeddings for RAG |
-| AI | Agno + OpenAI gpt-4o | Contextual analysis and briefing generation |
-| Market Data | Brapi SDK | Brazilian equities, indices, SELIC, IPCA, forex |
-| Database | PostgreSQL 16 | Single instance for MVP |
-
----
-
-## What Has Been Copied (Pre-Built)
-
-These files already exist and work — do not rewrite them:
-
-### `web/src/lib/services/market.ts`
-Seven working Brapi integrations. Do not touch unless adding new endpoints.
-- `getMarketRadarData(ticker)` — radar chart scores (Rentabilidade, Momentum, Liquidez, Valuation, Tendência)
-- `getMarketListings(params)` — paginated asset listings with BDR workaround
-- `getMultipleQuotes(tickers)` — batch quote fetch
-- `getMarketIndicators()` — SELIC + IPCA (24h cache)
-- `searchAssets(query)` — ticker/name search
-- `getMarketStatus()` — IBOVESPA, S&P 500, VIX, VXBR (with Yahoo Finance fallback)
-- `getAssetHistory(tickers, range)` — historical price data, tiered caching
-
-### `web/src/types/market.ts`
-All TypeScript types for market data. Import from here, don't redefine.
-
-### `web/src/components/atoms/MarketTemperatureDial.tsx`
-SVG gauge component. Props: `{ value: number (0-100), stateName: string }`. Pure component, no dependencies. This is a key visual differentiator.
-
-### `web/src/components/atoms/VariationBadge.tsx`
-Price change badge. Shows green/red with percentage. Use everywhere for asset changes.
-
-### `web/src/components/atoms/GlassHighlight.tsx`
-Glass surface shimmer effect used on card tops. Props: `{ widthPercent, className }`. Apply to every card/panel.
-
-### `web/src/lib/auth.ts` + `auth.config.ts`
-NextAuth v5 configured with Credentials (email/password + bcrypt) and JWT strategy. Do not change providers for MVP — no Google OAuth needed yet.
-
-### `web/src/middleware.ts`
-Route protection. Currently protects `/dashboard`, `/settings`, `/portfolio`. Update protected routes list as new screens are added.
-
-### `web/prisma/schema.prisma`
-User + Account + Session schema for NextAuth. Do not modify.
-
-### `api/`
-FastAPI skeleton with:
-- `app/agent/base.py` — AbstractBaseAgent class
-- `app/agent/market_analysis.py` — MarketAnalysisAgent with Agno, gpt-4o, lazy init
-- `app/models/conversation.py` — Conversation + Message with pgVector embeddings
-- `app/core/config.py` — Pydantic settings
-- `app/core/database.py` — SQLAlchemy async session
-
-**These routes need actual implementation (currently placeholders):**
-- `api/app/api/routes/analysis.py` — POST/GET /api/v1/analysis for asset/event/trend analyses
-- `api/app/api/routes/health.py` — add real DB connectivity check
-
----
-
-## MVP Scope — What to Build
-
-**4 screens, no more for v1:**
-
-### 1. Onboarding / Auth (`/` and `/auth`)
-- Landing: app name, one-line value proposition in Portuguese, sign up CTA
-- Sign up: email + password only
-- Sign in: email + password only
-- No OAuth, no social login, no password recovery for MVP
-
-### 2. Home / Market Overview (`/home`)
-- Market temperature dial (already built: `MarketTemperatureDial`)
-- Top movers (gainers/losers) using `getMultipleQuotes`
-- IBOVESPA, S&P 500 index status using `getMarketStatus`
-- SELIC rate indicator using `getMarketIndicators`
-- Entry point to contextual market analysis
-
-### 3. Asset Detail (`/asset/[ticker]`)
-- Price + change badge (`VariationBadge`)
-- Simple price chart (1d/1mo/1y range)
-- Radar chart (Rentabilidade, Momentum, Liquidez, Valuation, Tendência)
-- "Analisar este ativo" action → requests an AI analysis for this asset and its latest signals
-
-### 4. Contextual Analysis (`/analysis` or inline analysis cards)
-- Portuguese analysis cards generated from a specific asset, market mover, macro indicator, or trend
-- Standard sections: "O que aconteceu", "Por que importa", "Impacto potencial", "O que acompanhar", "Riscos e incertezas"
-- Backed by FastAPI `/api/v1/analysis` endpoint
-- No buy/sell/hold recommendation, suitability claim, or portfolio advice
-- Optional future drill-down must stay anchored to the selected asset, event, trend, or generated analysis
-
-**Explicitly OUT of MVP:**
-- Portfolio tracking
-- Full watchlists with alerts and push notifications
-- Price alerts / push notifications
-- Settings screen
-- Social / sharing features
-- Screeners / filters
-- CSV export
-- Professional tools / advanced analysis
-- Open Finance, B3 scraping, brokerage integrations
-- Personalized investment recommendations
-
----
-
-## Design System
-
-Full reference in `system-design.md`. Summary for agents:
-
-**Philosophy**: "The Financial Reading Room" — calm, contextual, serious but approachable. NOT a trading terminal. NOT aggressive colors. Like a well-designed notebook for someone who cares about their financial future.
-
-**Color tokens** (use these, not arbitrary hex values):
-- `#0D0B14` — Void (deepest background)
-- `#1A1625` — Surface (card backgrounds)
-- `#F4F0FF` — Starlight (primary text)
-- `#8B5CF6` — Amethyst (accent, highlights, positive)
-- `#F43F5E` — Rose (negative, alerts)
-- `rgba(255,255,255,0.05-0.15)` — Glass layers
-
-**Typography**:
-- Playfair Display (serif) — headings, card titles, emphasis
-- Inter (sans-serif) — body, labels, numbers
-
-**Component anatomy**:
-- Cards: `rounded-[2.5rem]`, `border border-white/10`, `bg-[#1A1625]/40`, `backdrop-blur-2xl`, `shadow-[inset_0_1px_1px_rgba(255,255,255,0.15)...]`
-- Always apply `GlassHighlight` at top of cards
-- Glows: `absolute` div with `bg-[#8B5CF6]/15 blur-[100px]` behind content
-- Buttons: ghost style, `rounded-xl`, subtle hover states
-
-**Hard rules** (never break these):
-1. No flat design — every surface has depth (shadow, blur, highlight)
-2. No bright or aggressive colors outside the palette
-3. All corners rounded — minimum `rounded-xl`, cards `rounded-[2.5rem]`
-4. Glassmorphism on every card — `backdrop-blur`, `bg-.../40`, `border-white/10`
-5. Portuguese for all user-facing text
-6. No skeleton loaders — use Suspense with graceful empty states
-
----
-
-## Brazilian Market Context
-
-- Target user: 25-45yo investor, creator, student, or lightweight professional who already follows the Brazilian market and wants faster interpretation of assets and trends
-- Language: all UI copy in Brazilian Portuguese (pt-BR)
-- Currency: BRL, format with `toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })`
-- Key indices: IBOVESPA (^BVSP), SELIC rate, IPCA inflation
-- Market hours: B3 opens 10:00-17:00 BRT (UTC-3)
-- Brapi API key required: set `BRAPI_KEY` in environment
-
----
-
-## Environment Variables
-
-```bash
-# web/.env.local
-NEXTAUTH_SECRET=
-NEXTAUTH_URL=http://localhost:3000
-DATABASE_URL=postgresql://...
-BRAPI_KEY=
-
-# api/.env
-DATABASE_URL=postgresql://...
-OPENAI_API_KEY=
-CORS_ORIGINS=http://localhost:3000
+/speckit-git-feature 008-comparador
+/speckit-specify "comparador top-level de 2-4 ativos com narrativa IA pt-BR"
+/speckit-clarify
+/speckit-plan
+/speckit-tasks
+/speckit-analyze
+/speckit-implement
 ```
 
 ---
 
-## Commands
+## 6. Plan mode
 
-```bash
-# Web
-cd web && pnpm install
-pnpm dev                          # localhost:3000
-pnpm prisma migrate dev           # run DB migrations
-
-# API
-cd api
-python -m uvicorn app.main:app --reload --port 8001
-
-# Database
-# Single PostgreSQL instance for MVP
-# Run Alembic migrations: alembic upgrade head (needs alembic/ dir — not yet created)
-```
+Use plan mode para mudanças que afetam >3 arquivos ou introduzem decisão arquitetural. Saia com `ExitPlanMode` apenas depois do usuário confirmar o plano. Não use plan mode para edição trivial.
 
 ---
 
-## What Not to Do
+## 7. TodoWrite
 
-- Do not add Google OAuth or social login — out of scope for MVP
-- Do not split into two databases — one Postgres for everything in MVP
-- Do not add Turborepo or complex monorepo tooling
-- Do not rewrite `market.ts` — it works, use it
-- Do not add portfolio tracking, Open Finance, brokerage ingestion, or alerts — not in MVP
-- Do not add an open-ended IA prompt as a primary surface — analysis must start from a concrete asset, event, trend, or indicator
-- Do not use English in user-facing text — everything is pt-BR
-- Do not use flat UI patterns — always apply the glassmorphism system
-- Do not add Swagger/API docs pages — not for MVP
-- Do not implement Google OAuth — credentials only for now
-- Do not over-engineer the AI — one contextual analysis endpoint is enough for MVP
+Use `TodoWrite` quando a tarefa tem ≥3 passos não-triviais. Mantenha **um único item `in_progress`** por vez. Marque `completed` imediatamente ao terminar (não em batch).
+
+**Não use** para tarefas de 1-2 passos triviais — vira ruído.
 
 ---
 
-<!-- SPECKIT START -->
-## Active Feature Plan
+## 8. Commits e PRs
 
-**Branch**: `005-ai-conversation`
-**Plan**: [specs/005-ai-conversation/plan.md](specs/005-ai-conversation/plan.md)
-**Spec**: [specs/005-ai-conversation/spec.md](specs/005-ai-conversation/spec.md)
-**Tasks**: [specs/005-ai-conversation/tasks.md](specs/005-ai-conversation/tasks.md) *(generated by /speckit-tasks)*
+Conforme [AGENTS.md §9.4 e §9.5](AGENTS.md):
 
-**Key decisions**: Conversa ancorada ao ativo (não chat genérico), histórico em React state apenas (sem DB), novo endpoint `POST /api/v1/conversation`, disclaimer permanente não-dismissível em dois locais, sugestões de follow-up geradas pelo LLM como parte do JSON de resposta, server action `conversation.ts` segue padrão de `analysis.ts`
-<!-- SPECKIT END -->
+- Conventional commits (`feat:`, `fix:`, `style:`, `perf:`, `refactor:`, `docs:`, `chore:`)
+- Não pular hooks (`--no-verify` proibido)
+- Não usar `git add -A` em massa — adicione arquivos específicos
+- Não amendar commits pushed
+- Não commitar `.env*`
+- **Nunca commitar `OpenFinancePortfolio.tsx`** sem decisão explícita (está untracked propositalmente — ver [AGENTS.md §13.2](AGENTS.md))
+
+Para commits, **só commite quando o usuário pedir**. Não seja proativo. Se em dúvida, pergunte.
+
+---
+
+## 9. Memória persistente
+
+A memória do Claude Code está em `/home/joaoh/.claude/projects/-home-joaoh-Documents-Projetos-BullCapital/memory/`.
+
+Salve memória sobre:
+- Preferências do usuário (estilo de trabalho, decisões recorrentes)
+- Feedback explícito ("não faça X", "sempre faça Y")
+- Contexto de iniciativas que não está no código (datas, stakeholders, motivos de pivô)
+
+**NÃO salve** em memória o que já está documentado:
+- Estado do código ou rotas → AGENTS.md §6
+- Roadmap → AGENTS.md §13
+- Design system → system-design.md
+- Convenções → AGENTS.md §9
+
+---
+
+## 10. Cuidado com ações destrutivas
+
+**Sempre confirme antes de**:
+- `git reset --hard`, `git push --force`, `git checkout -- .`
+- Apagar arquivos não-versionados (especialmente `OpenFinancePortfolio.tsx`)
+- Rodar migration que dropa coluna/tabela
+- Mexer em settings do Vercel/Railway
+- Postar em PR/issue do GitHub
+
+**Pode fazer sem perguntar**:
+- Edit em arquivos locais
+- Rodar testes, lint, type-check
+- `git status`, `git diff`, `git log`, `git stash`
+- `pnpm dev`, `pnpm test`
+
+---
+
+## 11. UI e screenshots
+
+Quando o usuário pedir para verificar uma mudança de UI:
+
+1. Rode `pnpm dev` em background.
+2. Use o skill `verify` ou `run` se disponível para abrir browser.
+3. **Não afirme que funcionou sem testar** — se não puder testar (sem browser disponível), diga explicitamente "não verifiquei visualmente".
+4. Teste **golden path + edge cases** + mobile (PWA é Android-first).
+
+---
+
+## 12. Quando o usuário escreve em pt-BR ambíguo
+
+Faça **uma pergunta clarificadora** se a tarefa for grande (>4 arquivos) ou se houver pivô de produto. Use `AskUserQuestion` quando há 2-4 opções discretas.
+
+Não pergunte por trivialidades. "Onde colocar este componente?" se a resposta está em AGENTS.md §6 — apenas siga.
+
+---
+
+## 13. Verificação cruzada de claims
+
+Antes de afirmar que uma feature/função/flag **existe**:
+- Se for um path: `Read` ou `ls`.
+- Se for um símbolo: `grep` ou `Glob`.
+
+Memória pode estar defasada. Código atual sempre vence.
+
+---
+
+## 14. Convenções específicas da Bull para Claude
+
+Estas são preferências expressas que vão além do AGENTS.md:
+
+- **Quando criar componente novo**: copie a anatomia de um componente similar existente (§6 do AGENTS.md). Não invente nova estrutura.
+- **Quando renomear**: prefira deixar consistente com o resto do código mesmo que o nome novo seja "melhor".
+- **Quando achar código duplicado**: aponte mas não refatore sem pedir.
+- **Quando achar bug fora do escopo da tarefa**: aponte em uma linha. Não conserte sem perguntar.
+- **Quando o design do system-design.md parecer pesado para a feature**: ainda assim siga. A consistência visual é parte do produto.
+
+---
+
+## 15. Pós-pivô (24-mai-2026): o que mudou para o Claude
+
+O produto pivotou para B2B (CFP + influencer financeiro) em 24/mai/2026 ([AGENTS.md §2](AGENTS.md)). Isso significa:
+
+- **Persona muda copy.** Se você ver texto antigo falando com "investidor", "seu dinheiro", "rumo aos objetivos" — é candidato a reescrita.
+- **Algumas telas serão arquivadas** (DividendCalculator, SavingsSimulator). Não as estenda; não as use de exemplo.
+- **OpenFinancePortfolio.tsx existe untracked** — não é bug, é decisão. Não comite.
+- **3 features novas no MVP** (comparador, briefing email, exportação PDF) — sprint atual em [AGENTS.md §13](AGENTS.md).
+
+Se o usuário pedir feature que **claramente é para a persona antiga** (ex: "calculadora de aposentadoria"), **pergunte se ainda faz sentido pós-pivô** antes de codar.
+
+---
+
+## Referência rápida
+
+| Quero... | Vá para |
+|---|---|
+| Entender o produto | [AGENTS.md §1-3](AGENTS.md) |
+| Entender a stack | [AGENTS.md §4-5](AGENTS.md) |
+| Achar um componente existente | [AGENTS.md §6](AGENTS.md) |
+| Detalhes de design | [system-design.md](system-design.md) |
+| Saber o que codar agora | [AGENTS.md §13](AGENTS.md) |
+| Saber o que NÃO codar | [AGENTS.md §14](AGENTS.md) |
+| Operação do Claude Code | este arquivo |
