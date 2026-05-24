@@ -1,6 +1,6 @@
 export type TemperatureLevel = 'panico' | 'medo' | 'neutro' | 'ganancia' | 'euforia'
 
-const MARKET_FETCH_TIMEOUT_MS = 20000
+const MARKET_FETCH_TIMEOUT_MS = 10000
 const MARKET_API_URL = process.env.ANALYSIS_API_URL ?? 'http://localhost:8001/api/v1'
 
 export interface ComputedTemperature {
@@ -132,7 +132,7 @@ export async function fetchIndexFromYfinance(
 ): Promise<{ price: number; changePercent: number; name: string | null } | null> {
   try {
     const res = await fetch(`${MARKET_API_URL}/market/quote/${encodeURIComponent(symbol)}`, {
-      cache: 'no-store',
+      next: { revalidate: 60 },
       signal: AbortSignal.timeout(MARKET_FETCH_TIMEOUT_MS),
     })
     if (!res.ok) return null

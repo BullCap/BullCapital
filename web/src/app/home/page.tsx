@@ -2,7 +2,6 @@ import { redirect } from 'next/navigation'
 import { auth } from '@/lib/auth'
 import { buildAssetHref } from '@/lib/market-routing'
 import { getMarketListings, getAssetHistory, getCurrencyRates } from '@/lib/services/market'
-import { getNewsRadarItems } from '@/lib/news-radar'
 import {
   computeTemperature,
   fetchSELIC,
@@ -21,7 +20,7 @@ import MarketMapSection from '@/components/home/MarketMapSection'
 import MarketPlaybookSection from '@/components/home/MarketPlaybookSection'
 import WatchlistRadarSection from '@/components/home/WatchlistRadarSection'
 import type { RadarPulseItem } from '@/components/home/RadarPulseSection'
-import StoryDigestSection from '@/components/home/StoryDigestSection'
+import { StoryDigestLoader, StoryDigestSkeleton } from '@/components/home/StoryDigestLoader'
 import type { NewsRadarItem } from '@/lib/news-radar'
 import AppShell from '@/components/navigation/AppShell'
 import ScrollFocus from '@/components/ui/ScrollFocus'
@@ -153,7 +152,6 @@ export default async function HomePage() {
     ipcaResult,
     gainersResult,
     losersResult,
-    storyResult,
     historyResult,
     fxResult,
   ] =
@@ -165,7 +163,6 @@ export default async function HomePage() {
       fetchIPCA(),
       getMarketListings({ sortBy: 'change', sortOrder: 'desc', limit: 6, type: 'stock' }),
       getMarketListings({ sortBy: 'change', sortOrder: 'asc', limit: 6, type: 'stock' }),
-      getNewsRadarItems(),
       getAssetHistory(['^BVSP', '^GSPC'], '1mo'),
       getCurrencyRates(['USD-BRL', 'EUR-BRL']),
     ])
@@ -218,7 +215,7 @@ export default async function HomePage() {
     new Map([...gainersRaw, ...losersRaw].map((asset) => [asset.stock, asset])).values()
   )
 
-  const topStories = storyResult.status === 'fulfilled' ? storyResult.value.slice(0, 4) : []
+  const topStories: NewsRadarItem[] = []
 
   const radarItems = buildRadarItems(gainers, losers, topStories)
   const marketOpen = isMarketOpen()
@@ -311,7 +308,9 @@ export default async function HomePage() {
         {/* ── Main column ── */}
         <div className="grid content-start gap-5">
           <ScrollFocus>
-            <StoryDigestSection stories={topStories} />
+            <Suspense fallback={<StoryDigestSkeleton />}>
+              <StoryDigestLoader />
+            </Suspense>
           </ScrollFocus>
 
           <ScrollFocus>

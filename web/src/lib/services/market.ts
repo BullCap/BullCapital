@@ -30,7 +30,7 @@ export interface MarketListingsParams {
 }
 
 const MARKET_API_URL = process.env.ANALYSIS_API_URL ?? 'http://localhost:8001/api/v1'
-const MARKET_FETCH_TIMEOUT_MS = 60000
+const MARKET_FETCH_TIMEOUT_MS = 10000
 
 function emptySearch(limit: number): AssetSearchData & { error?: string } {
   return {
@@ -43,14 +43,18 @@ function emptySearch(limit: number): AssetSearchData & { error?: string } {
   }
 }
 
-async function marketGet<T>(path: string, params?: Record<string, string | number | undefined>) {
+async function marketGet<T>(
+  path: string,
+  params?: Record<string, string | number | undefined>,
+  revalidate = 60
+) {
   const url = new URL(`${MARKET_API_URL}${path}`)
   Object.entries(params ?? {}).forEach(([key, value]) => {
     if (value !== undefined) url.searchParams.set(key, String(value))
   })
 
   const response = await fetch(url, {
-    cache: 'no-store',
+    next: { revalidate },
     signal: AbortSignal.timeout(MARKET_FETCH_TIMEOUT_MS),
   })
   if (!response.ok) {
@@ -59,12 +63,12 @@ async function marketGet<T>(path: string, params?: Record<string, string | numbe
   return (await response.json()) as T
 }
 
-async function marketPost<T>(path: string, body: unknown) {
+async function marketPost<T>(path: string, body: unknown, revalidate = 60) {
   const response = await fetch(`${MARKET_API_URL}${path}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
-    cache: 'no-store',
+    next: { revalidate },
     signal: AbortSignal.timeout(MARKET_FETCH_TIMEOUT_MS),
   })
   if (!response.ok) {
@@ -109,7 +113,7 @@ export async function getMultipleQuotes(
   if (tickers.length === 0) return { results: [], error: 'No tickers provided.' }
 
   try {
-    return await marketPost<{ results: AssetQuote[] }>('/market/quotes', { symbols: tickers })
+    return await marketPost<{ results: AssetQuote[] }>('/market/quotes', { symbols: tickers }, 60)
   } catch (error) {
     console.warn('Exception while fetching yfinance quotes:', error)
     return { results: [], error: 'Failed to fetch quotes from yfinance API.' }
@@ -160,7 +164,7 @@ export async function getAssetHistory(
     return await marketGet<AssetHistoryData>('/market/history', {
       tickers: tickers.join(','),
       range,
-    })
+    }, 300)
   } catch (error) {
     console.warn('Exception while fetching yfinance asset history:', error)
     return { results: [], error: 'Failed to fetch asset history from yfinance API.' }
@@ -174,7 +178,7 @@ export async function getAssetNews(
   try {
     return await marketGet<AssetNewsItem[]>(`/market/news/${encodeURIComponent(ticker)}`, {
       count: newsCount,
-    })
+    }, 600)
   } catch {
     return []
   }
