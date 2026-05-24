@@ -139,10 +139,10 @@ export default function MetricStoryModal({
           </div>
 
           {/* Premium Nav Tabs */}
-          <div className="mt-5 flex border-b border-white/[0.06] px-6">
+          <div className="mt-5 flex gap-6 border-b border-white/[0.06] px-6 overflow-x-auto whitespace-nowrap scrollbar-none">
             <button
               onClick={() => setActiveTab('concept')}
-              className={`flex items-center gap-2 border-b-2 pb-3 text-xs font-semibold tracking-wide transition ${
+              className={`flex shrink-0 items-center gap-2 border-b-2 pb-3 text-xs font-semibold tracking-wide transition ${
                 activeTab === 'concept'
                   ? 'border-[#8B5CF6] text-white'
                   : 'border-transparent text-[#F4F0FF]/40 hover:text-[#F4F0FF]/60'
@@ -153,7 +153,7 @@ export default function MetricStoryModal({
             </button>
             <button
               onClick={() => setActiveTab('chart')}
-              className={`ml-6 flex items-center gap-2 border-b-2 pb-3 text-xs font-semibold tracking-wide transition ${
+              className={`flex shrink-0 items-center gap-2 border-b-2 pb-3 text-xs font-semibold tracking-wide transition ${
                 activeTab === 'chart'
                   ? 'border-[#8B5CF6] text-white'
                   : 'border-transparent text-[#F4F0FF]/40 hover:text-[#F4F0FF]/60'
@@ -164,7 +164,7 @@ export default function MetricStoryModal({
             </button>
             <button
               onClick={() => setActiveTab('quotes')}
-              className={`ml-6 flex items-center gap-2 border-b-2 pb-3 text-xs font-semibold tracking-wide transition ${
+              className={`flex shrink-0 items-center gap-2 border-b-2 pb-3 text-xs font-semibold tracking-wide transition ${
                 activeTab === 'quotes'
                   ? 'border-[#8B5CF6] text-white'
                   : 'border-transparent text-[#F4F0FF]/40 hover:text-[#F4F0FF]/60'
@@ -175,7 +175,7 @@ export default function MetricStoryModal({
             </button>
             <button
               onClick={() => setActiveTab('impact')}
-              className={`ml-6 flex items-center gap-2 border-b-2 pb-3 text-xs font-semibold tracking-wide transition ${
+              className={`flex shrink-0 items-center gap-2 border-b-2 pb-3 text-xs font-semibold tracking-wide transition ${
                 activeTab === 'impact'
                   ? 'border-[#8B5CF6] text-white'
                   : 'border-transparent text-[#F4F0FF]/40 hover:text-[#F4F0FF]/60'
