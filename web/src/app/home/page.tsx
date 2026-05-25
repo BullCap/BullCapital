@@ -27,15 +27,6 @@ import ScrollFocus from '@/components/ui/ScrollFocus'
 import { Suspense } from 'react'
 
 
-function getInitials(name: string | null, email: string | null): string {
-  if (name) {
-    const parts = name.trim().split(/\s+/)
-    return parts.length >= 2
-      ? (parts[0][0]! + parts[parts.length - 1][0]!).toUpperCase()
-      : parts[0]!.slice(0, 2).toUpperCase()
-  }
-  return email?.[0]?.toUpperCase() ?? '?'
-}
 
 function formatPercent(value: number | null) {
   if (value === null) return 'n/d'
@@ -265,27 +256,18 @@ export default async function HomePage() {
   const hour = brt.getHours()
   const firstName = session.user.name?.trim().split(/\s+/)[0] ?? session.user.email?.split('@')[0] ?? 'você'
   const greetingStart = hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite'
-  const initials = getInitials(session.user.name ?? null, session.user.email ?? null)
   const storyLine = topStories.length > 0
     ? `${topStories.length} históri${topStories.length === 1 ? 'a relevante' : 'as relevantes'} no radar de hoje.`
     : 'Aqui está o que está movendo o mercado.'
 
   return (
     <AppShell active="market" contentClassName="md:max-w-none">
-      <header className="flex items-start justify-between gap-4 px-1 pb-2">
-        <div>
-          <p className="bull-eyebrow">{dateLabel}</p>
-          <h1 className="mt-2 font-serif text-3xl md:text-4xl tracking-tight text-[#F4F0FF]">
-            {greetingStart}, <span className="text-gradient-amethyst font-semibold">{firstName}</span>.
-          </h1>
-          <p className="mt-1 text-sm text-[#DBEAFE]/55">{storyLine}</p>
-        </div>
-        <span
-          aria-hidden="true"
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/[0.06] text-xs font-semibold tracking-wide text-[#F4F0FF] shadow-[inset_0_1px_1px_rgba(255,255,255,0.12),0_4px_12px_rgba(0,0,0,0.3)] backdrop-blur-xl"
-        >
-          {initials}
-        </span>
+      <header className="px-1 pb-2">
+        <p className="bull-eyebrow">{dateLabel}</p>
+        <h1 className="mt-2 font-serif text-3xl md:text-4xl tracking-tight text-[#F4F0FF]">
+          {greetingStart}, <span className="text-gradient-amethyst font-semibold">{firstName}</span>.
+        </h1>
+        <p className="mt-1 text-sm text-[#DBEAFE]/55">{storyLine}</p>
       </header>
 
       <Suspense fallback={<DailyBriefSkeleton dateLabel={dateLabel} storiesCount={topStories.length} />}>
@@ -303,7 +285,7 @@ export default async function HomePage() {
         />
       </Suspense>
 
-      <div className="grid gap-5 xl:items-start xl:grid-cols-[minmax(0,1fr)_22rem]">
+      <div className="grid gap-5 xl:items-start xl:grid-cols-[minmax(0,1fr)_22rem] 2xl:grid-cols-[minmax(0,1fr)_24rem] 3xl:grid-cols-[minmax(0,1fr)_28rem]">
 
         {/* ── Main column ── */}
         <div className="grid content-start gap-5">
@@ -320,7 +302,12 @@ export default async function HomePage() {
             <MarketMapSection assets={bubbleAssets} />
           </ScrollFocus>
 
-          <div className="grid gap-5 md:grid-cols-2">
+          <div className="px-1 pt-3">
+            <p className="bull-eyebrow">Panorama Macro</p>
+            <h2 className="mt-1 font-serif text-2xl tracking-tight text-[#F4F0FF]/80">Índices & Juros</h2>
+          </div>
+
+          <div className="grid gap-5 md:grid-cols-2 2xl:grid-cols-3">
             <ScrollFocus>
               <IndexCard
                 name="IBOVESPA"
@@ -339,12 +326,17 @@ export default async function HomePage() {
                 historyData={sp500Closes}
               />
             </ScrollFocus>
-            <ScrollFocus className="md:col-span-2">
+            <ScrollFocus className="md:col-span-2 2xl:col-span-1">
               <SELICCard selic={selicData} ipca={ipcaData} />
             </ScrollFocus>
             <ScrollFocus className="md:col-span-2 xl:hidden">
               <VixCard value={vix} />
             </ScrollFocus>
+          </div>
+
+          <div className="px-1 pt-3">
+            <p className="bull-eyebrow">Fluxo do Pregão</p>
+            <h2 className="mt-1 font-serif text-2xl tracking-tight text-[#F4F0FF]/80">Destaques do Dia</h2>
           </div>
 
           <div className="grid gap-5 lg:grid-cols-2">
@@ -362,7 +354,7 @@ export default async function HomePage() {
         </div>
 
         {/* ── Sticky right sidebar (xl+) ── */}
-        <div className="hidden xl:grid xl:content-start xl:gap-5 xl:sticky xl:top-5">
+        <div className="hidden xl:grid xl:content-start xl:gap-5 xl:sticky xl:top-24">
           <VixCard value={vix} />
           <WatchlistRadarSection fallbackItems={radarItems} />
         </div>

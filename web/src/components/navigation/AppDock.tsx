@@ -10,7 +10,7 @@ interface AppDockProps {
 
 export default function AppDock({ active }: AppDockProps) {
   return (
-    <aside className="pointer-events-none fixed inset-x-0 bottom-0 z-30 px-3 pb-[max(env(safe-area-inset-bottom),0.75rem)] lg:pointer-events-auto lg:sticky lg:top-6 lg:inset-auto lg:px-0 lg:pb-0">
+    <aside className="pointer-events-none fixed inset-x-0 bottom-0 z-30 px-3 pb-[max(env(safe-area-inset-bottom),0.75rem)] lg:hidden">
       <div className="bull-dock-shell pointer-events-auto mx-auto flex max-w-sm flex-col gap-2 p-2 lg:max-w-none">
         <nav
           className="grid grid-cols-5 gap-1 rounded-[1.45rem] border border-white/[0.08] bg-black/35 p-1 lg:grid-cols-1"

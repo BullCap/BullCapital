@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { Sparkles, Brain, Landmark, ArrowLeftRight, TrendingUp } from 'lucide-react'
+import { Sparkles, Brain, Landmark, ArrowLeftRight, TrendingUp, Wallet } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ConversationDisclaimer } from '@/components/analysis/ConversationDisclaimer'
 import { ConversationInput } from '@/components/analysis/ConversationInput'
@@ -14,6 +14,7 @@ type ActiveContext =
   | { type: 'dividends'; title: string; data: { ticker: string; shares: number; averageCost: number; monthlyAporte: number } }
   | { type: 'compare'; title: string; data: { tickerA: string; tickerB: string } }
   | { type: 'savings'; title: string; data: { initialCapital: number; monthlyAporte: number; annualYield: number; periodYears: number; adjustInflation: boolean } }
+  | { type: 'openfinance'; title: string; data: { syncedBanks: string[]; totalCapital: number; stocksPercent: number; fixedIncomePercent: number; fiisPercent: number; riskScore: number } }
 
 interface TerminalCopilotProps {
   activeContext: ActiveContext
@@ -51,6 +52,12 @@ export default function TerminalCopilot({ activeContext }: TerminalCopilotProps)
         `Como a inflação brasileira corrói o patrimônio se eu não descontar o IPCA?`,
         `Qual a proporção sugerida para diversificar esse capital na bolsa brasileira?`,
       ]
+    } else if (type === 'openfinance') {
+      suggestions = [
+        `Como posso reduzir o Beta consolidado da minha carteira?`,
+        `Qual o benefício de ter contas XP e Itaú conectadas via Open Finance?`,
+        `Como otimizar a carga tributária do meu patrimônio integrado?`,
+      ]
     }
 
     setCurrentSuggestions(suggestions)
@@ -72,6 +79,8 @@ export default function TerminalCopilot({ activeContext }: TerminalCopilotProps)
       promptText = `Analise minha comparação entre os ativos ${data.tickerA} e ${data.tickerB}. Compare os múltiplos de P/L, dividendos e as notas de radar de ambos para me ajudar a entender os pontos fortes e riscos qualitativos de cada um na B3.`
     } else if (type === 'savings') {
       promptText = `Analise minha simulação de juros compostos em renda variável. Estou investindo R$ ${data.initialCapital} iniciais mais R$ ${data.monthlyAporte} mensais a uma taxa de retorno anual de ${data.annualYield}% por ${data.periodYears} anos. O ajuste pela inflação (IPCA) está ${data.adjustInflation ? 'ATIVADO (Ganho Real)' : 'DESATIVADO (Ganho Nominal)'}. Avalie a viabilidade deste cenário no mercado brasileiro.`
+    } else if (type === 'openfinance') {
+      promptText = `Analise meu portfólio consolidado via Open Finance. Tenho as seguintes contas conectadas: ${data.syncedBanks.length > 0 ? data.syncedBanks.join(', ') : 'Nenhuma corretora sincronizada'}. Meu patrimônio total consolidado nessas contas é de R$ ${data.totalCapital.toLocaleString('pt-BR')} e a alocação atual é de ${data.stocksPercent}% em Ações, ${data.fixedIncomePercent}% em Renda Fixa e ${data.fiisPercent}% em FIIs. Avalie a diversificação de custódia institucional, o Beta de volatilidade e me dê sugestões de rebalanceamento ou otimização tributária no Brasil.`
     }
 
     handleQuestion(promptText)
@@ -190,6 +199,19 @@ export default function TerminalCopilot({ activeContext }: TerminalCopilotProps)
     setSending(false)
   }
 
+  const renderIcon = () => {
+    switch (activeContext.type) {
+      case 'dividends':
+        return <Landmark size={15} />
+      case 'compare':
+        return <ArrowLeftRight size={15} />
+      case 'savings':
+        return <TrendingUp size={15} />
+      case 'openfinance':
+        return <Wallet size={15} />
+    }
+  }
+
   return (
     <div className="relative rounded-[2rem] border border-white/10 bg-[#1A1625]/40 backdrop-blur-2xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),0_12px_40px_rgba(0,0,0,0.4)] overflow-hidden p-5 flex flex-col gap-4 min-h-[500px] max-h-[820px]">
       {/* Brilho Shimmer Superior */}
@@ -199,7 +221,7 @@ export default function TerminalCopilot({ activeContext }: TerminalCopilotProps)
       <div className="flex items-center justify-between border-b border-white/5 pb-3">
         <div className="flex items-center gap-2">
           <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#8B5CF6]/15 border border-[#8B5CF6]/30 text-[#8B5CF6]">
-            <Brain size={15} />
+            {renderIcon()}
           </div>
           <span className="text-xs uppercase tracking-widest text-[#F4F0FF]/60 font-semibold font-serif">
             Copiloto de IA
@@ -220,17 +242,17 @@ export default function TerminalCopilot({ activeContext }: TerminalCopilotProps)
             </span>
             <h3 className="font-serif text-base font-semibold text-[#F4F0FF]">Dúvidas sobre a simulação?</h3>
             <p className="mt-2 text-xs leading-5 text-[#F4F0FF]/50 max-w-xs">
-              Preencha os valores na esquerda e clique no botão abaixo. Eu irei ler sua estratégia de juros ou dividendos e sugerir ajustes, alertar riscos setoriais e prever cenários reais.
+              Preencha os valores na esquerda e clique no botão abaixo. Eu irei ler sua estratégia ou consolidação e sugerir ajustes, alertar riscos setoriais e prever cenários reais.
             </p>
 
             {/* Ação Principal: Analisar Simulação */}
             <button
               onClick={handleAnalyzeSimulation}
-              disabled={sending}
+              disabled={sending || (activeContext.type === 'openfinance' && activeContext.data.syncedBanks.length === 0)}
               className="mt-6 flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-gradient-to-r from-[#8B5CF6] to-[#8B5CF6]/80 text-[#F4F0FF] text-xs font-bold hover:scale-[1.03] active:scale-[0.98] transition-all shadow-[0_4px_16px_rgba(139,92,246,0.25)] border border-white/10 disabled:opacity-40 disabled:scale-100 cursor-pointer"
             >
               <Sparkles size={13} />
-              Analisar Simulação Atual ✦
+              {activeContext.type === 'openfinance' ? 'Analisar Carteira Consolidada ✦' : 'Analisar Simulação Atual ✦'}
             </button>
           </div>
         ) : (
@@ -305,11 +327,11 @@ export default function TerminalCopilot({ activeContext }: TerminalCopilotProps)
         {turns.length > 0 && (
           <button
             onClick={handleAnalyzeSimulation}
-            disabled={sending}
+            disabled={sending || (activeContext.type === 'openfinance' && activeContext.data.syncedBanks.length === 0)}
             className="flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl border border-white/10 bg-white/[0.03] text-xs font-semibold text-[#C4B5FD] hover:bg-[#8B5CF6]/10 transition disabled:opacity-40 cursor-pointer"
           >
             <Sparkles size={11} />
-            Analisar Cenário Atual Novamente ✦
+            {activeContext.type === 'openfinance' ? 'Analisar Carteira Consolidada Novamente ✦' : 'Analisar Cenário Atual Novamente ✦'}
           </button>
         )}
 
@@ -322,7 +344,7 @@ export default function TerminalCopilot({ activeContext }: TerminalCopilotProps)
         <ConversationInput
           onSubmit={handleQuestion}
           disabled={sending}
-          subjectLabel={activeContext.type === 'dividends' ? 'dividendos' : activeContext.type === 'compare' ? 'comparação' : 'simulação'}
+          subjectLabel={activeContext.type === 'dividends' ? 'dividendos' : activeContext.type === 'compare' ? 'comparação' : activeContext.type === 'openfinance' ? 'Open Finance' : 'simulação'}
         />
 
         <ConversationDisclaimer variant="footer" className="mt-1" />

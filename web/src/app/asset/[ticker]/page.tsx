@@ -93,21 +93,32 @@ export default async function AssetPage({ params }: AssetPageProps) {
           isMarketOpen={isMarketOpen()}
         />
       </ScrollFocus>
-      <ScrollFocus>
-        <AssetProfileCard ticker={ticker} profile={profile} />
-      </ScrollFocus>
-      <ScrollFocus>
-        <RadarSection data={radarPoints} />
-      </ScrollFocus>
-      <ScrollFocus>
-        <AssetQuotesTable ticker={ticker} history={initialHistory} />
-      </ScrollFocus>
-      <ScrollFocus>
-        <AssetNewsSection news={news} />
-      </ScrollFocus>
-      <ScrollFocus>
-        <AssetAnalysisCTA ticker={ticker} />
-      </ScrollFocus>
+
+      {/* Grid de Duas Colunas para Telas Grandes */}
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1fr_22rem] 2xl:grid-cols-[1fr_24rem] items-start w-full">
+        {/* Coluna Esquerda: Indicadores de Score, Cotações e Notícias */}
+        <div className="flex flex-col gap-5 min-w-0">
+          <ScrollFocus>
+            <RadarSection data={radarPoints} />
+          </ScrollFocus>
+          <ScrollFocus>
+            <AssetQuotesTable ticker={ticker} history={initialHistory} />
+          </ScrollFocus>
+          <ScrollFocus>
+            <AssetNewsSection news={news} />
+          </ScrollFocus>
+        </div>
+
+        {/* Coluna Direita (Sticky): Perfil e Ações do Copiloto */}
+        <div className="flex flex-col gap-5 xl:sticky xl:top-24 w-full">
+          <ScrollFocus>
+            <AssetProfileCard ticker={ticker} profile={profile} />
+          </ScrollFocus>
+          <ScrollFocus>
+            <AssetAnalysisCTA ticker={ticker} />
+          </ScrollFocus>
+        </div>
+      </div>
     </AppShell>
   )
 }

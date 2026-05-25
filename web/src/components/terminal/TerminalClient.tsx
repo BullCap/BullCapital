@@ -1,15 +1,16 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Landmark, ArrowLeftRight, TrendingUp } from 'lucide-react'
+import { Landmark, ArrowLeftRight, TrendingUp, Wallet } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { AssetQuote } from '@/types/market'
 import DividendCalculator from './DividendCalculator'
 import AssetComparator from './AssetComparator'
 import SavingsSimulator from './SavingsSimulator'
+import OpenFinancePortfolio from './OpenFinancePortfolio'
 import TerminalCopilot from './TerminalCopilot'
 
-export type SimulatorTab = 'dividends' | 'compare' | 'savings'
+export type SimulatorTab = 'dividends' | 'compare' | 'savings' | 'openfinance'
 
 interface TerminalClientProps {
   initialQuotes: AssetQuote[]
@@ -41,11 +42,20 @@ export default function TerminalClient({ initialQuotes }: TerminalClientProps) {
     adjustInflation: false,
   })
 
+  const [openFinanceState, setOpenFinanceState] = useState({
+    syncedBanks: ['XP', 'ITAU'],
+    totalCapital: 130000,
+    stocksPercent: 27,
+    fixedIncomePercent: 46,
+    fiisPercent: 19,
+    riskScore: 50,
+  })
+
   // Carrega do localStorage ao montar no cliente
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const savedTab = localStorage.getItem('bull_terminal_active_tab') as SimulatorTab
-      if (savedTab && ['dividends', 'compare', 'savings'].includes(savedTab)) {
+      if (savedTab && ['dividends', 'compare', 'savings', 'openfinance'].includes(savedTab)) {
         setActiveTab(savedTab)
       }
 
@@ -67,6 +77,13 @@ export default function TerminalClient({ initialQuotes }: TerminalClientProps) {
       if (savedSavings) {
         try {
           setSavingsState(JSON.parse(savedSavings))
+        } catch (_) {}
+      }
+
+      const savedOpenFinance = localStorage.getItem('bull_terminal_openfinance')
+      if (savedOpenFinance) {
+        try {
+          setOpenFinanceState(JSON.parse(savedOpenFinance))
         } catch (_) {}
       }
 
@@ -93,6 +110,11 @@ export default function TerminalClient({ initialQuotes }: TerminalClientProps) {
   const updateSavingsState = (newState: typeof savingsState) => {
     setSavingsState(newState)
     localStorage.setItem('bull_terminal_savings', JSON.stringify(newState))
+  }
+
+  const updateOpenFinanceState = (newState: typeof openFinanceState) => {
+    setOpenFinanceState(newState)
+    localStorage.setItem('bull_terminal_openfinance', JSON.stringify(newState))
   }
 
   if (!isLoaded) {
@@ -127,15 +149,19 @@ export default function TerminalClient({ initialQuotes }: TerminalClientProps) {
           title: 'Simulador de Renda Variável e Juros Compostos',
           data: savingsState,
         }
+      case 'openfinance':
+        return {
+          type: 'openfinance' as const,
+          title: 'Consolidador Open Finance & Análise de Portfólio',
+          data: openFinanceState,
+        }
     }
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[1fr_24rem] gap-6 items-start mt-6">
-      {/* ── Coluna Esquerda: Simuladores ── */}
-      <div className="flex flex-col gap-5">
-        {/* Abas Superiores */}
-        <div className="bull-dock-shell flex p-1 rounded-2xl bg-black/35 border border-white/[0.08] max-w-lg">
+    <div className="flex flex-col gap-5 mt-6">
+      {/* Abas — full-width acima do grid, para que card e copiloto iniciem no mesmo y */}
+      <div className="bull-dock-shell flex p-1 rounded-2xl bg-black/35 border border-white/[0.08] max-w-2xl w-full">
           <button
             onClick={() => handleTabChange('dividends')}
             className={cn(
@@ -172,11 +198,24 @@ export default function TerminalClient({ initialQuotes }: TerminalClientProps) {
             <TrendingUp size={14} />
             Renda Variável
           </button>
+          <button
+            onClick={() => handleTabChange('openfinance')}
+            className={cn(
+              'flex flex-1 items-center justify-center gap-2 py-2.5 px-3 text-xs font-semibold rounded-xl transition',
+              activeTab === 'openfinance'
+                ? 'border border-white/[0.08] bg-white/[0.09] text-[#F4F0FF] shadow-[inset_0_1px_1px_rgba(255,255,255,0.12)] font-bold'
+                : 'text-[#F4F0FF]/55 hover:bg-white/[0.03] hover:text-[#F4F0FF]/80'
+            )}
+          >
+            <Wallet size={14} />
+            Open Finance
+          </button>
         </div>
 
-        {/* Conteúdo Ativo com Efeito Vidro Premium */}
+      {/* Grid: simulador (esq) + copiloto (dir) — ambos alinham no mesmo y */}
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_24rem] gap-6 items-start">
+        {/* Coluna Esquerda: conteúdo do simulador */}
         <div className="relative rounded-[2rem] border border-white/[0.08] bg-[#0f0c18]/50 backdrop-blur-2xl shadow-[inset_0_1px_0px_rgba(255,255,255,0.08),0_18px_48px_rgba(0,0,0,0.45)] overflow-hidden p-5 md:p-6 min-h-[460px]">
-          {/* Brilho Shimmer Superior */}
           <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
 
           {activeTab === 'dividends' && (
@@ -201,12 +240,19 @@ export default function TerminalClient({ initialQuotes }: TerminalClientProps) {
               onChange={updateSavingsState}
             />
           )}
-        </div>
-      </div>
 
-      {/* ── Coluna Direita: Copiloto de IA ── */}
-      <div className="lg:sticky lg:top-6">
-        <TerminalCopilot activeContext={getCopilotContext()} />
+          {activeTab === 'openfinance' && (
+            <OpenFinancePortfolio
+              state={openFinanceState}
+              onChange={updateOpenFinanceState}
+            />
+          )}
+        </div>
+
+        {/* Coluna Direita: Copiloto de IA */}
+        <div className="lg:sticky lg:top-24">
+          <TerminalCopilot activeContext={getCopilotContext()} />
+        </div>
       </div>
     </div>
   )

@@ -1,42 +1,89 @@
-import Link from 'next/link'
 import { redirect } from 'next/navigation'
-
 import { auth } from '@/lib/auth'
 
-export default async function Page() {
+import Header from '@/components/landing/Header'
+import DynamicTitle from '@/components/landing/DynamicTitle'
+import SearchBar from '@/components/landing/SearchBar'
+import Grainient from '@/components/landing/Grainient'
+import TopAssetsSection from '@/components/landing/TopAssetsSection'
+import MarketOverview from '@/components/landing/MarketOverview'
+import MarketHighlights from '@/components/landing/MarketHighlights'
+import Footer from '@/components/landing/Footer'
+
+export default async function HomePage() {
   const session = await auth()
 
   if (session?.user) {
     redirect('/home')
   }
 
+  const user = session?.user
+    ? {
+        name: session.user.name,
+        email: session.user.email,
+        image: session.user.image,
+      }
+    : undefined
+
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[var(--void)] px-6 py-10">
-      <section className="relative w-full max-w-md overflow-hidden rounded-[2.5rem] border border-white/10 bg-[#1A1625]/40 p-8 text-center shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),inset_0_-2px_6px_rgba(0,0,0,0.6),0_10px_20px_rgba(0,0,0,0.4)] backdrop-blur-2xl">
-        <div className="pointer-events-none absolute left-1/2 top-0 h-px w-3/5 -translate-x-1/2 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-        <div className="flex justify-center mb-6 mt-2">
-          <img
-            src="/icons/icon-192.png"
-            alt="Logo BCAP"
-            className="h-16 w-16 rounded-[1.25rem] border border-white/10 shadow-[0_10px_20px_rgba(0,0,0,0.4)]"
-          />
-        </div>
-        <p className="text-sm font-medium uppercase tracking-[0.2em] text-[#F4F0FF]/55">
-          Inteligência financeira
-        </p>
-        <h1 className="mt-4 leading-tight text-[#F4F0FF] flex justify-center items-baseline select-none font-serif text-6xl font-bold tracking-wide">
-          BCAP
-        </h1>
-        <p className="mt-5 text-sm leading-6 text-[#F4F0FF]/70">
-          Leia o mercado brasileiro com clareza, contexto e calma.
-        </p>
-        <Link
-          href="/auth/sign-in"
-          className="mt-8 inline-flex min-h-11 items-center justify-center rounded-2xl border border-white/10 bg-[#8B5CF6]/20 px-5 text-sm font-medium text-[#F4F0FF] shadow-[inset_0_1px_2px_rgba(255,255,255,0.18),0_8px_18px_rgba(0,0,0,0.35)] transition duration-500 hover:-translate-y-0.5 hover:bg-[#8B5CF6]/30"
-        >
-          Entrar
-        </Link>
+    <main className="relative min-h-screen w-full overflow-x-hidden text-[#F4F0FF]">
+      {/* Fixed WebGL Background Animation */}
+      <div className="pointer-events-none fixed inset-0 -z-50 h-screen w-screen opacity-70">
+        <Grainient
+          color1="#0D0B14"
+          color2="#5227FF"
+          color3="#0D0B14"
+          timeSpeed={0.25}
+          colorBalance={0.1}
+          warpStrength={2.5}
+          warpFrequency={4.5}
+          warpSpeed={2.5}
+          warpAmplitude={45}
+          blendAngle={15}
+          blendSoftness={0.08}
+          rotationAmount={350}
+          noiseScale={2.5}
+          grainAmount={0.08}
+          grainScale={1.5}
+          grainAnimated={true}
+          contrast={1.4}
+          gamma={1.1}
+          saturation={1.2}
+          centerX={0}
+          centerY={0}
+          zoom={0.8}
+          className="h-full w-full"
+        />
+        {/* Soft shadow overlay to blend WebGL with the dark void background */}
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#0D0B14]/40 to-[#0D0B14]" />
+      </div>
+
+      {/* Dynamic Floating Header */}
+      <Header user={user} />
+
+      {/* Hero Section */}
+      <section className="relative flex h-[700px] w-full flex-col items-center justify-center gap-8 pt-28">
+        <DynamicTitle />
+        <SearchBar />
       </section>
+
+
+
+      {/* Content Sections */}
+      <div className="z-10 mx-auto flex w-full max-w-7xl flex-col items-start gap-32 px-6 py-12">
+        {/* Top Asset Cards */}
+        <TopAssetsSection />
+
+        {/* Visão Geral */}
+        <MarketOverview />
+
+        {/* Destaques */}
+        <MarketHighlights />
+      </div>
+
+      {/* Institutional Glass Footer */}
+      <Footer />
     </main>
   )
 }
+

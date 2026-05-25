@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { motion } from 'motion/react'
-import { Building2, Globe, Users, Briefcase, ChevronDown, ChevronUp } from 'lucide-react'
+import { ChevronDown, ChevronUp } from 'lucide-react'
 import { GlassHighlight } from '@/components/atoms/GlassHighlight'
 
 interface AssetProfileCardProps {
@@ -37,11 +37,6 @@ export default function AssetProfileCard({ ticker, profile }: AssetProfileCardPr
   const customSummary = LOCAL_SUMMARIES[uppercaseTicker]
   const summaryText = customSummary || profile?.longBusinessSummary || 'Sem descrição institucional detalhada disponível para este ativo no momento.'
 
-  const sector = profile?.sector || 'n/d'
-  const industry = profile?.industry || 'n/d'
-  const website = profile?.website || null
-  const employees = profile?.fullTimeEmployees || null
-
   const isLongDescription = summaryText.length > 280
 
   return (
@@ -49,58 +44,6 @@ export default function AssetProfileCard({ ticker, profile }: AssetProfileCardPr
       <GlassHighlight widthPercent={60} />
 
       <p className="bull-eyebrow mb-4">Sobre a empresa</p>
-
-      {/* Grid structure for corporate metadata */}
-      <div className="mb-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        {/* Setor */}
-        <div className="flex items-center gap-3 rounded-2xl border border-white/[0.05] bg-white/[0.02] p-3">
-          <Briefcase size={16} className="text-[#8B5CF6]/60 shrink-0" />
-          <div className="min-w-0">
-            <p className="text-[10px] uppercase tracking-wider text-[#F4F0FF]/35">Setor</p>
-            <p className="mt-0.5 truncate text-xs font-semibold text-[#F4F0FF]/85">{sector}</p>
-          </div>
-        </div>
-
-        {/* Indústria */}
-        <div className="flex items-center gap-3 rounded-2xl border border-white/[0.05] bg-white/[0.02] p-3">
-          <Building2 size={16} className="text-[#8B5CF6]/60 shrink-0" />
-          <div className="min-w-0">
-            <p className="text-[10px] uppercase tracking-wider text-[#F4F0FF]/35">Indústria</p>
-            <p className="mt-0.5 truncate text-xs font-semibold text-[#F4F0FF]/85">{industry}</p>
-          </div>
-        </div>
-
-        {/* Funcionários */}
-        <div className="flex items-center gap-3 rounded-2xl border border-white/[0.05] bg-white/[0.02] p-3">
-          <Users size={16} className="text-[#8B5CF6]/60 shrink-0" />
-          <div className="min-w-0">
-            <p className="text-[10px] uppercase tracking-wider text-[#F4F0FF]/35">Funcionários</p>
-            <p className="mt-0.5 truncate text-xs font-semibold text-[#F4F0FF]/85">
-              {employees ? employees.toLocaleString('pt-BR') : 'n/d'}
-            </p>
-          </div>
-        </div>
-
-        {/* Website Link */}
-        <div className="flex items-center gap-3 rounded-2xl border border-white/[0.05] bg-white/[0.02] p-3">
-          <Globe size={16} className="text-[#8B5CF6]/60 shrink-0" />
-          <div className="min-w-0">
-            <p className="text-[10px] uppercase tracking-wider text-[#F4F0FF]/35">Website</p>
-            {website ? (
-              <a
-                href={website}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-0.5 block truncate text-xs font-semibold text-[#8B5CF6] hover:underline"
-              >
-                {website.replace(/^https?:\/\/(www\.)?/, '')}
-              </a>
-            ) : (
-              <p className="mt-0.5 truncate text-xs font-semibold text-[#F4F0FF]/50">n/d</p>
-            )}
-          </div>
-        </div>
-      </div>
 
       {/* Description text area */}
       <div className="relative">
@@ -116,7 +59,7 @@ export default function AssetProfileCard({ ticker, profile }: AssetProfileCardPr
 
         {/* Shading/Fade layer for collapsed state */}
         {isLongDescription && !isExpanded && (
-          <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-[#1A1625] to-transparent pointer-events-none" />
+          <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-[#0f0c18] to-transparent pointer-events-none" />
         )}
       </div>
 
