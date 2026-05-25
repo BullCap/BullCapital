@@ -63,7 +63,7 @@ export default async function AppShell({ active, children, contentClassName }: A
       <AppHeader initials={initials} />
 
       {/* Content — top padding clears the fixed header */}
-      <div className="mx-auto flex w-full max-w-6xl xl:max-w-7xl 2xl:max-w-[1440px] 3xl:max-w-[1760px] flex-col gap-5 px-4 pb-40 pt-[5.5rem] sm:px-6 md:pb-10 lg:px-8 lg:pt-[6rem]">
+      <div className="mx-auto flex w-full max-w-6xl xl:max-w-7xl 2xl:max-w-[1440px] 3xl:max-w-[1760px] flex-col gap-5 px-4 pb-40 pt-[calc(3.5rem_+_var(--sat))] sm:px-6 md:pb-10 lg:px-8 lg:pt-24">
         <section
           className={cn(
             'mx-auto flex w-full max-w-sm flex-col gap-5 md:max-w-3xl lg:max-w-none',

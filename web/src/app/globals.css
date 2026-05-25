@@ -47,6 +47,7 @@
     --glass-rim-strong: rgba(255, 255, 255, 0.14);
     --shadow-soft: rgba(0, 0, 0, 0.45);
     --shadow-deep: rgba(0, 0, 0, 0.65);
+    --sat: env(safe-area-inset-top, 0px);
   }
 }
 

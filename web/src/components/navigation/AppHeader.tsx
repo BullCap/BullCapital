@@ -37,13 +37,19 @@ export default function AppHeader({ initials }: AppHeaderProps) {
   return (
     <header
       className={cn(
-        'fixed left-0 right-0 z-50 mx-auto h-14 overflow-hidden rounded-full border border-white/10 bg-[#0f0c18]/55 shadow-[inset_0_1px_1px_rgba(255,255,255,0.09),inset_0_-2px_6px_rgba(0,0,0,0.5),0_12px_32px_rgba(0,0,0,0.55)] backdrop-blur-2xl transition-all duration-700 ease-in-out',
-        shrinks ? 'top-2 max-w-[780px]' : 'top-4 max-w-[92%]'
+        'fixed left-0 right-0 z-50 backdrop-blur-2xl transition-all duration-700 ease-in-out',
+        // Mobile: flat full-width sticky bar
+        'top-0 border-b border-white/[0.07] bg-[#0f0c18]/80',
+        // Desktop: animated pill shape
+        'lg:mx-auto lg:overflow-hidden lg:rounded-full lg:border lg:border-white/10 lg:bg-[#0f0c18]/55 lg:shadow-[inset_0_1px_1px_rgba(255,255,255,0.09),inset_0_-2px_6px_rgba(0,0,0,0.5),0_12px_32px_rgba(0,0,0,0.55)]',
+        shrinks ? 'lg:top-2 lg:max-w-[780px]' : 'lg:top-4 lg:max-w-[92%]'
       )}
     >
-      <GlassHighlight className="via-white/30" />
+      <GlassHighlight className="hidden lg:block via-white/30" />
+      {/* Safe-area spacer for notched devices — mobile only */}
+      <div className="lg:hidden" style={{ height: 'env(safe-area-inset-top)' }} aria-hidden="true" />
 
-      <div className="relative flex h-full items-center justify-between px-5 gap-3">
+      <div className="relative flex h-14 items-center justify-between px-5 gap-3">
         {/* Logo */}
         <Link href="/home" className="bull-wordmark shrink-0" aria-label="BullCapital home">
           <span className="bull-brand-mark" />
