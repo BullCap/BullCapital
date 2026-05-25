@@ -1,10 +1,29 @@
 """BullCapital AI Service - FastAPI Application."""
 
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import text
 
 from app.api import api_router
 from app.core.config import settings
+from app.core.database import Base, engine
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Lifespan event handler for startup and shutdown actions."""
+    # Startup: Ensure the database tables are created in pgvector context
+    async with engine.begin() as conn:
+        # Ensure 'ai' schema exists
+        await conn.execute(text("CREATE SCHEMA IF NOT EXISTS ai"))
+        # Create all tables programmatically
+        await conn.run_sync(Base.metadata.create_all)
+    yield
+    # Shutdown: Close engine connection
+    await engine.dispose()
+
 
 app = FastAPI(
     title=settings.app_name,
@@ -12,6 +31,7 @@ app = FastAPI(
     version=settings.app_version,
     docs_url="/docs",
     redoc_url="/redoc",
+    lifespan=lifespan,
 )
 
 # CORS middleware

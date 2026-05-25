@@ -100,29 +100,44 @@ async function fetchBcbSeries(
   }
 }
 
+import { getMarketIndicators } from '@/lib/services/market'
+
 export async function fetchSELIC(): Promise<{ rate: string; date: string } | null> {
-  const result = await fetchBcbSeries(432, 45)
-  if (!result) return null
-  return {
-    rate: `${result.value.toLocaleString('pt-BR', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })}% a.a.`,
-    date: result.date,
+  try {
+    const data = await getMarketIndicators()
+    const latest = data.selic?.[0]
+    if (!latest) return null
+    const numValue = typeof latest.value === 'number' ? latest.value : parseFloat(latest.value)
+    if (isNaN(numValue)) return null
+    return {
+      rate: `${numValue.toLocaleString('pt-BR', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}% a.a.`,
+      date: latest.date,
+    }
+  } catch {
+    return null
   }
 }
 
 /** IPCA — inflação mensal acumulada 12 meses (série BCB 13522). */
 export async function fetchIPCA(): Promise<{ rate: string; date: string } | null> {
-  // Série 13522: IPCA acumulado 12 meses em %
-  const result = await fetchBcbSeries(13522, 90)
-  if (!result) return null
-  return {
-    rate: `${result.value.toLocaleString('pt-BR', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })}% a.a.`,
-    date: result.date,
+  try {
+    const data = await getMarketIndicators()
+    const latest = data.inflation?.[0]
+    if (!latest) return null
+    const numValue = typeof latest.value === 'number' ? latest.value : parseFloat(latest.value)
+    if (isNaN(numValue)) return null
+    return {
+      rate: `${numValue.toLocaleString('pt-BR', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}% a.a.`,
+      date: latest.date,
+    }
+  } catch {
+    return null
   }
 }
 

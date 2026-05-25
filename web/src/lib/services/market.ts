@@ -121,10 +121,15 @@ export async function getMultipleQuotes(
 }
 
 export async function getMarketIndicators(): Promise<MarketIndicatorsData & { error?: string }> {
-  return {
-    selic: [],
-    inflation: [],
-    error: 'Market indicators are not available through yfinance.',
+  try {
+    return await marketGet<MarketIndicatorsData>('/market/indicators')
+  } catch (error) {
+    console.warn('Exception while fetching macro indicators from backend:', error)
+    return {
+      selic: [],
+      inflation: [],
+      error: 'Failed to fetch macro indicators from database.',
+    }
   }
 }
 
