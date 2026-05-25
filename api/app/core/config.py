@@ -21,6 +21,7 @@ class Settings(BaseSettings):
 
     # API
     api_prefix: str = "/api/v1"
+    api_shared_secret: str = ""
 
     # Database (pgvector for AI)
     database_url: str = (

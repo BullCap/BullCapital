@@ -44,8 +44,10 @@ export default function SignInForm() {
           className="h-16 w-16 rounded-[1.25rem] border border-white/10 shadow-[0_10px_20px_rgba(0,0,0,0.4)] mb-4"
         />
         <p className="bull-eyebrow">BullCapital</p>
-        <h1 className="mt-3 font-serif text-4xl text-[#F4F0FF]">Inteligência de mercado</h1>
-        <p className="mt-2 text-sm text-[#DBEAFE]/55">Radar do mercado brasileiro, explicado por IA</p>
+        <h1 className="mt-3 font-serif text-4xl text-[#F4F0FF]">Research com Brapi PRO</h1>
+        <p className="mt-2 text-sm text-[#DBEAFE]/55">
+          Dados brasileiros para briefing, comparação e narrativa profissional
+        </p>
       </div>
 
       <div className="bull-panel-focus relative overflow-hidden p-8">
@@ -53,7 +55,7 @@ export default function SignInForm() {
 
         <div className="mb-6 text-center">
           <p className="bull-eyebrow">Acesso</p>
-          <p className="mt-3 font-serif text-2xl text-[#F4F0FF]">Entrar na sua conta</p>
+          <p className="mt-3 font-serif text-2xl text-[#F4F0FF]">Entrar no workspace</p>
         </div>
 
         <form action={formAction} noValidate className="flex flex-col gap-4">

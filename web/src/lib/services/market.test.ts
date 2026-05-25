@@ -6,7 +6,7 @@ describe('getAssetHistory', () => {
     vi.unstubAllGlobals()
   })
 
-  it('requests history from the yfinance-backed market API', async () => {
+  it('requests history from the market API with 5-minute PRO cache TTL', async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       new Response(
         JSON.stringify({
@@ -32,7 +32,7 @@ describe('getAssetHistory', () => {
     expect(url.pathname).toBe('/api/v1/market/history')
     expect(url.searchParams.get('tickers')).toBe('PETR4')
     expect(url.searchParams.get('range')).toBe('1d')
-    expect(requestOptions.cache).toBe('no-store')
+    expect(requestOptions.next).toEqual({ revalidate: 300 })
     expect(result.results[0]?.history).toEqual([
       { timestamp: 10, close: 39.5, high: 40, low: 39.1 },
       { timestamp: 20, close: 40.1, high: 41.2, low: 39.8 },

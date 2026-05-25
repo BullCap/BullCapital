@@ -1,9 +1,14 @@
 'use server'
 
+import { auth } from '@/lib/auth'
+
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions'
 const OPENROUTER_MODEL = 'deepseek/deepseek-v4-flash:free'
 
 export async function getStoryBrief(headline: string, tickers: string[]): Promise<string | null> {
+  const session = await auth()
+  if (!session?.user) return null
+
   const apiKey = process.env.OPENROUTER_API_KEY
   if (!apiKey) return null
 
@@ -28,7 +33,7 @@ export async function getStoryBrief(headline: string, tickers: string[]): Promis
           },
           {
             role: 'user',
-            content: `Em até 2 frases curtas, explique por que a notícia abaixo é relevante para investidores no mercado B3. Foque no impacto prático. Não repita o título. Não use jargão desnecessário.\n\nTítulo: ${headline}\nAtivos: ${tickerLine}`,
+            content: `Em até 2 frases curtas, explique por que a notícia abaixo é relevante para profissionais que explicam o mercado B3. Foque no impacto prático. Não repita o título. Não use jargão desnecessário.\n\nTítulo: ${headline}\nAtivos: ${tickerLine}`,
           },
         ],
         max_tokens: 90,

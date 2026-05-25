@@ -1,6 +1,7 @@
 import { getDailyBrief, type DailyBriefInput } from '@/lib/actions/daily-brief'
-import DailyBriefHero, { type SuggestedPrompt } from './DailyBriefHero'
+import DailyBriefHero, { type SuggestedPrompt, type BriefPulseData } from './DailyBriefHero'
 import { GlassHighlight } from '@/components/atoms/GlassHighlight'
+import type { MarketListingItem } from '@/types/market'
 
 // ── Fallback templates (used when AI is unavailable) ──────────────────────────
 
@@ -23,7 +24,7 @@ function fallbackSummary(
 
   const ibovLine = ibovChange === null
     ? 'O Ibovespa ainda não formou leitura confiável.'
-    : `O Ibovespa opera em ${fmt(ibovChange)}, ${ibovChange >= 0 ? 'sinalizando algum apetite por risco local' : 'refletindo pressão no humor do investidor'}.`
+    : `O Ibovespa opera em ${fmt(ibovChange)}, ${ibovChange >= 0 ? 'sinalizando algum apetite por risco local' : 'refletindo pressão no humor do mercado'}.`
 
   const extLine = sp500Change === null
     ? 'O exterior segue sem leitura consolidada.'
@@ -60,11 +61,13 @@ interface DailyBriefContentProps extends DailyBriefInput {
   dateLabel: string
   storiesCount: number
   suggestedPrompts: SuggestedPrompt[]
+  pulse: BriefPulseData
+  fixedIncomeHighlights: MarketListingItem[]
 }
 
 export async function DailyBriefContent({
   ibovChange, sp500Change, vix, selicValue, marketOpen, storyHeadlines,
-  contextLine, dateLabel, storiesCount, suggestedPrompts,
+  contextLine, dateLabel, storiesCount, suggestedPrompts, pulse, fixedIncomeHighlights,
 }: DailyBriefContentProps) {
   const brief = await getDailyBrief({ ibovChange, sp500Change, vix, selicValue, marketOpen, storyHeadlines })
 
@@ -82,6 +85,8 @@ export async function DailyBriefContent({
       suggestedPrompts={suggestedPrompts}
       summary={summary}
       aiGenerated={brief !== null}
+      pulse={pulse}
+      fixedIncomeHighlights={fixedIncomeHighlights}
     />
   )
 }
@@ -95,31 +100,38 @@ export function DailyBriefSkeleton({ dateLabel, storiesCount }: { dateLabel: str
       <div className="flex flex-col gap-5">
         <div className="flex flex-wrap items-center gap-2">
           <span className="bull-chip">{dateLabel}</span>
-          {storiesCount > 0 && <span className="bull-chip">{storiesCount} historias no radar</span>}
+          {storiesCount > 0 && <span className="bull-chip">{storiesCount} histórias no radar</span>}
         </div>
-        <div className="max-w-3xl">
-          <div className="h-2.5 w-20 animate-pulse rounded-full bg-white/[0.07]" />
-          <div className="mt-4 space-y-3">
-            <div className="h-9 w-full animate-pulse rounded-2xl bg-white/[0.06]" />
-            <div className="h-9 w-4/5 animate-pulse rounded-2xl bg-white/[0.05]" style={{ animationDelay: '60ms' }} />
-          </div>
-          <div className="mt-4 space-y-2">
-            <div className="h-3.5 w-full animate-pulse rounded-full bg-white/[0.05]" style={{ animationDelay: '100ms' }} />
-            <div className="h-3.5 w-5/6 animate-pulse rounded-full bg-white/[0.04]" style={{ animationDelay: '160ms' }} />
-            <div className="h-3.5 w-3/4 animate-pulse rounded-full bg-white/[0.04]" style={{ animationDelay: '220ms' }} />
-          </div>
-        </div>
-        <div className="grid gap-3 md:grid-cols-3">
-          {[0, 1, 2].map((i) => (
-            <div key={i} className="bull-panel-quiet px-4 py-3">
-              <div className="h-3 w-full animate-pulse rounded-full bg-white/[0.06]" style={{ animationDelay: `${i * 60}ms` }} />
-              <div className="mt-2 h-3 w-3/4 animate-pulse rounded-full bg-white/[0.05]" style={{ animationDelay: `${i * 60 + 40}ms` }} />
+        <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start">
+          <div className="flex flex-col gap-5 min-w-0">
+            <div className="max-w-3xl">
+              <div className="h-2.5 w-20 animate-pulse rounded-full bg-white/[0.07]" />
+              <div className="mt-4 space-y-3">
+                <div className="h-9 w-full animate-pulse rounded-2xl bg-white/[0.06]" />
+                <div className="h-9 w-4/5 animate-pulse rounded-2xl bg-white/[0.05]" style={{ animationDelay: '60ms' }} />
+              </div>
+              <div className="mt-4 space-y-2">
+                <div className="h-3.5 w-full animate-pulse rounded-full bg-white/[0.05]" style={{ animationDelay: '100ms' }} />
+                <div className="h-3.5 w-5/6 animate-pulse rounded-full bg-white/[0.04]" style={{ animationDelay: '160ms' }} />
+                <div className="h-3.5 w-3/4 animate-pulse rounded-full bg-white/[0.04]" style={{ animationDelay: '220ms' }} />
+              </div>
             </div>
-          ))}
-        </div>
-        <div className="flex gap-3">
-          <div className="h-12 w-48 animate-pulse rounded-2xl bg-white/[0.06]" />
-          <div className="h-12 w-40 animate-pulse rounded-2xl bg-white/[0.04]" />
+            <div className="grid gap-3 md:grid-cols-3">
+              {[0, 1, 2].map((i) => (
+                <div key={i} className="bull-panel-quiet px-4 py-3">
+                  <div className="h-3 w-full animate-pulse rounded-full bg-white/[0.06]" style={{ animationDelay: `${i * 60}ms` }} />
+                  <div className="mt-2 h-3 w-3/4 animate-pulse rounded-full bg-white/[0.05]" style={{ animationDelay: `${i * 60 + 40}ms` }} />
+                </div>
+              ))}
+            </div>
+            <div className="flex gap-3">
+              <div className="h-12 w-48 animate-pulse rounded-2xl bg-white/[0.06]" />
+              <div className="h-12 w-40 animate-pulse rounded-2xl bg-white/[0.04]" />
+            </div>
+          </div>
+          <div className="hidden lg:block">
+            <div className="h-[22rem] w-full animate-pulse rounded-[1.75rem] bg-white/[0.04]" />
+          </div>
         </div>
       </div>
     </section>

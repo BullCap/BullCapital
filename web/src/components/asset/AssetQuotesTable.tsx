@@ -17,7 +17,7 @@ export default function AssetQuotesTable({ ticker, history }: AssetQuotesTablePr
     return (
       <section className="bull-panel p-5">
         <GlassHighlight widthPercent={55} />
-        <p className="bull-eyebrow mb-3">Planilha de Cotações</p>
+        <p className="bull-eyebrow mb-3">OHLCV diário</p>
         <div className="flex h-24 items-center justify-center">
           <p className="text-sm text-[#F4F0FF]/40">Histórico de cotações indisponível</p>
         </div>
@@ -25,7 +25,8 @@ export default function AssetQuotesTable({ ticker, history }: AssetQuotesTablePr
     )
   }
 
-  // Format historical series, sort chronologically, calculate variations, then reverse to show latest first
+  // Format historical series, sort chronologically, calculate variations, then reverse to show latest first.
+  // High, low, open and volume are displayed only when the backend returns real OHLCV values.
   const sortedHistory = [...history].sort((a, b) => a.timestamp - b.timestamp)
   const rows = sortedHistory.map((day, idx) => {
     const prevDay = sortedHistory[idx - 1]
@@ -43,9 +44,11 @@ export default function AssetQuotesTable({ ticker, history }: AssetQuotesTablePr
         year: 'numeric',
         timeZone: 'America/Sao_Paulo',
       }).format(dateObj),
+      open: day.open ?? null,
       close: day.close,
-      high: day.high ?? day.close * 1.015,
-      low: day.low ?? day.close * 0.985,
+      high: day.high ?? null,
+      low: day.low ?? null,
+      volume: day.volume ?? null,
       change,
       timestamp: day.timestamp,
     }
@@ -55,19 +58,23 @@ export default function AssetQuotesTable({ ticker, history }: AssetQuotesTablePr
     return val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
   }
 
+  const formatOptionalBRL = (val: number | null) => {
+    return val === null ? 'n/d' : formatBRL(val)
+  }
+
   const formatChange = (val: number) => {
     return `${val >= 0 ? '+' : ''}${val.toFixed(2)}%`
   }
 
-  // Premium feature: Export quote data as a clean CSV text block copied to clipboard
+  // Export quote data as a clean CSV text block copied to clipboard.
   const handleExportCSV = () => {
-    const header = 'Data;Fechamento;Variacao;Minimo;Maximo\n'
+    const header = 'Data;Abertura;Fechamento;Variacao;Minimo;Maximo;Volume\n'
     const csvContent = rows
       .map(
         (r) =>
-          `${r.date};${r.close.toFixed(2).replace('.', ',')};${formatChange(
+          `${r.date};${r.open?.toFixed(2).replace('.', ',') ?? ''};${r.close.toFixed(2).replace('.', ',')};${formatChange(
             r.change
-          )};${r.low.toFixed(2).replace('.', ',')};${r.high.toFixed(2).replace('.', ',')}`
+          )};${r.low?.toFixed(2).replace('.', ',') ?? ''};${r.high?.toFixed(2).replace('.', ',') ?? ''};${r.volume ?? ''}`
       )
       .join('\n')
     
@@ -82,9 +89,9 @@ export default function AssetQuotesTable({ ticker, history }: AssetQuotesTablePr
 
       <div className="mb-4 flex items-start justify-between gap-3">
         <div>
-          <p className="bull-eyebrow">Histórico de Cotações</p>
+          <p className="bull-eyebrow">Histórico Brapi PRO</p>
           <h3 className="mt-1.5 font-serif text-lg text-[#F4F0FF]">
-            Planilha diária de {ticker.toUpperCase()}
+            OHLCV diário de {ticker.toUpperCase()}
           </h3>
         </div>
 
@@ -114,10 +121,12 @@ export default function AssetQuotesTable({ ticker, history }: AssetQuotesTablePr
             <thead className="sticky top-0 bg-[#161222] text-[#F4F0FF]/40 border-b border-white/[0.08] z-10 select-none">
               <tr>
                 <th className="px-4 py-3 font-semibold uppercase tracking-wider">Data</th>
+                <th className="px-4 py-3 font-semibold uppercase tracking-wider text-right">Abertura</th>
                 <th className="px-4 py-3 font-semibold uppercase tracking-wider text-right">Fechamento</th>
                 <th className="px-4 py-3 font-semibold uppercase tracking-wider text-right">Variação</th>
                 <th className="px-4 py-3 font-semibold uppercase tracking-wider text-right">Mínimo</th>
                 <th className="px-4 py-3 font-semibold uppercase tracking-wider text-right">Máximo</th>
+                <th className="px-4 py-3 font-semibold uppercase tracking-wider text-right">Volume</th>
               </tr>
             </thead>
             
@@ -134,6 +143,9 @@ export default function AssetQuotesTable({ ticker, history }: AssetQuotesTablePr
                 return (
                   <tr key={index} className="hover:bg-white/[0.02] transition-colors">
                     <td className="px-4 py-3 font-medium text-[#F4F0FF]">{row.date}</td>
+                    <td className="px-4 py-3 text-right text-[#F4F0FF]/60">
+                      {formatOptionalBRL(row.open)}
+                    </td>
                     <td className="px-4 py-3 text-right font-semibold text-[#F4F0FF]">
                       {formatBRL(row.close)}
                     </td>
@@ -141,10 +153,13 @@ export default function AssetQuotesTable({ ticker, history }: AssetQuotesTablePr
                       {formatChange(row.change)}
                     </td>
                     <td className="px-4 py-3 text-right text-[#F4F0FF]/60">
-                      {formatBRL(row.low)}
+                      {formatOptionalBRL(row.low)}
                     </td>
                     <td className="px-4 py-3 text-right text-[#F4F0FF]/60">
-                      {formatBRL(row.high)}
+                      {formatOptionalBRL(row.high)}
+                    </td>
+                    <td className="px-4 py-3 text-right text-[#F4F0FF]/60">
+                      {row.volume?.toLocaleString('pt-BR') ?? 'n/d'}
                     </td>
                   </tr>
                 )

@@ -1,15 +1,13 @@
 import { redirect } from 'next/navigation'
 import { auth } from '@/lib/auth'
 import { buildAssetHref } from '@/lib/market-routing'
-import { getMarketListings, getAssetHistory, getCurrencyRates } from '@/lib/services/market'
+import { getMarketListings, getAssetHistory, getCurrencyRates, getMultipleQuotes } from '@/lib/services/market'
 import {
-  computeTemperature,
   fetchSELIC,
   fetchIPCA,
-  fetchIndexFromYfinance,
+  fetchMarketQuote,
   isMarketOpen,
 } from '@/lib/market-utils'
-import TemperatureCard from '@/components/home/TemperatureCard'
 import IndexCard from '@/components/home/IndexCard'
 import SELICCard from '@/components/home/SELICCard'
 import VixCard from '@/components/home/VixCard'
@@ -20,6 +18,7 @@ import MarketMapSection from '@/components/home/MarketMapSection'
 import MarketPlaybookSection from '@/components/home/MarketPlaybookSection'
 import MarketHighlightsSection from '@/components/home/MarketHighlightsSection'
 import WatchlistRadarSection from '@/components/home/WatchlistRadarSection'
+import { SECTOR_TREEMAP_TICKERS } from '@/components/home/SectorTreeMap'
 import type { RadarPulseItem } from '@/components/home/RadarPulseSection'
 import { StoryDigestLoader, StoryDigestSkeleton } from '@/components/home/StoryDigestLoader'
 import type { NewsRadarItem } from '@/lib/news-radar'
@@ -93,8 +92,8 @@ function buildRadarItems(
   if (gainers[0]) {
     items.push({
       ticker: gainers[0].ticker,
-      label: 'Forca entre as maiores altas',
-      description: `${gainers[0].ticker} sobe ${formatPercent(gainers[0].changePercent)} e pode ajudar a testar se o fluxo comprador tem continuidade.`,
+      label: 'Força entre as maiores altas',
+      description: `${gainers[0].ticker} sobe ${formatPercent(gainers[0].changePercent)} e ajuda a testar se o fluxo do pregão tem continuidade.`,
       href: buildAssetHref(gainers[0].ticker),
       tone: 'up',
     })
@@ -103,8 +102,8 @@ function buildRadarItems(
   if (losers[0]) {
     items.push({
       ticker: losers[0].ticker,
-      label: 'Pressao entre as maiores baixas',
-      description: `${losers[0].ticker} cai ${formatPercent(losers[0].changePercent)} e merece leitura de risco para ver se o movimento e isolado ou setorial.`,
+      label: 'Pressão entre as maiores baixas',
+      description: `${losers[0].ticker} cai ${formatPercent(losers[0].changePercent)} e merece leitura de risco para ver se o movimento é isolado ou setorial.`,
       href: buildAssetHref(losers[0].ticker),
       tone: 'down',
     })
@@ -114,8 +113,8 @@ function buildRadarItems(
   if (storyTicker) {
     items.push({
       ticker: storyTicker,
-      label: 'Historia com chance de gerar follow-up',
-      description: `${storyTicker} apareceu no noticiario do dia e vale cruzar a manchete com preco, radar e leitura contextual.`,
+      label: 'História com chance de gerar follow-up',
+      description: `${storyTicker} apareceu no noticiário do dia e vale cruzar a manchete com preço, radar e leitura contextual.`,
       href: `/analysis?ticker=${encodeURIComponent(storyTicker)}`,
       tone: 'neutral',
     })
@@ -124,7 +123,7 @@ function buildRadarItems(
   items.push({
     ticker: 'B3',
     label: 'Leitura completa do mercado',
-    description: 'Abra a analise do mercado para juntar juros, humor local e os nomes que puxam a narracao do pregão.',
+    description: 'Abra a análise do mercado para juntar juros, humor local e os nomes que puxam a narrativa do pregão.',
     href: '/analysis',
     tone: 'neutral',
   })
@@ -147,18 +146,24 @@ export default async function HomePage() {
     historyResult,
     fxResult,
     mostTradedResult,
+    treemapResult,
+    cryptoResult,
+    fixedIncomeResult,
   ] =
     await Promise.allSettled([
-      fetchIndexFromYfinance('^BVSP'),
-      fetchIndexFromYfinance('^GSPC'),
-      fetchIndexFromYfinance('^VIX'),
+      fetchMarketQuote('^BVSP'),
+      fetchMarketQuote('^GSPC'),
+      fetchMarketQuote('^VIX'),
       fetchSELIC(),
       fetchIPCA(),
       getMarketListings({ sortBy: 'change', sortOrder: 'desc', limit: 6, type: 'stock' }),
       getMarketListings({ sortBy: 'change', sortOrder: 'asc', limit: 6, type: 'stock' }),
       getAssetHistory(['^BVSP', '^GSPC'], '1mo'),
-      getCurrencyRates(['USD-BRL', 'EUR-BRL']),
+      getCurrencyRates(['USD-BRL']),
       getMarketListings({ sortBy: 'volume', sortOrder: 'desc', limit: 6, type: 'stock' }),
+      getMultipleQuotes(SECTOR_TREEMAP_TICKERS),
+      getMarketListings({ limit: 6, type: 'crypto' }),
+      getMarketListings({ limit: 6, type: 'fixed_income' }),
     ])
 
   const ibov = ibovResult.status === 'fulfilled' ? ibovResult.value : null
@@ -184,15 +189,8 @@ export default async function HomePage() {
   const gainersRaw = gainersResult.status === 'fulfilled' ? (gainersResult.value?.stocks ?? []) : []
   const losersRaw = losersResult.status === 'fulfilled' ? (losersResult.value?.stocks ?? []) : []
   const mostTradedRaw = mostTradedResult.status === 'fulfilled' ? (mostTradedResult.value?.stocks ?? []) : []
-
-  // Market breadth: % of visible movers with positive change (approx from top-6 each side)
-  const allVisible = [...gainersRaw, ...losersRaw]
-  const gainersCount = allVisible.filter((s) => s.change > 0).length
-  const marketBreadth = allVisible.length > 0 ? (gainersCount / allVisible.length) * 100 : null
-
-  const temperature = ibov
-    ? computeTemperature({ ibovChange: ibov.changePercent, vix, usdBrlChange, marketBreadth })
-    : null
+  const cryptoRaw = cryptoResult.status === 'fulfilled' ? (cryptoResult.value?.stocks ?? []) : []
+  const fixedIncomeRaw = fixedIncomeResult.status === 'fulfilled' ? (fixedIncomeResult.value?.stocks ?? []) : []
 
   const gainers = gainersRaw.map((s) => ({
     ticker: s.stock,
@@ -210,6 +208,22 @@ export default async function HomePage() {
     new Map([...gainersRaw, ...losersRaw].map((asset) => [asset.stock, asset])).values()
   )
 
+  const treemapQuotes = treemapResult.status === 'fulfilled' ? (treemapResult.value?.results ?? []) : []
+  const treemapAssets = treemapQuotes.map((q) => ({
+    stock: q.symbol,
+    name: q.shortName ?? q.longName ?? q.symbol,
+    close: q.regularMarketPrice,
+    change: q.regularMarketChangePercent,
+    volume: q.regularMarketVolume ?? 0,
+    marketCap: q.marketCap ?? null,
+    logo: null,
+    sector: q.sector ?? null,
+    type: 'stock' as const,
+  }))
+  const mapAssets = Array.from(
+    new Map([...bubbleAssets, ...treemapAssets].map((asset) => [asset.stock, asset])).values()
+  )
+
   const topStories: NewsRadarItem[] = []
 
   const radarItems = buildRadarItems(gainers, losers, topStories)
@@ -219,7 +233,7 @@ export default async function HomePage() {
     day: '2-digit',
     month: 'long',
   }).format(new Date())
-  const contextLine = marketOpen ? 'pregao em andamento' : 'mercado fora do horario regular'
+  const contextLine = marketOpen ? 'pregão em andamento' : 'mercado fora do horário regular'
   const leadStory = topStories[0]
   const storyTicker = leadStory?.tickers.find((ticker) => !ticker.startsWith('^'))
   const topMover = gainers[0] ?? losers[0] ?? null
@@ -233,25 +247,25 @@ export default async function HomePage() {
   const playbookActions = [
     {
       title: 'Ler o mercado por inteiro',
-      description: 'Abra a analise principal para juntar macro, narrativa e os nomes que puxam o dia.',
+      description: 'Abra a análise principal para juntar macro, narrativa e os nomes que puxam o dia.',
       href: '/analysis',
-      label: 'analise guiada',
+      label: 'análise guiada',
       tone: 'analysis' as const,
     },
     {
       title: storyTicker ? `Investigar ${storyTicker}` : 'Explorar o ativo em destaque',
       description: storyTicker
-        ? `${storyTicker} apareceu no radar de noticias e vale cruzar manchete, preco e scores.`
+        ? `${storyTicker} apareceu no radar de notícias e vale cruzar manchete, preço e scores.`
         : 'Use o detalhe do ativo para sair do painel e validar o movimento com mais contexto.',
       href: storyTicker ? buildAssetHref(storyTicker) : '/search',
       label: storyTicker ? 'detalhe do ativo' : 'buscar ativo',
       tone: 'asset' as const,
     },
     {
-      title: 'Voltar para as historias do dia',
+      title: 'Voltar para as histórias do dia',
       description: 'Passe pelas manchetes com mais potencial de follow-up antes de entrar em tese.',
       href: '#stories',
-      label: 'noticias priorizadas',
+      label: 'notícias priorizadas',
       tone: 'news' as const,
     },
   ]
@@ -262,7 +276,19 @@ export default async function HomePage() {
   const greetingStart = hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite'
   const storyLine = topStories.length > 0
     ? `${topStories.length} históri${topStories.length === 1 ? 'a relevante' : 'as relevantes'} no radar de hoje.`
-    : 'Aqui está o que está movendo o mercado.'
+    : 'Veja o radar do dia para acompanhar o mercado.'
+
+  const briefPulse = {
+    ibovPrice: ibov?.price ?? null,
+    ibovChange: ibov?.changePercent ?? null,
+    ibovHistory: ibovCloses,
+    sp500Change: sp500?.changePercent ?? null,
+    vix,
+    selicValue,
+    usdBrlPrice: usdBrl?.bidPrice ?? null,
+    usdBrlChange,
+    marketOpen,
+  }
 
   return (
     <AppShell active="market" contentClassName="md:max-w-none">
@@ -286,6 +312,8 @@ export default async function HomePage() {
           dateLabel={dateLabel}
           storiesCount={topStories.length}
           suggestedPrompts={suggestedPrompts}
+          pulse={briefPulse}
+          fixedIncomeHighlights={fixedIncomeRaw}
         />
       </Suspense>
 
@@ -297,10 +325,17 @@ export default async function HomePage() {
         </ScrollFocus>
 
         <ScrollFocus>
-          <TemperatureCard temperature={temperature} />
+          <MarketHighlightsSection
+            stockGainers={gainersRaw}
+            stockLosers={losersRaw}
+            stockMostTraded={mostTradedRaw}
+            cryptoHighlights={cryptoRaw}
+            fixedIncomeHighlights={fixedIncomeRaw}
+          />
         </ScrollFocus>
+
         <ScrollFocus>
-          <MarketMapSection assets={bubbleAssets} />
+          <MarketMapSection assets={mapAssets} />
         </ScrollFocus>
 
         <div className="px-1 pt-3">
@@ -351,14 +386,6 @@ export default async function HomePage() {
 
         <ScrollFocus>
           <WatchlistRadarSection fallbackItems={radarItems} />
-        </ScrollFocus>
-
-        <ScrollFocus>
-          <MarketHighlightsSection
-            stockGainers={gainersRaw}
-            stockLosers={losersRaw}
-            stockMostTraded={mostTradedRaw}
-          />
         </ScrollFocus>
 
         <ScrollFocus>

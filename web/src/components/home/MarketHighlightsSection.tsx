@@ -1,15 +1,11 @@
 'use client'
 
-import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import { GlassHighlight } from '@/components/atoms/GlassHighlight'
 import { CompanyIcon } from '@/components/atoms/CompanyIcon'
 import { VariationBadge } from '@/components/atoms/VariationBadge'
 import { buildAssetHref } from '@/lib/market-routing'
-import { marketHighlightsMock } from '@/mocks/marketHighlights.mock'
 import type { MarketListingItem } from '@/types/market'
-
-type AssetType = 'stock' | 'fund' | 'etf'
 
 type DisplayAsset = {
   stock: string
@@ -17,12 +13,6 @@ type DisplayAsset = {
   close: number
   change: number
   volume: number
-}
-
-const TYPE_LABELS: Record<AssetType, string> = {
-  stock: 'Ações',
-  fund: 'Fundos',
-  etf: 'ETFs',
 }
 
 const ICONS = {
@@ -41,6 +31,18 @@ const ICONS = {
       <rect x="2" y="9" width="3" height="5" rx="0.75" fill="currentColor" opacity="0.5" />
       <rect x="6.5" y="5.5" width="3" height="8.5" rx="0.75" fill="currentColor" opacity="0.7" />
       <rect x="11" y="2" width="3" height="12" rx="0.75" fill="currentColor" opacity="0.9" />
+    </svg>
+  ),
+  crypto: (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.5" opacity="0.8" />
+      <path d="M8 5V11M6.5 7H9.5M6.5 9H9.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" opacity="0.8" />
+    </svg>
+  ),
+  fixedIncome: (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <rect x="3" y="3" width="10" height="10" rx="1.5" stroke="currentColor" strokeWidth="1.5" opacity="0.8" />
+      <path d="M3 8H13" stroke="currentColor" strokeWidth="1.5" opacity="0.6" />
     </svg>
   ),
 }
@@ -85,9 +87,15 @@ function HighlightList({
       </div>
 
       <div className="flex flex-col gap-2">
-        {data.slice(0, 5).map((asset) => (
-          <HighlightItem key={asset.stock} asset={asset} />
-        ))}
+        {data.length > 0 ? (
+          data.slice(0, 5).map((asset) => (
+            <HighlightItem key={asset.stock} asset={asset} />
+          ))
+        ) : (
+          <div className="rounded-2xl border border-white/5 bg-white/[0.02] px-4 py-5 text-sm text-white/35">
+            Dados indisponíveis
+          </div>
+        )}
       </div>
 
       <Link
@@ -113,34 +121,30 @@ function toDisplay(m: MarketListingItem | { stock: string; name: string; close: 
   return { stock: m.stock, name: m.name, close: m.close, change: m.change, volume: m.volume }
 }
 
+import { useState } from 'react'
+
 interface MarketHighlightsSectionProps {
   stockGainers: MarketListingItem[]
   stockLosers: MarketListingItem[]
   stockMostTraded: MarketListingItem[]
+  cryptoHighlights: MarketListingItem[]
+  fixedIncomeHighlights: MarketListingItem[]
 }
 
 export default function MarketHighlightsSection({
   stockGainers,
   stockLosers,
   stockMostTraded,
+  cryptoHighlights,
+  fixedIncomeHighlights,
 }: MarketHighlightsSectionProps) {
-  const [tab, setTab] = useState<AssetType>('stock')
+  const [activeTab, setActiveTab] = useState<'b3' | 'alt'>('b3')
 
-  const { gainers, losers, mostTraded } = useMemo(() => {
-    if (tab === 'stock') {
-      return {
-        gainers: stockGainers.map(toDisplay),
-        losers: stockLosers.map(toDisplay),
-        mostTraded: stockMostTraded.map(toDisplay),
-      }
-    }
-    const byType = marketHighlightsMock.filter((a) => a.type === tab)
-    return {
-      gainers: [...byType].sort((a, b) => b.change - a.change).map(toDisplay),
-      losers: [...byType].sort((a, b) => a.change - b.change).map(toDisplay),
-      mostTraded: [...byType].sort((a, b) => b.volume - a.volume).map(toDisplay),
-    }
-  }, [tab, stockGainers, stockLosers, stockMostTraded])
+  const gainers = stockGainers.map(toDisplay)
+  const losers = stockLosers.map(toDisplay)
+  const mostTraded = stockMostTraded.map(toDisplay)
+  const crypto = cryptoHighlights.map(toDisplay)
+  const fixedIncome = fixedIncomeHighlights.map(toDisplay)
 
   return (
     <section>
@@ -151,36 +155,47 @@ export default function MarketHighlightsSection({
             Destaques do Mercado
           </h2>
           <p className="mt-1 text-sm text-[#DBEAFE]/55">
-            Maiores altas, quedas e mais negociados do pregão de hoje.
+            Os principais ativos e taxas monitorados do dia.
           </p>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
-          {(Object.entries(TYPE_LABELS) as [AssetType, string][]).map(([type, label]) => {
-            const isActive = tab === type
-            return (
-              <button
-                key={type}
-                type="button"
-                onClick={() => setTab(type)}
-                className={`rounded-2xl border px-4 py-2 text-sm font-medium transition-all duration-300 ${
-                  isActive
-                    ? 'border-[#8B5CF6]/30 bg-[#8B5CF6]/15 text-[#F4F0FF] shadow-[inset_0_1px_2px_rgba(139,92,246,0.3)]'
-                    : 'border-white/5 bg-white/[0.03] text-white/40 hover:border-white/10 hover:bg-white/[0.06] hover:text-white/60'
-                }`}
-              >
-                {label}
-              </button>
-            )
-          })}
+        {/* Tab Selector */}
+        <div className="flex rounded-xl bg-white/[0.03] border border-white/5 p-1 select-none">
+          <button
+            onClick={() => setActiveTab('b3')}
+            className={`rounded-lg px-4 py-1.5 text-xs font-bold transition duration-300 ${
+              activeTab === 'b3'
+                ? 'bg-[#8B5CF6]/20 text-[#F4F0FF] border border-[#8B5CF6]/30 shadow-[0_0_12px_rgba(139,92,246,0.15)]'
+                : 'text-white/40 hover:text-white border border-transparent'
+            }`}
+          >
+            Ações B3
+          </button>
+          <button
+            onClick={() => setActiveTab('alt')}
+            className={`rounded-lg px-4 py-1.5 text-xs font-bold transition duration-300 ${
+              activeTab === 'alt'
+                ? 'bg-[#8B5CF6]/20 text-[#F4F0FF] border border-[#8B5CF6]/30 shadow-[0_0_12px_rgba(139,92,246,0.15)]'
+                : 'text-white/40 hover:text-white border border-transparent'
+            }`}
+          >
+            Renda Fixa & Cripto
+          </button>
         </div>
       </div>
 
-      <div className="mt-5 grid w-full grid-cols-1 gap-5 md:grid-cols-3">
-        <HighlightList title="Maiores Altas" icon={ICONS.gainers} data={gainers} />
-        <HighlightList title="Maiores Quedas" icon={ICONS.losers} data={losers} />
-        <HighlightList title="Mais Negociados" icon={ICONS.mostTraded} data={mostTraded} />
-      </div>
+      {activeTab === 'b3' ? (
+        <div className="mt-5 grid w-full grid-cols-1 gap-5 md:grid-cols-3">
+          <HighlightList title="Maiores Altas" icon={ICONS.gainers} data={gainers} />
+          <HighlightList title="Maiores Quedas" icon={ICONS.losers} data={losers} />
+          <HighlightList title="Mais Negociados" icon={ICONS.mostTraded} data={mostTraded} />
+        </div>
+      ) : (
+        <div className="mt-5 grid w-full grid-cols-1 gap-5 md:grid-cols-2">
+          <HighlightList title="Títulos do Tesouro Direto" icon={ICONS.fixedIncome} data={fixedIncome} />
+          <HighlightList title="Criptoativos (BRL)" icon={ICONS.crypto} data={crypto} />
+        </div>
+      )}
     </section>
   )
 }

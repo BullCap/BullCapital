@@ -11,7 +11,7 @@ const NAV_ITEMS = [
   { label: 'Mercado', href: '/home', icon: BarChart3 },
   { label: 'Notícias', href: '/news', icon: Newspaper },
   { label: 'Buscar', href: '/search', icon: Search },
-  { label: 'Terminal', href: '/terminal', icon: Terminal },
+  { label: 'Comparar', href: '/terminal', icon: Terminal },
   { label: 'Análises', href: '/analysis', icon: Sparkles },
 ] as const
 

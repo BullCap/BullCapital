@@ -40,7 +40,7 @@ export default function SearchBar() {
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Ex.: Notícias de hoje da Petrobras e impactos"
+          placeholder="Ex.: PETR4 vs VALE3 com fundamentos e macro"
           className="w-full bg-transparent text-sm text-[#F4F0FF]/90 placeholder-[#F4F0FF]/40 outline-none sm:text-base py-2.5"
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
@@ -49,7 +49,7 @@ export default function SearchBar() {
           type="submit"
           className="relative inline-flex min-h-10 items-center justify-center rounded-full border border-white/10 bg-[#8B5CF6]/20 px-5 text-xs font-semibold text-[#F4F0FF] shadow-[inset_0_1px_2px_rgba(255,255,255,0.18),0_4px_12px_rgba(0,0,0,0.35)] transition duration-500 hover:scale-[1.03] hover:bg-[#8B5CF6]/30 active:scale-[0.98] mr-1"
         >
-          Analisar
+          Entrar
         </button>
       </div>
     </form>

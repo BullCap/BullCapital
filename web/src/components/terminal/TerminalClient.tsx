@@ -27,7 +27,7 @@ export default function TerminalClient({ initialQuotes }: TerminalClientProps) {
       if (savedCompare) {
         try {
           setCompareState(JSON.parse(savedCompare))
-        } catch (_) {}
+        } catch {}
       }
       setIsLoaded(true)
     }
@@ -43,7 +43,7 @@ export default function TerminalClient({ initialQuotes }: TerminalClientProps) {
       <div className="flex min-h-[450px] items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#8B5CF6]/30 border-t-[#8B5CF6]" />
-          <p className="text-sm text-[#F4F0FF]/40 font-medium">Carregando Terminal de Trabalho...</p>
+          <p className="text-sm text-[#F4F0FF]/40 font-medium">Carregando terminal de comparação...</p>
         </div>
       </div>
     )
@@ -59,7 +59,7 @@ export default function TerminalClient({ initialQuotes }: TerminalClientProps) {
 
   return (
     <div className="flex flex-col gap-5 mt-6">
-      {/* Abas - Apenas Comparador no MVP B2B */}
+      {/* Apenas Comparador no MVP B2B */}
       <div className="bull-dock-shell flex p-1 rounded-2xl bg-black/35 border border-white/[0.08] max-w-[200px] w-full">
         <button
           className="flex flex-1 items-center justify-center gap-2 py-2.5 px-3 text-xs font-semibold rounded-xl transition border border-white/[0.08] bg-white/[0.09] text-[#F4F0FF] shadow-[inset_0_1px_1px_rgba(255,255,255,0.12)] font-bold cursor-default"
@@ -69,7 +69,7 @@ export default function TerminalClient({ initialQuotes }: TerminalClientProps) {
         </button>
       </div>
 
-      {/* Grid: simulador (esq) + copiloto (dir) */}
+      {/* Grid: comparador + copiloto */}
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_24rem] gap-6 items-start">
         <div className="relative rounded-[2rem] border border-white/[0.08] bg-[#0f0c18]/50 backdrop-blur-2xl shadow-[inset_0_1px_0px_rgba(255,255,255,0.08),0_18px_48px_rgba(0,0,0,0.45)] overflow-hidden p-5 md:p-6 min-h-[460px]">
           <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />

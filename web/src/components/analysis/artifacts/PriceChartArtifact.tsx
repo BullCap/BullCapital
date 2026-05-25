@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react'
 import { Area, AreaChart, ResponsiveContainer, Tooltip, YAxis } from 'recharts'
 import { GlassHighlight } from '@/components/atoms/GlassHighlight'
 import { fetchAssetHistory } from '@/lib/actions/market'
-import { getMockAssetHistory } from '@/lib/market-history.mock'
 import type { AssetHistoricalPrice } from '@/types/market'
 
 type Range = '1d' | '1mo' | '3mo'
@@ -18,7 +17,6 @@ interface PriceChartArtifactProps {
 
 const RANGE_LABELS: Record<Range, string> = { '1d': '1D', '1mo': '1M', '3mo': '3M' }
 const SHIMMER_HEIGHTS = [40, 58, 44, 68, 52, 76, 62, 72, 58, 82, 68, 88]
-const MIN_SERIES_POINTS = 12
 
 function formatBRL(v: number) {
   return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
@@ -27,7 +25,7 @@ function formatBRL(v: number) {
 export function PriceChartArtifact({ ticker, title, range = '1mo', chartNote }: PriceChartArtifactProps) {
   const [data, setData] = useState<AssetHistoricalPrice[]>([])
   const [activeRange, setActiveRange] = useState<Range>(range === '1y' ? '3mo' : range)
-  const [isMockHistory, setIsMockHistory] = useState(false)
+  const [isUnavailable, setIsUnavailable] = useState(false)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -46,17 +44,17 @@ export function PriceChartArtifact({ ticker, title, range = '1mo', chartNote }: 
         const history = result?.history ?? []
         if (history.length > 0) {
           setData(history)
-          setIsMockHistory(false)
+          setIsUnavailable(false)
           return
         }
 
-        setData(getMockAssetHistory(activeRange, undefined))
-        setIsMockHistory(true)
+        setData([])
+        setIsUnavailable(true)
       })
       .catch(() => {
         if (!cancelled) {
-          setData(getMockAssetHistory(activeRange, undefined))
-          setIsMockHistory(true)
+          setData([])
+          setIsUnavailable(true)
         }
       })
       .finally(() => {
@@ -87,9 +85,9 @@ export function PriceChartArtifact({ ticker, title, range = '1mo', chartNote }: 
           {title && <h3 className="mt-1.5 font-serif text-lg text-[#F4F0FF]">{title}</h3>}
         </div>
         <div className="flex shrink-0 items-center gap-1">
-          {isMockHistory && (
+          {isUnavailable && (
             <span className="mr-1 rounded-full border border-[#60A5FA]/20 bg-[#3B82F6]/10 px-2 py-1 text-[10px] text-[#DBEAFE]/70">
-              Modelo
+              Indisponível
             </span>
           )}
           {(['1d', '1mo', '3mo'] as const).map((r) => (

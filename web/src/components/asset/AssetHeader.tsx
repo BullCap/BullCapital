@@ -60,7 +60,7 @@ export default function AssetHeader({ ticker, name, price, changePercent, follow
             </p>
             <VariationBadge variation={changePercent ?? 0} />
           </div>
-          <p className="mt-3 text-xs text-[#DBEAFE]/40">Preço, perfil e contexto juntos.</p>
+          <p className="mt-3 text-xs text-[#DBEAFE]/40">Preço, fundamentos e contexto no mesmo fluxo.</p>
         </div>
       ) : (
         <p className="mt-5 text-sm text-[#F4F0FF]/40">Dados indisponíveis</p>

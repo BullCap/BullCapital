@@ -1,5 +1,5 @@
 import { buildAssetHref } from '@/lib/market-routing'
-import { getAssetNews } from '@/lib/services/market'
+import { getAssetNews, getLatestNews } from '@/lib/services/market'
 import type { AssetNewsItem } from '@/types/market'
 
 export const MARKET_NEWS_TICKERS = ['^BVSP', 'PETR4', 'VALE3', 'ITUB4'] as const
@@ -44,24 +44,24 @@ export function buildNewsNote(tickers: string[]) {
     return 'Use esta manchete para entender o clima geral do mercado antes de entrar nos nomes individuais.'
   }
   if (tickers.includes('PETR4')) {
-    return 'Petrobras ajuda a ler commodities, indice e risco politico em uma mesma historia.'
+    return 'Petrobras ajuda a ler commodities, índice e risco político em uma mesma história.'
   }
   if (tickers.includes('VALE3')) {
-    return 'Vale cruza fluxo global, minerio e apetite por exportadoras brasileiras.'
+    return 'Vale cruza fluxo global, minério e apetite por exportadoras brasileiras.'
   }
   if (tickers.includes('ITUB4')) {
-    return 'Itau ajuda a testar se o movimento local tambem passa por bancos e credito.'
+    return 'Itaú ajuda a testar se o movimento local também passa por bancos e crédito.'
   }
-  return 'Cruze a manchete com preco, fonte e contexto antes de transformar sinal em tese.'
+  return 'Cruze a manchete com preço, fonte e contexto antes de transformar sinal em tese.'
 }
 
 function buildNewsReason(scopes: NewsRadarScope[], tickers: string[]) {
   if (scopes.includes('watchlist')) {
     const followed = tickers.find((ticker) => !isIndexTicker(ticker))
-    return followed ? `${followed} esta na sua lista` : 'Apareceu na sua lista'
+    return followed ? `${followed} está na sua lista` : 'Apareceu na sua lista'
   }
   if (tickers.includes('^BVSP')) return 'Afeta a leitura do mercado local'
-  return tickers[0] ? `${tickers[0]} esta no radar do dia` : 'Historia priorizada no radar'
+  return tickers[0] ? `${tickers[0]} está no radar do dia` : 'História priorizada no radar'
 }
 
 function getRankScore(item: NewsRadarItem) {
@@ -131,21 +131,46 @@ export function buildNewsRadarItems(sources: NewsRadarSource[]): NewsRadarItem[]
 }
 
 export async function getNewsRadarItems(watchlist: string[] = []): Promise<NewsRadarItem[]> {
-  const tickers = [
-    ...MARKET_NEWS_TICKERS.map((ticker) => ({ scope: 'market' as const, ticker })),
-    ...watchlist
-      .slice(0, 5)
-      .map((ticker) => ({ scope: 'watchlist' as const, ticker })),
-  ]
+  const watchlistTickers = watchlist.slice(0, 5)
 
-  const results = await Promise.allSettled(
-    tickers.map(async (source) => ({
-      ...source,
-      items: await getAssetNews(source.ticker, source.scope === 'watchlist' ? 4 : 3),
-    }))
-  )
+  const [marketResult, ...watchlistResults] = await Promise.allSettled([
+    getLatestNews(18),
+    ...watchlistTickers.map((ticker) => getAssetNews(ticker, 4)),
+  ])
 
-  return buildNewsRadarItems(
-    results.flatMap((result) => (result.status === 'fulfilled' ? [result.value] : []))
-  )
+  const sources: NewsRadarSource[] = []
+
+  if (marketResult.status === 'fulfilled') {
+    const items = marketResult.value
+    const matched = new Map<string, AssetNewsItem[]>()
+    const generic: AssetNewsItem[] = []
+
+    for (const item of items) {
+      const tagged = (item.relatedTickers ?? []).filter((ticker) => ticker)
+      if (tagged.length === 0) {
+        generic.push(item)
+        continue
+      }
+      for (const ticker of tagged) {
+        const bucket = matched.get(ticker) ?? []
+        bucket.push(item)
+        matched.set(ticker, bucket)
+      }
+    }
+
+    for (const [ticker, bucket] of matched.entries()) {
+      sources.push({ scope: 'market', ticker, items: bucket })
+    }
+    if (generic.length > 0) {
+      sources.push({ scope: 'market', ticker: '^BVSP', items: generic })
+    }
+  }
+
+  watchlistResults.forEach((result, idx) => {
+    if (result.status === 'fulfilled') {
+      sources.push({ scope: 'watchlist', ticker: watchlistTickers[idx], items: result.value })
+    }
+  })
+
+  return buildNewsRadarItems(sources)
 }

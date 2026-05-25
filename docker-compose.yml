@@ -1,6 +1,6 @@
 services:
   db:
-    image: postgres:16-alpine
+    image: pgvector/pgvector:pg16
     restart: unless-stopped
     ports:
       - '5432:5432'
@@ -25,6 +25,8 @@ services:
     environment:
       DATABASE_URL: postgresql+asyncpg://bullcapital:bullcapital@db:5432/bullcapital
       DATABASE_SSL: 'false'
+      API_SHARED_SECRET: ${API_SHARED_SECRET:-}
+      BRAPI_KEY: ${BRAPI_KEY:-}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       CORS_ORIGINS: http://localhost:3000
     depends_on:

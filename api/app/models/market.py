@@ -3,7 +3,7 @@
 from datetime import date, datetime
 from uuid import uuid4
 
-from sqlalchemy import Date, DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint, func
+from sqlalchemy import Date, DateTime, Float, Integer, String, Text, UniqueConstraint, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -14,7 +14,6 @@ class MacroIndicator(Base):
     """Macroeconomic indicators (e.g., SELIC, IPCA, CDI) from BCB SGS."""
 
     __tablename__ = "macro_indicators"
-    __table_args__ = {"schema": "ai"}
 
     id: Mapped[str] = mapped_column(
         UUID(as_uuid=False),
@@ -86,7 +85,7 @@ class AssetQuote(Base):
 
 
 class AssetHistoricalPrice(Base):
-    """Historical daily close prices for B3 assets (used for Markovitz calculations)."""
+    """Historical daily OHLCV prices for B3 assets."""
 
     __tablename__ = "asset_historical_prices"
 
@@ -97,6 +96,9 @@ class AssetHistoricalPrice(Base):
     )
     ticker: Mapped[str] = mapped_column(String(20), index=True)
     date: Mapped[date] = mapped_column(Date, index=True)
+    open: Mapped[float | None] = mapped_column(Float, nullable=True)
+    high: Mapped[float | None] = mapped_column(Float, nullable=True)
+    low: Mapped[float | None] = mapped_column(Float, nullable=True)
     close: Mapped[float] = mapped_column(Float)
     volume: Mapped[float | None] = mapped_column(Float, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
@@ -114,7 +116,6 @@ class NewsArticle(Base):
     """High-signal Brazilian news articles (CVM RAD + RSS) filtered by ticker."""
 
     __tablename__ = "news_articles"
-    __table_args__ = {"schema": "ai"}
 
     id: Mapped[str] = mapped_column(
         UUID(as_uuid=False),
@@ -132,4 +133,9 @@ class NewsArticle(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
+    )
+
+    __table_args__ = (
+        UniqueConstraint("ticker", "link", name="uq_news_ticker_link"),
+        {"schema": "ai"},
     )

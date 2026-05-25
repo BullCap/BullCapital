@@ -5,8 +5,7 @@ import { NavLink } from './NavLink'
 const navItems = [
   { href: '#', label: 'Início' },
   { href: '#visao-geral', label: 'Mercado' },
-  { href: '#destaques', label: 'Notícias' },
-  { href: '#visao-geral', label: 'Risco' },
+  { href: '#destaques', label: 'Destaques' },
 ]
 
 export function HeaderNav() {

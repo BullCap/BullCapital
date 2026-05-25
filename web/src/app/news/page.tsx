@@ -25,7 +25,7 @@ function buildRadarItems(
     items.push({
       ticker: gainers[0].ticker,
       label: 'Força entre as maiores altas',
-      description: `${gainers[0].ticker} sobe ${formatPercent(gainers[0].changePercent)} e pode ajudar a testar se o fluxo comprador tem continuidade.`,
+      description: `${gainers[0].ticker} sobe ${formatPercent(gainers[0].changePercent)} e ajuda a testar se o fluxo do pregão tem continuidade.`,
       href: buildAssetHref(gainers[0].ticker),
       tone: 'up',
     })
@@ -44,7 +44,7 @@ function buildRadarItems(
   items.push({
     ticker: 'B3',
     label: 'Leitura completa do mercado',
-    description: 'Abra a análise do mercado para juntar juros, humor local e os nomes que puxam a narração do pregão.',
+    description: 'Abra a análise do mercado para juntar juros, humor local e os nomes que puxam a narrativa do pregão.',
     href: '/analysis',
     tone: 'neutral',
   })
@@ -88,10 +88,10 @@ export default async function NewsPage() {
           <header className="px-1">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="bull-eyebrow">Radar Editorial</p>
+                <p className="bull-eyebrow">Radar editorial com Brapi PRO</p>
                 <h1 className="mt-2 font-serif text-3xl tracking-tight text-[#F4F0FF]">Notícias</h1>
                 <p className="mt-1 max-w-xl text-sm leading-6 text-[#DBEAFE]/55">
-                  Manchetes confirmadas para cruzar fonte, ativo e contexto de mercado.
+                  Manchetes confirmadas para cruzar fonte, ativo, preço, fundamentos e macro.
                 </p>
               </div>
             </div>

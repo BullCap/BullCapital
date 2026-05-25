@@ -5,7 +5,7 @@ import type { AssetHistoryData } from '@/types/market'
 
 export async function fetchAssetHistory(
   ticker: string,
-  range: '1d' | '1mo' | '3mo'
+  range: '1d' | '1mo' | '3mo' | '6mo' | '1y'
 ): Promise<AssetHistoryData> {
   return getAssetHistory([ticker], range)
 }

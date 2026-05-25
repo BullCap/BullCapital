@@ -160,11 +160,11 @@ cd web && pnpm install && cd ..
 ```bash
 # Web
 cp web/.env.local.example web/.env.local
-# Preencha: NEXTAUTH_SECRET, NEXTAUTH_URL, DATABASE_URL, BRAPI_KEY
+# Preencha: NEXTAUTH_SECRET, NEXTAUTH_URL, DATABASE_URL, ANALYSIS_API_URL
 
 # API
 cp api/.env.example api/.env
-# Preencha: DATABASE_URL, OPENAI_API_KEY, CORS_ORIGINS
+# Preencha: DATABASE_URL, BRAPI_KEY, OPENAI_API_KEY, CORS_ORIGINS
 ```
 
 Gere o `NEXTAUTH_SECRET`:
@@ -336,7 +336,8 @@ Filosofia: **"The Financial Reading Room"** — calmo, contextual, sério mas ac
 NEXTAUTH_SECRET=           # openssl rand -base64 32
 NEXTAUTH_URL=http://localhost:3000
 DATABASE_URL=postgresql://bullcapital:bullcapital@localhost:5432/bullcapital
-BRAPI_KEY=                 # brapi.dev — opcional em dev
+ANALYSIS_API_URL=http://localhost:8001/api/v1
+API_SHARED_SECRET=         # mesmo valor configurado na API, quando habilitado
 ```
 
 ### `api/.env`
@@ -344,6 +345,8 @@ BRAPI_KEY=                 # brapi.dev — opcional em dev
 ```bash
 DATABASE_URL=postgresql+asyncpg://bullcapital:bullcapital@localhost:5432/bullcapital
 DATABASE_SSL=false
+API_SHARED_SECRET=         # mesmo valor configurado no web, quando habilitado
+BRAPI_KEY=                 # brapi.dev — fica apenas no backend/API
 OPENAI_API_KEY=            # platform.openai.com
 CORS_ORIGINS=http://localhost:3000
 ```
@@ -384,7 +387,7 @@ docker compose logs -f api      # Logs do serviço API
 → Execute `pnpm prisma generate`
 
 **Dados de mercado retornando null**
-→ Normal sem `BRAPI_KEY`. Defina no `.env.local` se necessário
+→ Normal sem `BRAPI_KEY` na API. Defina no `api/.env` ou Railway, nunca no web/client
 
 **Serviço `db` não sobe**
 → Porta 5432 em uso. Execute `lsof -i :5432` e pare o Postgres local

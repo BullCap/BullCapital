@@ -32,7 +32,7 @@ const LOCAL_SUMMARIES: Record<string, string> = {
 export default function AssetProfileCard({ ticker, profile }: AssetProfileCardProps) {
   const [isExpanded, setIsExpanded] = useState(false)
 
-  // Determine description with local fallback first, then yfinance profile, then general notice
+  // Determine description with local fallback first, then the Brapi-backed profile, then a general notice.
   const uppercaseTicker = ticker.toUpperCase()
   const customSummary = LOCAL_SUMMARIES[uppercaseTicker]
   const summaryText = customSummary || profile?.longBusinessSummary || 'Sem descrição institucional detalhada disponível para este ativo no momento.'

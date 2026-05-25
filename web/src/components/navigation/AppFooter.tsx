@@ -4,13 +4,13 @@ import { GlassHighlight } from '@/components/atoms/GlassHighlight'
 const footerLinks = {
   Plataforma: [
     { label: 'Mercado', href: '/home' },
-    { label: 'Buscar Ativos', href: '/search' },
+    { label: 'Buscar ativos', href: '/search' },
     { label: 'Notícias', href: '/news' },
-    { label: 'Terminal', href: '/terminal' },
+    { label: 'Comparador', href: '/terminal' },
   ],
   Recursos: [
-    { label: 'Análise com IA', href: '/analysis' },
-    { label: 'Radar de Mercado', href: '/home' },
+    { label: 'Análise contextual', href: '/analysis' },
+    { label: 'Radar Brapi PRO', href: '/home' },
   ],
   Legal: [
     { label: 'Privacidade', href: '#' },
@@ -67,7 +67,7 @@ export default function AppFooter() {
               <span className="font-serif font-bold text-[#F4F0FF] text-[20px] tracking-wide">BCAP</span>
             </div>
             <p className="text-sm leading-relaxed text-[#F4F0FF]/40">
-              Inteligência de mercado para assessores e planejadores financeiros que pensam antes de agir.
+              Inteligência de mercado para CFPs, criadores financeiros e AAIs que precisam explicar dados com contexto.
             </p>
             <div className="flex items-center gap-2">
               {socialLinks.map((social) => (
@@ -117,7 +117,7 @@ export default function AppFooter() {
           </p>
           <div className="rounded-full border border-white/5 bg-white/5 px-4 py-1.5">
             <span className="text-[10px] text-[#F4F0FF]/25">
-              Não é recomendação de investimento. Invista com consciência.
+              Análises contextuais e educacionais. Não constituem recomendação de investimento.
             </span>
           </div>
         </div>

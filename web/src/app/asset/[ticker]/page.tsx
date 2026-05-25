@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { auth } from '@/lib/auth'
 import { getMarketRadarData, getAssetHistory, getAssetNews } from '@/lib/services/market'
-import { fetchIndexFromYfinance, isMarketOpen } from '@/lib/market-utils'
+import { fetchMarketQuote, isMarketOpen } from '@/lib/market-utils'
 import { normalizeTicker } from '@/lib/market-routing'
 import AssetHeader from '@/components/asset/AssetHeader'
 import FollowButton from '@/components/asset/FollowButton'
@@ -29,14 +29,14 @@ export default async function AssetPage({ params }: AssetPageProps) {
   const ticker = normalizeTicker(rawTicker) || rawTicker
 
   const [quoteResult, historyResult, radarResult, newsResult, followingResult] = await Promise.allSettled([
-    fetchIndexFromYfinance(ticker),
+    fetchMarketQuote(ticker),
     getAssetHistory([ticker], '1mo'),
     getMarketRadarData(ticker),
     getAssetNews(ticker),
     isFollowing(ticker),
   ])
 
-  // Header — sourced from free-tier quote, never from radar
+  // Header — sourced through the backend market boundary, never from client-side Brapi calls.
   const quote = quoteResult.status === 'fulfilled' ? quoteResult.value : null
   const price = quote?.price ?? null
   const changePercent = quote?.changePercent ?? null
@@ -88,8 +88,6 @@ export default async function AssetPage({ params }: AssetPageProps) {
         <PriceChartClient
           ticker={ticker}
           initialHistory={initialHistory}
-          quotePrice={price}
-          quoteChangePercent={changePercent}
           isMarketOpen={isMarketOpen()}
         />
       </ScrollFocus>

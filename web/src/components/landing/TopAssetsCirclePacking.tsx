@@ -5,7 +5,7 @@ import { ResponsiveCirclePacking } from '@nivo/circle-packing'
 import { animated } from '@react-spring/web'
 import { Settings2 } from 'lucide-react'
 import { GlassHighlight } from '@/components/atoms/GlassHighlight'
-import { topAssetsMock, type StockSummary } from '@/mocks/topAssets.mock'
+import type { MarketListingItem } from '@/types/market'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,13 +27,13 @@ interface CirclePackingNode {
   sector?: string
 }
 
-function buildHierarchy(assets: StockSummary[], groupBySector: boolean): CirclePackingNode {
+function buildHierarchy(assets: MarketListingItem[], groupBySector: boolean): CirclePackingNode {
   if (!groupBySector) {
     return {
       id: 'root',
       children: assets.map((s) => ({
         id: s.stock,
-        value: s.market_cap / 1_000_000_000,
+        value: (s.marketCap ?? 0) / 1_000_000_000,
         stock: s.stock,
         name: s.name,
         close: s.close,
@@ -43,7 +43,7 @@ function buildHierarchy(assets: StockSummary[], groupBySector: boolean): CircleP
     }
   }
 
-  const sectorMap = new Map<string, StockSummary[]>()
+  const sectorMap = new Map<string, MarketListingItem[]>()
 
   for (const asset of assets) {
     const sector = asset.sector ?? 'Outros'
@@ -56,7 +56,7 @@ function buildHierarchy(assets: StockSummary[], groupBySector: boolean): CircleP
     sector,
     children: stocks.map((s) => ({
       id: s.stock,
-      value: s.market_cap / 1_000_000_000, // in billions
+      value: (s.marketCap ?? 0) / 1_000_000_000,
       stock: s.stock,
       name: s.name,
       close: s.close,
@@ -75,14 +75,20 @@ function formatBRL(value: number): string {
   })
 }
 
-export default function TopAssetsCirclePacking() {
+interface TopAssetsCirclePackingProps {
+  assets: MarketListingItem[]
+}
+
+export default function TopAssetsCirclePacking({ assets }: TopAssetsCirclePackingProps) {
   const [groupBySector, setGroupBySector] = useState(false)
   const [assetCount, setAssetCount] = useState(10)
 
   const data = useMemo(() => {
-    const slicedAssets = topAssetsMock.slice(0, assetCount)
+    const slicedAssets = assets
+      .filter((asset) => (asset.marketCap ?? 0) > 0)
+      .slice(0, assetCount)
     return buildHierarchy(slicedAssets, groupBySector)
-  }, [groupBySector, assetCount])
+  }, [assets, groupBySector, assetCount])
 
   return (
     <div className="group relative flex h-full w-full flex-col items-center gap-6 overflow-hidden rounded-[2.5rem] border border-white/10 bg-[#1A1625]/40 p-10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),inset_0_-2px_6px_rgba(0,0,0,0.6),0_10px_20px_rgba(0,0,0,0.4)] backdrop-blur-2xl transition-all duration-700">
@@ -166,6 +172,11 @@ export default function TopAssetsCirclePacking() {
 
       {/* Chart */}
       <div className="z-10 -my-3 aspect-square w-full max-w-[480px]">
+        {(data.children?.length ?? 0) === 0 ? (
+          <div className="flex h-full items-center justify-center rounded-[2rem] border border-white/5 bg-black/15 text-sm text-[#F4F0FF]/40">
+            Dados indisponíveis
+          </div>
+        ) : (
         <ResponsiveCirclePacking
           data={data}
           id="id"
@@ -303,6 +314,7 @@ export default function TopAssetsCirclePacking() {
           animate
           motionConfig="gentle"
         />
+        )}
       </div>
     </div>
   )

@@ -1,10 +1,10 @@
 'use server'
 
 import { getMarketRadarData, getMarketStatus, getAssetNews, getCurrencyRates } from '@/lib/services/market'
-import { fetchIndexFromYfinance, fetchSELIC } from '@/lib/market-utils'
+import { ANALYSIS_API_URL, internalApiHeaders } from '@/lib/internal-api'
+import { fetchSELIC } from '@/lib/market-utils'
 import { normalizeTicker } from '@/lib/market-routing'
-
-const ANALYSIS_API_URL = process.env.ANALYSIS_API_URL ?? 'http://localhost:8001/api/v1'
+import { auth } from '@/lib/auth'
 
 export interface AnalysisSections {
   o_que_aconteceu: string
@@ -54,6 +54,9 @@ export async function requestAnalysis(
   template?: string
 ): Promise<AnalysisResult | null> {
   try {
+    const session = await auth()
+    if (!session?.user) return null
+
     const normalizedTicker = normalizeTicker(ticker)
     if (!normalizedTicker) return null
 
@@ -120,7 +123,7 @@ export async function requestAnalysis(
 
     const res = await fetch(`${ANALYSIS_API_URL}/analysis`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: internalApiHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({
         subject: isMarketAnalysis ? 'mercado' : normalizedTicker,
         source: isMarketAnalysis ? 'market' : 'asset',

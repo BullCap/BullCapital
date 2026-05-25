@@ -3,21 +3,30 @@
 import asyncio
 import logging
 import math
-from datetime import datetime, date
+from datetime import UTC, datetime
+
 import httpx
 import yfinance as yf
-from sqlalchemy import select
+from sqlalchemy import func
 from sqlalchemy.dialects.postgresql import insert
 
 from app.core.config import settings
 from app.core.database import async_session_maker
-from app.models.market import AssetQuote, AssetHistoricalPrice
+from app.models.market import AssetHistoricalPrice, AssetQuote
 from app.services.yfinance_market import B3_UNIVERSE
 
 logger = logging.getLogger(__name__)
 
 BRAPI_QUOTE_URL = "https://brapi.dev/api/quote/{ticker}"
 TIMEOUT_SECONDS = 15
+BRAPI_QUOTE_MODULES = "summaryProfile,defaultKeyStatistics,financialData"
+VALID_BRAPI_RANGES = {"1d", "5d", "1mo", "3mo", "6mo", "1y", "2y", "5y", "10y", "ytd", "max"}
+BRAPI_RANGE_ALIASES = {
+    "3y": "5y",
+    "15y": "max",
+    "16y": "max",
+    "all": "max",
+}
 
 
 def _to_float(v) -> float | None:
@@ -33,26 +42,52 @@ def _to_float(v) -> float | None:
         return None
 
 
+def _brapi_headers() -> dict[str, str]:
+    return {"Authorization": f"Bearer {settings.brapi_key}"} if settings.brapi_key else {}
+
+
+def _clean_ticker(ticker: str) -> str:
+    clean_ticker = ticker.strip().upper()
+    if clean_ticker.endswith(".SA"):
+        return clean_ticker[:-3]
+    return clean_ticker
+
+
+def _normalize_range(range_name: str) -> str:
+    requested = (range_name or "1mo").strip().lower()
+    requested = BRAPI_RANGE_ALIASES.get(requested, requested)
+    return requested if requested in VALID_BRAPI_RANGES else "1mo"
+
+
+def _normalize_yf_period(period: str) -> str:
+    requested = (period or "1mo").strip().lower()
+    return BRAPI_RANGE_ALIASES.get(requested, requested)
+
+
+def _nested_dict(data: dict, key: str) -> dict:
+    value = data.get(key)
+    return value if isinstance(value, dict) else {}
+
+
 async def fetch_brapi_quote(ticker: str) -> dict | None:
     """Fetch quote and fundamentals from Brapi for a single ticker."""
     if not settings.brapi_key:
         logger.warning("Brapi API key not configured. Skipping Brapi fetch.")
         return None
 
-    # Clean ticker (Brapi expects clean tickers for B3, no .SA)
-    clean_ticker = ticker.strip().upper()
-    if clean_ticker.endswith(".SA"):
-        clean_ticker = clean_ticker[:-3]
+    # Brapi expects clean B3 tickers, without the Yahoo ".SA" suffix.
+    clean_ticker = _clean_ticker(ticker)
 
     url = BRAPI_QUOTE_URL.format(ticker=clean_ticker)
     params = {
-        "token": settings.brapi_key,
         "fundamental": "true",
+        "dividends": "true",
+        "modules": BRAPI_QUOTE_MODULES,
     }
 
     async with httpx.AsyncClient(timeout=TIMEOUT_SECONDS) as client:
         try:
-            response = await client.get(url, params=params)
+            response = await client.get(url, params=params, headers=_brapi_headers())
             if response.status_code == 404:
                 logger.warning(f"Ticker {clean_ticker} not found on Brapi.")
                 return None
@@ -75,26 +110,77 @@ async def fetch_brapi_quotes_batch(tickers: list[str]) -> list[dict]:
 
     clean_tickers = []
     for t in tickers:
-        clean = t.strip().upper()
-        if clean.endswith(".SA"):
-            clean = clean[:-3]
-        clean_tickers.append(clean)
+        clean_tickers.append(_clean_ticker(t))
 
     tickers_str = ",".join(clean_tickers)
     url = BRAPI_QUOTE_URL.format(ticker=tickers_str)
     params = {
-        "token": settings.brapi_key,
         "fundamental": "true",
+        "dividends": "true",
+        "modules": BRAPI_QUOTE_MODULES,
     }
 
     async with httpx.AsyncClient(timeout=TIMEOUT_SECONDS) as client:
         try:
-            response = await client.get(url, params=params)
+            response = await client.get(url, params=params, headers=_brapi_headers())
             response.raise_for_status()
             data = response.json()
             return data.get("results", [])
         except Exception as e:
             logger.error(f"Error calling Brapi batch for tickers {tickers_str}: {e}")
+            return []
+
+
+async def fetch_brapi_history(ticker: str, range_name: str = "1mo") -> list[dict]:
+    """Fetch daily OHLCV history from Brapi PRO using the quote historicalDataPrice payload."""
+    if not settings.brapi_key:
+        logger.warning("Brapi API key not configured. Skipping Brapi history fetch.")
+        return []
+
+    clean_ticker = _clean_ticker(ticker)
+    url = BRAPI_QUOTE_URL.format(ticker=clean_ticker)
+    params = {
+        "range": _normalize_range(range_name),
+        "interval": "1d",
+    }
+
+    async with httpx.AsyncClient(timeout=TIMEOUT_SECONDS) as client:
+        try:
+            response = await client.get(url, params=params, headers=_brapi_headers())
+            response.raise_for_status()
+            results = response.json().get("results", [])
+            if not results:
+                return []
+
+            history = results[0].get("historicalDataPrice") or []
+            records: list[dict] = []
+            for row in history:
+                if not isinstance(row, dict):
+                    continue
+
+                raw_date = row.get("date")
+                if raw_date is None:
+                    continue
+                try:
+                    record_date = datetime.fromtimestamp(int(raw_date), tz=UTC).date()
+                except (TypeError, ValueError, OSError):
+                    continue
+
+                close = _to_float(row.get("close") or row.get("adjustedClose"))
+                if close is None or close <= 0:
+                    continue
+
+                records.append({
+                    "date": record_date,
+                    "open": _to_float(row.get("open")),
+                    "high": _to_float(row.get("high")),
+                    "low": _to_float(row.get("low")),
+                    "close": close,
+                    "volume": _to_float(row.get("volume")),
+                })
+            return records
+        except Exception as e:
+            logger.error(f"Error calling Brapi history for ticker {clean_ticker}: {e}")
             return []
 
 
@@ -156,21 +242,43 @@ async def upsert_quote_record(quote_data: dict, ticker: str) -> bool:
     """Insert or update a quote record in the PostgreSQL cache, casting advanced fundamentals."""
     try:
         ticker_upper = ticker.strip().upper()
+        summary_profile = _nested_dict(quote_data, "summaryProfile")
+        key_stats = _nested_dict(quote_data, "defaultKeyStatistics")
+        financial_data = _nested_dict(quote_data, "financialData")
         price = _to_float(quote_data.get("regularMarketPrice")) or 0.0
         change_pct = _to_float(quote_data.get("regularMarketChangePercent")) or 0.0
         volume = _to_float(quote_data.get("regularMarketVolume")) or 0.0
 
-        pe = _to_float(quote_data.get("priceEarnings") or quote_data.get("pe"))
-        dy = _to_float(quote_data.get("dividendYield") or quote_data.get("dy"))
+        pe = _to_float(
+            quote_data.get("priceEarnings")
+            or quote_data.get("pe")
+            or key_stats.get("trailingPE")
+            or key_stats.get("forwardPE")
+        )
+        dy = _to_float(
+            quote_data.get("dividendYield")
+            or quote_data.get("dy")
+            or key_stats.get("dividendYield")
+            or key_stats.get("trailingAnnualDividendYield")
+        )
         # Normalize Dividend Yield to percent standard
         if dy is not None and dy > 0.0 and dy < 1.0:
             dy = dy * 100.0
 
         # Advanced B2B fundamentals from Brapi PRO
-        p_vp = _to_float(quote_data.get("priceToBook") or quote_data.get("p_vp"))
-        roe = _to_float(quote_data.get("roe") or quote_data.get("returnOnEquity"))
-        roic = _to_float(quote_data.get("roic") or quote_data.get("returnOnInvestedCapital"))
-        ev_ebitda = _to_float(quote_data.get("enterpriseValueEbitda") or quote_data.get("evEbitda"))
+        p_vp = _to_float(quote_data.get("priceToBook") or quote_data.get("p_vp") or key_stats.get("priceToBook"))
+        roe = _to_float(quote_data.get("roe") or quote_data.get("returnOnEquity") or financial_data.get("returnOnEquity"))
+        roic = _to_float(
+            quote_data.get("roic")
+            or quote_data.get("returnOnInvestedCapital")
+            or financial_data.get("returnOnInvestedCapital")
+        )
+        ev_ebitda = _to_float(
+            quote_data.get("enterpriseValueEbitda")
+            or quote_data.get("evEbitda")
+            or key_stats.get("enterpriseToEbitda")
+            or financial_data.get("enterpriseToEbitda")
+        )
 
         async with async_session_maker() as session:
             stmt = insert(AssetQuote).values(
@@ -188,9 +296,13 @@ async def upsert_quote_record(quote_data: dict, ticker: str) -> bool:
                 roe=roe,
                 roic=roic,
                 p_vp=p_vp,
-                sector=quote_data.get("sector"),
-                industry=quote_data.get("industry"),
-                business_summary=quote_data.get("longBusinessSummary") or quote_data.get("businessSummary"),
+                sector=quote_data.get("sector") or summary_profile.get("sector") or summary_profile.get("sectorDisp"),
+                industry=quote_data.get("industry") or summary_profile.get("industry") or summary_profile.get("industryDisp"),
+                business_summary=(
+                    quote_data.get("longBusinessSummary")
+                    or quote_data.get("businessSummary")
+                    or summary_profile.get("longBusinessSummary")
+                ),
             )
             # Upsert on conflict
             stmt = stmt.on_conflict_do_update(
@@ -258,11 +370,8 @@ async def ingest_all_quotes() -> int:
             results = await fetch_brapi_quotes_batch(chunk)
 
         # Fallback to individual yfinance fetching for tickers that failed or if Brapi key missing
-        fetched_tickers = {r.get("symbol", "").strip().upper() for r in results}
         for ticker in chunk:
-            clean = ticker.strip().upper()
-            if clean.endswith(".SA"):
-                clean = clean[:-3]
+            clean = _clean_ticker(ticker)
 
             # Find result in batch
             quote_data = next((r for r in results if r.get("symbol", "").strip().upper() == clean), None)
@@ -288,14 +397,14 @@ async def ingest_all_quotes() -> int:
 
 
 def _download_yf_history(symbol: str, period: str) -> list[dict]:
-    """Download daily closes synchronously from yfinance."""
+    """Download daily OHLCV synchronously from yfinance as a fallback."""
     ticker_symbol = symbol.strip().upper()
     if not ticker_symbol.startswith("^") and not ticker_symbol.endswith("=X") and "." not in ticker_symbol:
         ticker_symbol = f"{ticker_symbol}.SA"
 
     try:
         ticker = yf.Ticker(ticker_symbol)
-        df = ticker.history(period=period, interval="1d")
+        df = ticker.history(period=_normalize_yf_period(period), interval="1d")
         if df.empty:
             return []
 
@@ -308,6 +417,9 @@ def _download_yf_history(symbol: str, period: str) -> list[dict]:
 
             history_records.append({
                 "date": index.date(),
+                "open": _to_float(row.get("Open")),
+                "high": _to_float(row.get("High")),
+                "low": _to_float(row.get("Low")),
                 "close": close,
                 "volume": volume,
             })
@@ -318,9 +430,12 @@ def _download_yf_history(symbol: str, period: str) -> list[dict]:
 
 
 async def ingest_asset_history(ticker: str, period: str = "3y") -> int:
-    """Fetch daily closing history from yfinance and upsert it into the database."""
-    logger.info(f"Ingesting daily historical prices for {ticker} (Period: {period})...")
-    records = await asyncio.to_thread(_download_yf_history, ticker, period)
+    """Fetch daily OHLCV history from Brapi PRO and upsert it into the database."""
+    logger.info(f"Ingesting daily OHLCV prices for {ticker} (Period: {period})...")
+    records = await fetch_brapi_history(ticker, period)
+    if not records:
+        logger.info(f"Brapi history missing for {ticker}. Running yfinance fallback...")
+        records = await asyncio.to_thread(_download_yf_history, ticker, period)
 
     if not records:
         logger.warning(f"No history found for {ticker}")
@@ -333,12 +448,18 @@ async def ingest_asset_history(ticker: str, period: str = "3y") -> int:
                 stmt = insert(AssetHistoricalPrice).values(
                     ticker=ticker.strip().upper(),
                     date=record["date"],
+                    open=record.get("open"),
+                    high=record.get("high"),
+                    low=record.get("low"),
                     close=record["close"],
                     volume=record["volume"],
                 )
                 stmt = stmt.on_conflict_do_update(
                     constraint="uq_ticker_date",
                     set_={
+                        "open": record.get("open"),
+                        "high": record.get("high"),
+                        "low": record.get("low"),
                         "close": record["close"],
                         "volume": record["volume"],
                     },
