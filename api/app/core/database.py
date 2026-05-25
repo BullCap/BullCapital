@@ -26,7 +26,17 @@ if settings.database_ssl:
 connect_args["server_settings"] = {"search_path": "ai,extensions,public"}
 engine_kwargs["connect_args"] = connect_args
 
-engine = create_async_engine(settings.database_url, **engine_kwargs)
+def normalize_async_db_url(raw_url: str) -> str:
+    if raw_url.startswith("postgresql+asyncpg://"):
+        return raw_url
+    if raw_url.startswith("postgresql://"):
+        return raw_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+    if raw_url.startswith("postgres://"):
+        return raw_url.replace("postgres://", "postgresql+asyncpg://", 1)
+    return raw_url
+
+
+engine = create_async_engine(normalize_async_db_url(settings.database_url), **engine_kwargs)
 
 async_session_maker = async_sessionmaker(
     engine,
