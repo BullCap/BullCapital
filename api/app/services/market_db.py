@@ -79,9 +79,13 @@ async def get_db_quote(symbol: str) -> dict | None:
         "longBusinessSummary": quote.business_summary,
         "fullTimeEmployees": 0,
         "trailingPE": quote.pe_ratio or 0.0,
-        "profitMargins": 0.0,
+        "profitMargins": quote.roe or 0.0,  # fallback mapping
         "dividendYield": (quote.dividend_yield / 100.0) if quote.dividend_yield else 0.0,  # convert back to fraction for BFF
         "averageVolume": quote.volume,
+        "evEbitda": quote.ev_ebitda,
+        "roe": quote.roe,
+        "roic": quote.roic,
+        "pBook": quote.p_vp,
     }
 
 
