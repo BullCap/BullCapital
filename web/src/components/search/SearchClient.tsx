@@ -13,6 +13,8 @@ const TYPE_LABELS: Record<string, string> = {
   fund: 'FII',
   bdr: 'BDR',
   etf: 'ETF',
+  fixed_income: 'Renda Fixa',
+  crypto: 'Cripto',
 }
 
 async function fetchSearch(query: string): Promise<AssetSearchResult[]> {
@@ -181,13 +183,13 @@ export default function SearchClient({ news }: SearchClientProps) {
               <GlassHighlight widthPercent={50} />
               <p className="bull-eyebrow">Atalhos rápidos</p>
               <div className="flex flex-wrap gap-2 mt-1">
-                {['PETR4', 'VALE3', 'ITUB4', 'BBAS3', 'TAEE11', 'MXRF11'].map((ticker) => (
+                {['PETR4', 'VALE3', 'ITUB4', 'MXRF11', 'BTC', 'ETH', 'TESOURO_SELIC_2029', 'TESOURO_IPCA_2035'].map((ticker) => (
                   <Link
                     key={ticker}
                     href={buildAssetHref(ticker)}
                     className="px-3.5 py-2 rounded-xl border border-white/[0.06] bg-white/[0.03] text-xs font-bold text-[#C4B5FD] transition hover:bg-[#8B5CF6]/15 hover:border-[#8B5CF6]/30 active:scale-[0.98]"
                   >
-                    {ticker}
+                    {ticker === 'TESOURO_SELIC_2029' ? 'Tesouro Selic' : ticker === 'TESOURO_IPCA_2035' ? 'Tesouro IPCA+' : ticker}
                   </Link>
                 ))}
               </div>

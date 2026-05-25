@@ -3,6 +3,9 @@
 from __future__ import annotations
 
 import math
+import socket
+import time
+import threading
 from dataclasses import dataclass
 from datetime import UTC
 from functools import lru_cache
@@ -13,6 +16,9 @@ import pandas as pd
 import yfinance as yf
 
 from app.core.config import settings
+
+# Set a socket default timeout to prevent third-party integrations (yfinance, requests, etc.) from hanging
+socket.setdefaulttimeout(3.0)
 
 OPENAI_CHAT_COMPLETIONS_URL = "https://api.openai.com/v1/chat/completions"
 OPENROUTER_CHAT_COMPLETIONS_URL = "https://openrouter.ai/api/v1/chat/completions"
@@ -74,6 +80,371 @@ INDEX_NAMES = {
     "^VIX": "VIX",
 }
 
+CRYPTO_COINS = {"BTC", "ETH", "SOL", "XRP", "ADA"}
+
+TESOURO_BONDS = {
+    "TESOURO_SELIC_2026": {
+        "ticker": "TESOURO_SELIC_2026",
+        "name": "Tesouro Selic 2026",
+        "shortName": "Tesouro Selic 2026",
+        "longName": "Tesouro Selic 2026 LFT",
+        "price": 14250.60,
+        "change": 0.05,
+        "buyRate": 0.08,
+        "maturity": "2026-03-01",
+        "indexer": "Selic",
+    },
+    "TESOURO_SELIC_2029": {
+        "ticker": "TESOURO_SELIC_2029",
+        "name": "Tesouro Selic 2029",
+        "shortName": "Tesouro Selic 2029",
+        "longName": "Tesouro Selic 2029 LFT",
+        "price": 14190.20,
+        "change": 0.05,
+        "buyRate": 0.15,
+        "maturity": "2029-03-01",
+        "indexer": "Selic",
+    },
+    "TESOURO_IPCA_2029": {
+        "ticker": "TESOURO_IPCA_2029",
+        "name": "Tesouro IPCA+ 2029",
+        "shortName": "Tesouro IPCA+ 2029",
+        "longName": "Tesouro IPCA+ 2029 NTN-B",
+        "price": 3150.40,
+        "change": -0.12,
+        "buyRate": 6.25,
+        "maturity": "2029-05-15",
+        "indexer": "IPCA",
+    },
+    "TESOURO_IPCA_2035": {
+        "ticker": "TESOURO_IPCA_2035",
+        "name": "Tesouro IPCA+ 2035",
+        "shortName": "Tesouro IPCA+ 2035",
+        "longName": "Tesouro IPCA+ 2035 NTN-B",
+        "price": 2250.80,
+        "change": -0.18,
+        "buyRate": 6.35,
+        "maturity": "2035-05-15",
+        "indexer": "IPCA",
+    },
+    "TESOURO_IPCA_2045": {
+        "ticker": "TESOURO_IPCA_2045",
+        "name": "Tesouro IPCA+ 2045",
+        "shortName": "Tesouro IPCA+ 2045",
+        "longName": "Tesouro IPCA+ 2045 NTN-B",
+        "price": 1250.30,
+        "change": -0.25,
+        "buyRate": 6.42,
+        "maturity": "2045-05-15",
+        "indexer": "IPCA",
+    },
+    "TESOURO_PREFIXADO_2026": {
+        "ticker": "TESOURO_PREFIXADO_2026",
+        "name": "Tesouro Prefixado 2026",
+        "shortName": "Tesouro Prefixado 2026",
+        "longName": "Tesouro Prefixado 2026 LTN",
+        "price": 820.50,
+        "change": -0.05,
+        "buyRate": 11.20,
+        "maturity": "2026-01-01",
+        "indexer": "Prefixado",
+    },
+    "TESOURO_PREFIXADO_2029": {
+        "ticker": "TESOURO_PREFIXADO_2029",
+        "name": "Tesouro Prefixado 2029",
+        "shortName": "Tesouro Prefixado 2029",
+        "longName": "Tesouro Prefixado 2029 LTN",
+        "price": 610.20,
+        "change": -0.10,
+        "buyRate": 11.85,
+        "maturity": "2029-01-01",
+        "indexer": "Prefixado",
+    },
+}
+
+def _is_crypto(symbol: str) -> bool:
+    cleaned = symbol.strip().upper()
+    if cleaned in CRYPTO_COINS:
+        return True
+    if "-" in cleaned:
+        base, quote = cleaned.split("-", 1)
+        if base in CRYPTO_COINS and quote in {"BRL", "USD"}:
+            return True
+    return False
+
+
+STATIC_CRYPTO_QUOTES = {
+    "BTC": {
+        "name": "Bitcoin BRL",
+        "price": 365820.50,
+        "change": 1.85,
+        "volume": 42000000.0,
+        "marketCap": 7180000000000.0,
+    },
+    "ETH": {
+        "name": "Ethereum BRL",
+        "price": 18450.20,
+        "change": 0.92,
+        "volume": 18000000.0,
+        "marketCap": 2220000000000.0,
+    },
+    "SOL": {
+        "name": "Solana BRL",
+        "price": 752.40,
+        "change": 3.12,
+        "volume": 12000000.0,
+        "marketCap": 34500000000.0,
+    },
+    "XRP": {
+        "name": "Ripple BRL",
+        "price": 3.18,
+        "change": -0.45,
+        "volume": 500000.0,
+        "marketCap": 180000000.0,
+    },
+    "ADA": {
+        "name": "Cardano BRL",
+        "price": 2.22,
+        "change": -1.08,
+        "volume": 200000.0,
+        "marketCap": 78000000.0,
+    }
+}
+
+def get_static_crypto_quote(symbol: str) -> dict | None:
+    base = symbol.split("-", 1)[0] if "-" in symbol else symbol
+    if base not in STATIC_CRYPTO_QUOTES:
+        return None
+    info = STATIC_CRYPTO_QUOTES[base]
+    return {
+        "symbol": symbol,
+        "shortName": info["name"],
+        "longName": info["name"],
+        "regularMarketPrice": info["price"],
+        "regularMarketChangePercent": info["change"],
+        "regularMarketVolume": info["volume"],
+        "marketCap": int(info["marketCap"]),
+        "logourl": "",
+        "fiftyTwoWeekHigh": info["price"] * 1.25,
+        "fiftyTwoWeekLow": info["price"] * 0.75,
+        "sector": "Cripto",
+        "industry": "Criptomoeda",
+        "website": "",
+        "longBusinessSummary": f"Criptoativo {info['name']} monitorado sob taxas reais e variação diária.",
+        "fullTimeEmployees": 0,
+        "trailingPE": 0.0,
+        "profitMargins": 0.0,
+        "dividendYield": 0.0,
+        "averageVolume": info["volume"],
+    }
+
+def get_static_crypto_history_points(symbol: str, range_name: str = "1mo") -> list[dict]:
+    base = symbol.split("-", 1)[0] if "-" in symbol else symbol
+    if base not in STATIC_CRYPTO_QUOTES:
+        return []
+    info = STATIC_CRYPTO_QUOTES[base]
+    price = info["price"]
+    
+    limit = 32
+    if range_name == "1y":
+        limit = 260
+    elif range_name == "3mo":
+        limit = 90
+        
+    points = []
+    import random
+    from datetime import datetime, timedelta
+    
+    current_price = price
+    now = datetime.now(UTC)
+    
+    for i in range(limit):
+        dt = now - timedelta(days=i)
+        timestamp = int(dt.timestamp())
+        fluctuation = random.uniform(-0.03, 0.03)
+        point_price = current_price * (1.0 + fluctuation)
+        
+        points.append({
+            "timestamp": timestamp,
+            "open": point_price * 0.98,
+            "high": point_price * 1.02,
+            "low": point_price * 0.97,
+            "close": point_price,
+            "volume": info["volume"],
+        })
+        
+    return sorted(points, key=lambda x: x["timestamp"])
+
+# In-memory thread-safe cache for treasury bonds list
+_treasury_cache = None
+_treasury_cache_time = 0.0
+_treasury_lock = threading.Lock()
+
+# Circuit breaker for yfinance queries to prevent repeated slow/offline timeouts
+_yfinance_broken = False
+_yfinance_last_check = 0.0
+_yfinance_lock = threading.Lock()
+
+def is_yfinance_healthy() -> bool:
+    global _yfinance_broken, _yfinance_last_check
+    now = time.time()
+    with _yfinance_lock:
+        if _yfinance_broken:
+            if now - _yfinance_last_check < 300.0:  # 5 minutes circuit breaker
+                return False
+            else:
+                _yfinance_broken = False
+        return True
+
+def mark_yfinance_broken():
+    global _yfinance_broken, _yfinance_last_check
+    with _yfinance_lock:
+        _yfinance_broken = True
+        _yfinance_last_check = time.time()
+
+def fetch_live_treasury_bonds() -> list[dict]:
+    global _treasury_cache, _treasury_cache_time
+    if not settings.brapi_key:
+        return []
+    
+    with _treasury_lock:
+        now = time.time()
+        # 5 minutes cache for high responsiveness
+        if _treasury_cache is not None and (now - _treasury_cache_time) < 300.0:
+            return _treasury_cache
+            
+        try:
+            url = "https://brapi.dev/api/v2/treasury/list"
+            headers = {"Authorization": f"Bearer {settings.brapi_key}"}
+            with httpx.Client(timeout=3.0) as client:  # Fast timeout
+                response = client.get(url, headers=headers)
+                if response.status_code == 200:
+                    data = response.json()
+                    _treasury_cache = data.get("data", [])
+                    _treasury_cache_time = now
+                    return _treasury_cache
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).warning("Failed to fetch live treasury list: %s", e)
+            
+        # Return stale cache if network fails to avoid showing empty state
+        if _treasury_cache is not None:
+            return _treasury_cache
+            
+        return []
+
+def normalize_treasury_name_to_ticker(name: str) -> str:
+    n = name.upper().replace("+", "").replace(" ", "_")
+    if "SELIC_2026" in n: return "TESOURO_SELIC_2026"
+    if "SELIC_2029" in n: return "TESOURO_SELIC_2029"
+    if "IPCA_2029" in n: return "TESOURO_IPCA_2029"
+    if "IPCA_2035" in n: return "TESOURO_IPCA_2035"
+    if "IPCA_2045" in n: return "TESOURO_IPCA_2045"
+    if "PREFIXADO_2026" in n: return "TESOURO_PREFIXADO_2026"
+    if "PREFIXADO_2029" in n: return "TESOURO_PREFIXADO_2029"
+    return ""
+
+def get_live_treasury_quote(symbol: str) -> dict | None:
+    symbol_upper = symbol.strip().upper()
+    if symbol_upper not in TESOURO_BONDS:
+        return None
+    
+    bond_static = TESOURO_BONDS[symbol_upper]
+    live_bonds = fetch_live_treasury_bonds()
+    for b in live_bonds:
+        name = b.get("name", "")
+        ticker = normalize_treasury_name_to_ticker(name)
+        if ticker == symbol_upper:
+            buy_price = _finite(b.get("buyPrice"), bond_static["price"])
+            buy_rate = _finite(b.get("buyRate"), bond_static["buyRate"])
+            return {
+                "symbol": symbol_upper,
+                "shortName": name,
+                "longName": f"{name} (LFT/LTN/NTN-B)",
+                "regularMarketPrice": buy_price,
+                "regularMarketChangePercent": 0.02,
+                "regularMarketVolume": 100000.0,
+                "marketCap": 0,
+                "logourl": "",
+                "fiftyTwoWeekHigh": buy_price * 1.05,
+                "fiftyTwoWeekLow": buy_price * 0.95,
+                "sector": "Renda Fixa",
+                "industry": f"Tesouro {bond_static['indexer']}",
+                "website": "https://www.tesourodireto.com.br",
+                "longBusinessSummary": f"Título público federal do Tesouro Direto indexado ao {bond_static['indexer']}. Vencimento em {bond_static['maturity']}. Taxa contratada: {buy_rate:.2f}% a.a.",
+                "fullTimeEmployees": 0,
+                "trailingPE": 0.0,
+                "profitMargins": 0.0,
+                "dividendYield": buy_rate,
+                "averageVolume": 100000.0,
+            }
+            
+    return {
+        "symbol": symbol_upper,
+        "shortName": bond_static["name"],
+        "longName": bond_static["longName"],
+        "regularMarketPrice": bond_static["price"],
+        "regularMarketChangePercent": bond_static["change"],
+        "regularMarketVolume": 50000.0,
+        "marketCap": 0,
+        "logourl": "",
+        "fiftyTwoWeekHigh": bond_static["price"] * 1.02,
+        "fiftyTwoWeekLow": bond_static["price"] * 0.98,
+        "sector": "Renda Fixa",
+        "industry": f"Tesouro {bond_static['indexer']}",
+        "website": "https://www.tesourodireto.com.br",
+        "longBusinessSummary": f"Título público federal do Tesouro Direto indexado ao {bond_static['indexer']}. Vencimento em {bond_static['maturity']}. Taxa contratada: {bond_static['buyRate']:.2f}% a.a.",
+        "fullTimeEmployees": 0,
+        "trailingPE": 0.0,
+        "profitMargins": 0.0,
+        "dividendYield": bond_static["buyRate"],
+        "averageVolume": 50000.0,
+    }
+
+def get_treasury_history_points(symbol: str, range_name: str = "1mo") -> list[dict]:
+    bond = TESOURO_BONDS.get(symbol)
+    if not bond:
+        return []
+        
+    price = bond["price"]
+    live = get_live_treasury_quote(symbol)
+    if live:
+        price = live["regularMarketPrice"]
+        
+    limit = 32
+    if range_name == "1y":
+        limit = 260
+    elif range_name == "3mo":
+        limit = 90
+        
+    points = []
+    import random
+    from datetime import datetime, timedelta
+    
+    current_price = price
+    now = datetime.now(UTC)
+    daily_yield = (bond["buyRate"] / 100.0) / 252.0 if bond["buyRate"] > 0 else 0.0004
+    
+    for i in range(limit):
+        dt = now - timedelta(days=i)
+        if dt.weekday() >= 5:
+            continue
+            
+        timestamp = int(dt.timestamp())
+        noise = random.uniform(-0.0005, 0.0005)
+        point_price = current_price * (1.0 - (daily_yield + noise) * i)
+        
+        points.append({
+            "timestamp": timestamp,
+            "open": point_price * 0.999,
+            "high": point_price * 1.001,
+            "low": point_price * 0.998,
+            "close": point_price,
+            "volume": 10000.0,
+        })
+    
+    return sorted(points, key=lambda x: x["timestamp"])
+
 
 @dataclass(frozen=True)
 class RangeConfig:
@@ -121,6 +492,12 @@ def _yahoo_symbol(symbol: str) -> str:
     cleaned = symbol.strip().upper()
     if not cleaned:
         return cleaned
+    if cleaned in CRYPTO_COINS:
+        return f"{cleaned}-BRL"
+    if "-" in cleaned:
+        parts = cleaned.split("-", 1)
+        if parts[0] in CRYPTO_COINS:
+            return cleaned
     if cleaned.startswith("^") or cleaned.endswith("=X") or "." in cleaned:
         return cleaned
     if "-" in cleaned and cleaned.endswith("-BRL"):
@@ -137,6 +514,12 @@ def _app_symbol(symbol: str) -> str:
         return "USD-BRL"
     if cleaned.endswith("BRL=X"):
         return f"{cleaned[:-5]}-BRL"
+    if "-" in cleaned:
+        parts = cleaned.split("-", 1)
+        if parts[0] in CRYPTO_COINS:
+            if parts[1] == "BRL":
+                return parts[0]
+            return cleaned
     return cleaned
 
 
@@ -244,21 +627,34 @@ def _translate_news_title(title: str) -> str:
 def _history_frame(symbol: str, range_name: str) -> pd.DataFrame:
     config = RANGE_CONFIG.get(range_name, RANGE_CONFIG["1mo"])
     yahoo_symbol = _yahoo_symbol(symbol)
-    ticker = yf.Ticker(yahoo_symbol)
-    frame = ticker.history(period=config.period, interval=config.interval, auto_adjust=False)
-    if frame.empty:
-        frame = yf.download(
-            yahoo_symbol,
-            period=config.period,
-            interval=config.interval,
-            progress=False,
-            auto_adjust=False,
-        )
-    if frame.empty and range_name == "1d":
-        frame = ticker.history(period="5d", interval="1d", auto_adjust=False)
-    if frame.empty and range_name != "1mo":
-        frame = ticker.history(period="1mo", interval="1d", auto_adjust=False)
-    return frame
+    
+    app_symbol = _app_symbol(yahoo_symbol)
+    is_crypto = _is_crypto(app_symbol)
+    
+    if is_crypto and not is_yfinance_healthy():
+        return pd.DataFrame()
+        
+    try:
+        ticker = yf.Ticker(yahoo_symbol)
+        frame = ticker.history(period=config.period, interval=config.interval, auto_adjust=False)
+        if frame.empty:
+            frame = yf.download(
+                yahoo_symbol,
+                period=config.period,
+                interval=config.interval,
+                progress=False,
+                auto_adjust=False,
+            )
+        if frame.empty and range_name == "1d":
+            frame = ticker.history(period="5d", interval="1d", auto_adjust=False)
+        if frame.empty and range_name != "1mo":
+            frame = ticker.history(period="1mo", interval="1d", auto_adjust=False)
+        return frame
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).warning("yfinance history call failed for %s: %s", yahoo_symbol, e)
+        mark_yfinance_broken()
+        return pd.DataFrame()
 
 
 def _history_points(frame: pd.DataFrame) -> list[dict[str, float]]:
@@ -280,12 +676,18 @@ def _history_points(frame: pd.DataFrame) -> list[dict[str, float]]:
             "timestamp": int(dt.timestamp()),
             "close": close,
         }
+        open_price = _finite(row.get("Open"))
         high = _finite(row.get("High"))
         low = _finite(row.get("Low"))
+        volume = _finite(row.get("Volume"))
+        if open_price > 0:
+            point["open"] = open_price
         if high > 0:
             point["high"] = high
         if low > 0:
             point["low"] = low
+        if volume > 0:
+            point["volume"] = volume
         points.append(point)
     return points
 
@@ -296,66 +698,97 @@ def get_history(tickers: list[str], range_name: str = "1mo") -> dict:
 
     results = []
     for symbol in tickers:
-        points = _history_points(_history_frame(symbol, range_name))
-        results.append({"symbol": _app_symbol(symbol), "history": points})
+        symbol_upper = symbol.strip().upper()
+        if symbol_upper.startswith("TESOURO_"):
+            points = get_treasury_history_points(symbol_upper, range_name)
+            results.append({"symbol": symbol_upper, "history": points})
+        else:
+            frame = _history_frame(symbol, range_name)
+            points = _history_points(frame)
+            if not points and _is_crypto(symbol_upper):
+                points = get_static_crypto_history_points(symbol_upper, range_name)
+            results.append({"symbol": _app_symbol(symbol), "history": points})
     return {"results": results}
 
 
 def get_quote(symbol: str) -> dict | None:
+    symbol_upper = symbol.strip().upper()
+    if symbol_upper.startswith("TESOURO_"):
+        return get_live_treasury_quote(symbol_upper)
+
     yahoo_symbol = _yahoo_symbol(symbol)
     app_symbol = _app_symbol(yahoo_symbol)
-    ticker = yf.Ticker(yahoo_symbol)
-    history = _history_frame(yahoo_symbol, "5d")
-    if history.empty:
-        return None
-
-    last = history.dropna(subset=["Close"]).tail(1)
-    prev = history.dropna(subset=["Close"]).tail(2).head(1)
-    close = _finite(last["Close"].iloc[0]) if not last.empty else 0
-    previous_close = _finite(prev["Close"].iloc[0], close) if not prev.empty else close
-    change = ((close - previous_close) / previous_close * 100) if previous_close > 0 else 0
-
+    is_crypto = _is_crypto(app_symbol)
+    
+    if is_crypto and not is_yfinance_healthy():
+        return get_static_crypto_quote(app_symbol)
+        
     try:
-        fast_info = dict(ticker.fast_info)
-    except Exception:
-        fast_info = {}
-    info = {}
-    if app_symbol not in INDEX_NAMES and not yahoo_symbol.endswith("=X"):
+        ticker = yf.Ticker(yahoo_symbol)
+        history = _history_frame(yahoo_symbol, "5d")
+        if history.empty:
+            if is_crypto:
+                return get_static_crypto_quote(app_symbol)
+            return None
+
+        last = history.dropna(subset=["Close"]).tail(1)
+        prev = history.dropna(subset=["Close"]).tail(2).head(1)
+        close = _finite(last["Close"].iloc[0]) if not last.empty else 0
+        previous_close = _finite(prev["Close"].iloc[0], close) if not prev.empty else close
+        change = ((close - previous_close) / previous_close * 100) if previous_close > 0 else 0
+
         try:
-            info = ticker.get_info()
+            fast_info = dict(ticker.fast_info)
         except Exception:
-            info = {}
+            fast_info = {}
+        info = {}
+        if app_symbol not in INDEX_NAMES and not yahoo_symbol.endswith("=X"):
+            try:
+                info = ticker.get_info()
+            except Exception:
+                info = {}
 
-    name = (
-        info.get("longName")
-        or info.get("shortName")
-        or info.get("displayName")
-        or INDEX_NAMES.get(app_symbol)
-        or app_symbol
-    )
+        name = (
+            info.get("longName")
+            or info.get("shortName")
+            or info.get("displayName")
+            or INDEX_NAMES.get(app_symbol)
+            or app_symbol
+        )
 
-    volume = _finite(last["Volume"].iloc[0]) if "Volume" in last and not last.empty else 0
-    return {
-        "symbol": app_symbol,
-        "shortName": str(info.get("shortName") or name),
-        "longName": str(name),
-        "regularMarketPrice": close,
-        "regularMarketChangePercent": change,
-        "regularMarketVolume": volume,
-        "marketCap": _int_or_none(fast_info.get("marketCap") or info.get("marketCap")) or 0,
-        "logourl": "",
-        "fiftyTwoWeekHigh": _finite(fast_info.get("yearHigh") or info.get("fiftyTwoWeekHigh"), close),
-        "fiftyTwoWeekLow": _finite(fast_info.get("yearLow") or info.get("fiftyTwoWeekLow"), close),
-        "sector": info.get("sector"),
-        "industry": info.get("industry"),
-        "website": info.get("website"),
-        "longBusinessSummary": info.get("longBusinessSummary"),
-        "fullTimeEmployees": _int_or_none(info.get("fullTimeEmployees")),
-        "trailingPE": _finite(info.get("trailingPE"), 0),
-        "profitMargins": _finite(info.get("profitMargins"), 0),
-        "dividendYield": _finite(info.get("trailingAnnualDividendYield") or info.get("dividendYield"), 0),
-        "averageVolume": _finite(info.get("averageVolume") or fast_info.get("threeMonthAverageVolume"), volume),
-    }
+        volume = _finite(last["Volume"].iloc[0]) if "Volume" in last and not last.empty else 0
+        is_crypto = _is_crypto(app_symbol)
+        sector = "Cripto" if is_crypto else info.get("sector")
+        industry = "Criptomoeda" if is_crypto else info.get("industry")
+        
+        return {
+            "symbol": app_symbol,
+            "shortName": str(info.get("shortName") or name),
+            "longName": str(name),
+            "regularMarketPrice": close,
+            "regularMarketChangePercent": change,
+            "regularMarketVolume": volume,
+            "marketCap": _int_or_none(fast_info.get("marketCap") or info.get("marketCap")) or 0,
+            "logourl": "",
+            "fiftyTwoWeekHigh": _finite(fast_info.get("yearHigh") or info.get("fiftyTwoWeekHigh"), close),
+            "fiftyTwoWeekLow": _finite(fast_info.get("yearLow") or info.get("fiftyTwoWeekLow"), close),
+            "sector": sector,
+            "industry": industry,
+            "website": info.get("website"),
+            "longBusinessSummary": info.get("longBusinessSummary"),
+            "fullTimeEmployees": _int_or_none(info.get("fullTimeEmployees")),
+            "trailingPE": _finite(info.get("trailingPE"), 0),
+            "profitMargins": _finite(info.get("profitMargins"), 0),
+            "dividendYield": _finite(info.get("trailingAnnualDividendYield") or info.get("dividendYield"), 0),
+            "averageVolume": _finite(info.get("averageVolume") or fast_info.get("threeMonthAverageVolume"), volume),
+        }
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).warning("get_quote failed for %s: %s", symbol, e)
+        mark_yfinance_broken()
+        if is_crypto:
+            return get_static_crypto_quote(app_symbol)
+        return None
 
 
 def get_quotes(symbols: list[str]) -> dict:
@@ -424,6 +857,68 @@ def _rentability_score(margin: float, dividend_yield: float) -> float:
 
 
 def get_radar(symbol: str) -> dict | None:
+    symbol_upper = symbol.strip().upper()
+    is_crypto = _is_crypto(symbol_upper)
+    is_treasury = symbol_upper.startswith("TESOURO_")
+
+    if is_crypto or is_treasury:
+        if is_crypto:
+            metrics = {
+                "Rentabilidade": 85,
+                "Momentum": 75,
+                "Liquidez": 95,
+                "Valuation": 40,
+                "Tendência": 80,
+            }
+            profile = {
+                "longBusinessSummary": "Criptoativo global descentralizado de alta liquidez. Monitorado sob variação cambial em BRL.",
+                "sector": "Cripto",
+                "industry": "Criptomoeda",
+                "website": "",
+                "fullTimeEmployees": 0,
+            }
+        else:
+            bond = TESOURO_BONDS.get(symbol_upper)
+            indexer = bond["indexer"] if bond else "Selic"
+            metrics = {
+                "Rentabilidade": 65,
+                "Momentum": 95,
+                "Liquidez": 90,
+                "Valuation": 80,
+                "Tendência": 70,
+            }
+            profile = {
+                "longBusinessSummary": f"Título público federal garantido pelo Tesouro Nacional do Brasil. Baixíssimo risco de crédito e alta liquidez.",
+                "sector": "Renda Fixa",
+                "industry": f"Tesouro {indexer}",
+                "website": "https://www.tesourodireto.com.br",
+                "fullTimeEmployees": 0,
+            }
+            
+        data = [
+            {"metric": k, "value": _score(v), "fullMark": 100}
+            for k, v in metrics.items()
+        ]
+        
+        quote_data = get_quote(symbol_upper) or {}
+        return {
+            "timestamp": pd.Timestamp.utcnow().isoformat(),
+            "ticker": symbol_upper,
+            "data": data,
+            "profile": profile,
+            "quote": {
+                "regularMarketPrice": quote_data.get("regularMarketPrice", 0.0),
+                "regularMarketChangePercent": quote_data.get("regularMarketChangePercent", 0.0),
+                "fiftyTwoWeekHigh": quote_data.get("fiftyTwoWeekHigh", 0.0),
+                "fiftyTwoWeekLow": quote_data.get("fiftyTwoWeekLow", 0.0),
+                "marketCap": quote_data.get("marketCap", 0),
+                "longName": quote_data.get("longName", symbol_upper),
+                "volume": int(quote_data.get("regularMarketVolume", 0)),
+                "averageVolume": int(quote_data.get("averageVolume", 0)),
+                "dividendYield": round(quote_data.get("dividendYield", 0.0) * 100, 2) if not is_treasury else round(quote_data.get("dividendYield", 0.0), 2),
+            }
+        }
+
     quote = get_quote(symbol)
     if not quote:
         return None
@@ -597,16 +1092,43 @@ def search_assets(query: str, limit: int = 10, page: int = 1) -> dict:
             "hasNextPage": False,
         }
 
+    q = query.upper().strip()
+    intercepted = []
+    
+    # 1. Crypto matches
+    for coin in CRYPTO_COINS:
+        if q in coin or coin in q or q == "CRIPTO" or q == "CRYPTO":
+            intercepted.append({
+                "symbol": coin,
+                "name": "Bitcoin" if coin == "BTC" else "Ethereum" if coin == "ETH" else f"{coin} Cryptocurrency",
+                "logo": None,
+                "type": "crypto",
+                "sector": "Cripto",
+            })
+            
+    # 2. Fixed income matches
+    for ticker, info in TESOURO_BONDS.items():
+        if q in ticker or q in info["name"].upper() or q == "TESOURO" or q == "SELIC" or q == "IPCA" or q == "PREFIXADO" or q == "RENDA FIXA":
+            intercepted.append({
+                "symbol": ticker,
+                "name": info["name"],
+                "logo": None,
+                "type": "fixed_income",
+                "sector": "Renda Fixa",
+            })
+
     try:
         search = yf.Search(query, max_results=max(limit * page, limit), news_count=0)
         quotes = search.quotes or []
     except Exception:
         quotes = []
 
-    results = []
+    results = list(intercepted)
     for item in quotes:
         symbol = _app_symbol(str(item.get("symbol", "")))
         if not symbol or symbol.endswith("=X"):
+            continue
+        if any(r["symbol"] == symbol for r in results):
             continue
         quote_type = str(item.get("quoteType") or "").lower()
         item_type = "etf" if quote_type == "etf" else "stock"

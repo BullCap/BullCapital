@@ -1,8 +1,8 @@
 'use server'
 
 import type { AnalysisSections } from '@/lib/actions/analysis'
-
-const ANALYSIS_API_URL = process.env.ANALYSIS_API_URL ?? 'http://localhost:8001/api/v1'
+import { ANALYSIS_API_URL, internalApiHeaders } from '@/lib/internal-api'
+import { auth } from '@/lib/auth'
 
 export interface ConversationTurn {
   id: string
@@ -89,9 +89,12 @@ export async function requestConversation(
   question: string
 ): Promise<ConversationResult | null> {
   try {
+    const session = await auth()
+    if (!session?.user) return null
+
     const res = await fetch(`${ANALYSIS_API_URL}/conversation`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: internalApiHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ subject: ticker, context, analysis, history, question }),
       cache: 'no-store',
     })

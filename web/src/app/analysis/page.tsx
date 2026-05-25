@@ -23,9 +23,11 @@ export default async function AnalysisPage({ searchParams }: AnalysisPageProps) 
   return (
     <AppShell active="analysis">
       <header className="px-1">
-        <p className="bull-eyebrow">BullCapital Advisor</p>
-        <h1 className="mt-2 font-serif text-3xl text-[#F4F0FF]">Análises</h1>
-        <p className="mt-1 text-sm text-[#F4F0FF]/50">Leituras guiadas por contexto.</p>
+        <p className="bull-eyebrow">Advisor</p>
+        <h1 className="mt-2 font-serif text-3xl text-[#F4F0FF]">Análises contextuais</h1>
+        <p className="mt-1 text-sm text-[#F4F0FF]/50">
+          Leituras ancoradas em ativo, evento ou indicador. Sem recomendação de compra ou venda.
+        </p>
       </header>
 
       <AnalysisClient

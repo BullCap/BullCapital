@@ -74,9 +74,9 @@ const TEMPLATE_CHOICES: AnalysisTemplate[] = [
     prompt: 'Explique os principais riscos e pontos de atenção do ativo hoje, em linguagem acessível.',
   },
   {
-    id: 'pressao-compra-venda',
-    label: 'Sinais de compra e venda',
-    prompt: 'Descreva os sinais de interesse comprador ou vendedor e o que isso pode indicar sobre o momento do ativo.',
+    id: 'fluxo-mercado',
+    label: 'Fluxo e pressão de mercado',
+    prompt: 'Descreva os sinais de interesse comprador ou vendedor sem sugerir decisão de investimento.',
   },
   {
     id: 'qualidade-valor',
@@ -660,7 +660,7 @@ export default function AnalysisClient({ ticker, focusLabel, initialQuestion, so
             </div>
             
             <p className="text-xs text-[#F4F0FF]/60 leading-relaxed font-semibold">
-              Explore análises e leituras rápidas sobre os nomes mais acompanhados do pregão hoje na B3:
+              Explore leituras rápidas sobre nomes acompanhados do pregão com dados Brapi PRO e contexto editorial:
             </p>
 
             {/* Lista de Ativos em Tendência */}
@@ -688,7 +688,7 @@ export default function AnalysisClient({ ticker, focusLabel, initialQuestion, so
                   <div className="text-right shrink-0">
                     <span className={cn(
                       'text-xs font-mono font-bold',
-                      item.change >= 0 ? 'text-[#4ADE80]' : 'text-[#FB7185]'
+                      item.change >= 0 ? 'text-[#8B5CF6]' : 'text-[#FB7185]'
                     )}>
                       {item.change >= 0 ? '+' : ''}{item.change.toFixed(2)}%
                     </span>
@@ -703,14 +703,14 @@ export default function AnalysisClient({ ticker, focusLabel, initialQuestion, so
               {[
                 { label: 'Ciclo de Commodities na B3', q: 'Como a dinâmica atual das commodities impacta o Ibovespa e ativos de exportação?' },
                 { label: 'Dinâmica de Juros e Bancos', q: 'De que forma a manutenção da SELIC elevada afeta a rentabilidade e o risco de crédito dos grandes bancos?' },
-                { label: 'Dividendos vs Renda Fixa', q: 'Com a taxa SELIC atual, ainda vale a pena focar em ações pagadoras de dividendos?' },
+                { label: 'Dividendos vs Renda Fixa', q: 'Com a taxa SELIC atual, como contextualizar ações pagadoras de dividendos frente à renda fixa?' },
               ].map((item, idx) => (
                 <button
                   key={idx}
                   onClick={() => handleQuestion(item.q)}
                   className="text-left text-xs text-[#C4B5FD] hover:text-[#DDD6FE] hover:underline leading-relaxed font-semibold transition cursor-pointer"
                 >
-                  ✦ {item.label}
+                  {item.label}
                 </button>
               ))}
             </div>

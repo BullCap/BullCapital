@@ -53,11 +53,20 @@ export interface MarketListingsData {
 export interface AssetQuote {
   symbol: string
   shortName: string
+  longName?: string
   regularMarketPrice: number
   regularMarketChangePercent: number
   regularMarketVolume: number
   marketCap: number
   logourl: string
+  sector?: string | null
+  trailingPE?: number
+  dividendYield?: number
+  evEbitda?: number | null
+  roe?: number | null
+  roic?: number | null
+  pBook?: number | null
+  averageVolume?: number | null
 }
 
 export interface PrimeRateEntry {
@@ -118,9 +127,11 @@ export interface AssetHistoryResult {
 
 export interface AssetHistoricalPrice {
   timestamp: number
+  open?: number
   close: number
   high?: number
   low?: number
+  volume?: number
 }
 
 export interface AssetNewsItem {

@@ -2,14 +2,14 @@
 
 import React from 'react'
 import Link from 'next/link'
-import type { StockSummary } from '@/mocks/topAssets.mock'
+import type { MarketListingItem } from '@/types/market'
 import { MarketHighlightItem } from './MarketHighlightItem'
 import { GlassHighlight } from '@/components/atoms/GlassHighlight'
 
 interface MarketHighlightListProps {
   title: string
   icon: React.ReactNode
-  data: StockSummary[]
+  data: MarketListingItem[]
 }
 
 export function MarketHighlightList({ title, icon, data }: MarketHighlightListProps) {
@@ -27,9 +27,15 @@ export function MarketHighlightList({ title, icon, data }: MarketHighlightListPr
 
       {/* List */}
       <div className="flex flex-col gap-2">
-        {data.slice(0, 5).map((asset) => (
-          <MarketHighlightItem key={asset.stock} asset={asset} />
-        ))}
+        {data.length > 0 ? (
+          data.slice(0, 5).map((asset) => (
+            <MarketHighlightItem key={asset.stock} asset={asset} />
+          ))
+        ) : (
+          <div className="rounded-2xl border border-white/5 bg-white/[0.02] px-4 py-5 text-sm text-white/35">
+            Dados indisponíveis
+          </div>
+        )}
       </div>
 
       {/* CTA */}

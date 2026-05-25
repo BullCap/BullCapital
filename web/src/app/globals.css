@@ -339,13 +339,52 @@
     @apply rounded-[1.6rem] border border-white/[0.08] bg-black/25 shadow-[inset_0_1px_20px_rgba(0,0,0,0.35)];
   }
 
+  /* Global scrollbar — todo elemento rolável herda o estilo do design system.
+     Use .scrollbar-none para opt-out e .bull-scroll para refinar (mais discreto). */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(139, 92, 246, 0.32) transparent;
+  }
+
+  *::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background: rgba(139, 92, 246, 0.28);
+    border-radius: 99px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+    transition: background 200ms ease;
+  }
+
+  *::-webkit-scrollbar-thumb:hover {
+    background: rgba(139, 92, 246, 0.55);
+    background-clip: padding-box;
+  }
+
+  *::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  /* Hide the native buttons (the chunky up/down arrows on some platforms). */
+  *::-webkit-scrollbar-button {
+    display: none;
+  }
+
   .bull-scroll {
     scrollbar-width: thin;
-    scrollbar-color: rgba(139, 92, 246, 0.25) transparent;
+    scrollbar-color: rgba(139, 92, 246, 0.22) transparent;
   }
 
   .bull-scroll::-webkit-scrollbar {
     width: 3px;
+    height: 3px;
   }
 
   .bull-scroll::-webkit-scrollbar-track {
@@ -356,6 +395,7 @@
   .bull-scroll::-webkit-scrollbar-thumb {
     background: rgba(139, 92, 246, 0.3);
     border-radius: 99px;
+    border: 0;
   }
 
   .bull-scroll::-webkit-scrollbar-thumb:hover {

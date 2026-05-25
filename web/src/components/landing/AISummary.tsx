@@ -5,10 +5,12 @@ import { motion } from 'motion/react'
 
 interface AISummaryProps {
   text?: string
+  label?: string
 }
 
 export default function AISummary({
-  text = 'Ibovespa demonstra resiliência em meio à volatilidade global, sustentado por papéis de commodities, enquanto o mercado aguarda ansiosamente pelas próximas decisões do FED.',
+  text = 'Dados de mercado indisponíveis no momento.',
+  label = 'Leitura do mercado',
 }: AISummaryProps) {
   return (
     <motion.div
@@ -21,7 +23,7 @@ export default function AISummary({
       <div className="flex items-center gap-2 opacity-50">
         <span className="h-[1px] w-8 bg-gradient-to-r from-transparent to-[#8B5CF6]" />
         <span className="font-sans text-[10px] font-medium uppercase tracking-[0.3em] text-[#8B5CF6]">
-          IA Insight
+          {label}
         </span>
         <span className="h-[1px] w-8 bg-gradient-to-l from-transparent to-[#8B5CF6]" />
       </div>

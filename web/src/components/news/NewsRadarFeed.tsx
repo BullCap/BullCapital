@@ -133,7 +133,7 @@ export default function NewsRadarFeed({ hasWatchlist, items }: NewsRadarFeedProp
       <div className="bull-panel p-1.5">
         <div
           role="tablist"
-          aria-label="Filtros do radar de noticias"
+          aria-label="Filtros do radar de notícias"
           className="grid grid-cols-3 gap-1 rounded-[1.35rem] border border-white/[0.08] bg-black/20 p-1"
         >
           {FEED_TABS.map((tab) => (

@@ -1,13 +1,21 @@
-const API_URL = process.env.ANALYSIS_API_URL ?? 'http://localhost:8001/api/v1'
+import { auth } from '@/lib/auth'
+import { ANALYSIS_API_URL, internalApiHeaders } from '@/lib/internal-api'
+
+const API_URL = ANALYSIS_API_URL
 
 export async function POST(req: Request) {
+  const session = await auth()
+  if (!session?.user) {
+    return new Response('Não autorizado', { status: 401 })
+  }
+
   const body = await req.json()
 
   let upstream: Response
   try {
     upstream = await fetch(`${API_URL}/conversation/stream`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: internalApiHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(body),
     })
   } catch {

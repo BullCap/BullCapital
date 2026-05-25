@@ -11,13 +11,13 @@ export default function DynamicTitle() {
         layout
         className="z-10 flex flex-col items-center justify-center px-4 text-center font-serif text-4xl leading-snug tracking-tight text-[#F4F0FF] sm:text-5xl md:text-6xl lg:text-7xl"
       >
-        <motion.span layout>Entenda o que está acontecendo</motion.span>
+        <motion.span layout>Inteligência Brapi PRO</motion.span>
         <motion.span layout className="mt-2 flex flex-wrap items-center justify-center sm:mt-4">
           <motion.span layout className="mr-2 sm:mr-4">
-            com
+            para explicar
           </motion.span>
           <RotatingText
-            texts={['suas ações', 'o mercado', 'seu futuro', 'a Petrobras']}
+            texts={['fundamentos', 'OHLCV', 'FIIs', 'macro']}
             mainClassName="text-[#8B5CF6] drop-shadow-[0_0_15px_rgba(139,92,246,0.6)] font-medium"
             staggerFrom={'first'}
             initial={{ opacity: 0, y: '100%' }}

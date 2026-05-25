@@ -16,7 +16,7 @@ export default function VixCard({ value }: VixCardProps) {
   const label = getVixLabel(value)
 
   return (
-    <div className="bull-panel flex min-h-[9.5rem] flex-col gap-4 p-5">
+    <div className="bull-panel flex h-full min-h-[9.5rem] flex-col gap-4 p-5">
       <GlassHighlight widthPercent={58} />
 
       <div className="flex items-center justify-between gap-3">

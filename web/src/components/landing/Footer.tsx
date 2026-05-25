@@ -7,12 +7,11 @@ const footerLinks = {
     { label: 'Início', href: '#' },
     { label: 'Mercado', href: '#visao-geral' },
     { label: 'Destaques', href: '#destaques' },
-    { label: 'Risco', href: '#visao-geral' },
   ],
   Recursos: [
-    { label: 'Análise com IA', href: '#' },
-    { label: 'Notícias', href: '#' },
-    { label: 'Radar de Mercado', href: '#' },
+    { label: 'Briefing diário', href: '#destaques' },
+    { label: 'Comparador de ativos', href: '#destaques' },
+    { label: 'Exportação editorial', href: '#destaques' },
   ],
   Legal: [
     { label: 'Privacidade', href: '#' },
@@ -69,8 +68,8 @@ export function Footer() {
           <div className="flex flex-col gap-6 lg:col-span-2">
             <Logo />
             <p className="font-sans text-sm leading-relaxed text-[#F4F0FF]/40">
-              A reading room para o investidor e planejador que pensa antes de agir. Clareza, contexto e
-              inteligência — em uma só plataforma.
+              Uma sala de leitura financeira para profissionais que precisam explicar mercado com dados,
+              contexto e responsabilidade editorial.
             </p>
 
             {/* Social links */}
@@ -127,7 +126,7 @@ export function Footer() {
           {/* Disclaimer pill */}
           <div className="rounded-full border border-white/5 bg-white/5 px-4 py-1.5 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]">
             <span className="font-sans text-[10px] text-[#F4F0FF]/25">
-              Não é recomendação de investimento. Invista com consciência.
+              Análises contextuais e educacionais. Não constituem recomendação de investimento.
             </span>
           </div>
         </div>

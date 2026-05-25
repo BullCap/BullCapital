@@ -1,5 +1,7 @@
 'use server'
 
+import { auth } from '@/lib/auth'
+
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions'
 const OPENROUTER_MODEL = 'deepseek/deepseek-v4-flash:free'
 
@@ -35,6 +37,9 @@ function extractJson(raw: string): string {
 }
 
 export async function getDailyBrief(input: DailyBriefInput): Promise<DailyBrief | null> {
+  const session = await auth()
+  if (!session?.user) return null
+
   const apiKey = process.env.OPENROUTER_API_KEY
   if (!apiKey) return null
 
@@ -54,13 +59,13 @@ export async function getDailyBrief(input: DailyBriefInput): Promise<DailyBrief 
 Principais manchetes do dia:
 ${headlinesList}
 
-Gere um briefing diário em português brasileiro para investidores no mercado B3.
+Gere um briefing diário em português brasileiro para profissionais financeiros que explicam o mercado B3 a clientes ou audiência.
 Retorne SOMENTE um objeto JSON válido, sem markdown, sem explicações, sem texto fora do JSON:
 {
   "headline": "Uma frase direta e impactante sobre o humor do mercado hoje (máximo 18 palavras)",
   "summary": "Dois parágrafos curtos separados por espaço duplo explicando o contexto do dia: conecte os dados macro com as manchetes, explique o que isso significa para quem acompanha B3. Seja analítico, não apenas repita os números.",
   "focusPoints": [
-    "Primeiro ponto de atenção prático para o investidor hoje (máximo 20 palavras)",
+    "Primeiro ponto de atenção prático para o profissional hoje (máximo 20 palavras)",
     "Segundo ponto de atenção prático (máximo 20 palavras)",
     "Terceiro ponto de atenção prático (máximo 20 palavras)"
   ]

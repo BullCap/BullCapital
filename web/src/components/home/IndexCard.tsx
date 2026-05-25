@@ -46,7 +46,7 @@ export default function IndexCard({ name, price, changePercent, isOpen, historyD
   const isUp = (changePercent ?? 0) >= 0
 
   return (
-    <div className="bull-panel flex min-h-[10rem] flex-col gap-2 p-6">
+    <div className="bull-panel flex h-full min-h-[10rem] flex-col gap-2 p-6">
       <GlassHighlight widthPercent={80} />
 
       <div className="flex items-center justify-between gap-2">

@@ -48,7 +48,7 @@ export default function SELICCard({ selic, ipca }: SELICCardProps) {
 
   if (indicators.length === 0) {
     return (
-      <div className="bull-panel flex min-h-[9.5rem] items-center p-5 lg:p-6">
+      <div className="bull-panel flex h-full min-h-[9.5rem] items-center p-5 lg:p-6">
         <GlassHighlight widthPercent={60} />
         <p className="text-sm text-[#F4F0FF]/40">Indicadores macro indisponíveis</p>
       </div>
@@ -57,7 +57,7 @@ export default function SELICCard({ selic, ipca }: SELICCardProps) {
 
   return (
     <>
-      <div className={`bull-panel grid min-h-[9.5rem] divide-x divide-white/[0.06] ${indicators.length > 1 ? 'grid-cols-2' : 'grid-cols-1'}`}>
+      <div className={`bull-panel grid h-full min-h-[9.5rem] divide-x divide-white/[0.06] ${indicators.length > 1 ? 'grid-cols-2' : 'grid-cols-1'}`}>
         <GlassHighlight widthPercent={60} />
         {indicators.map((indicator) => (
           <button

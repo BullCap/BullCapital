@@ -44,26 +44,28 @@ export default function AssetCard({ asset }: AssetCardProps) {
       </div>
 
       {/* Sparkline Overlay */}
-      <div className="pointer-events-none absolute bottom-0 left-0 h-[45%] w-full opacity-50 transition-opacity duration-700 group-hover:opacity-85">
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={asset.history} margin={{ top: 10, bottom: 10, left: 0, right: 0 }}>
-            <YAxis domain={['dataMin', 'dataMax']} hide />
-            <Line
-              type="monotone"
-              dataKey="value"
-              stroke={themeColor}
-              strokeWidth={2}
-              dot={false}
-              isAnimationActive={false}
-              style={{
-                filter: isPositive
-                  ? 'drop-shadow(0px -4px 8px rgba(139,92,246,0.6))'
-                  : 'drop-shadow(0px -4px 8px rgba(244,63,94,0.6))',
-              }}
-            />
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
+      {asset.history.length >= 2 && (
+        <div className="pointer-events-none absolute bottom-0 left-0 h-[45%] w-full opacity-50 transition-opacity duration-700 group-hover:opacity-85">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={asset.history} margin={{ top: 10, bottom: 10, left: 0, right: 0 }}>
+              <YAxis domain={['dataMin', 'dataMax']} hide />
+              <Line
+                type="monotone"
+                dataKey="value"
+                stroke={themeColor}
+                strokeWidth={2}
+                dot={false}
+                isAnimationActive={false}
+                style={{
+                  filter: isPositive
+                    ? 'drop-shadow(0px -4px 8px rgba(139,92,246,0.6))'
+                    : 'drop-shadow(0px -4px 8px rgba(244,63,94,0.6))',
+                }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      )}
     </div>
   )
 }

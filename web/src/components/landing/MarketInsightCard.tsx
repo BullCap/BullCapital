@@ -1,16 +1,14 @@
 'use client'
 
 import React from 'react'
-import { BrainCircuit, AlertCircle, ShieldCheck, Flame, type LucideIcon } from 'lucide-react'
+import { AlertCircle, ShieldCheck, Flame, type LucideIcon } from 'lucide-react'
 import { GlassHighlight } from '@/components/atoms/GlassHighlight'
 import { getMarketVolatility, type VolatilityLevel } from '@/lib/utils'
 
-const AI_ANALYSIS =
-  'O mercado apresenta sinais mistos. Enquanto o setor de commodities demonstra resiliência e sustenta o Ibovespa, a aversão ao risco global pressiona as empresas de tecnologia. O momento exige cautela e seletividade estratégica nos ativos de renda variável.'
-
 interface MarketInsightCardProps {
   /** Temperatura de mercado de 0 a 100 indicando a volatilidade */
-  marketTemperature?: number
+  marketTemperature: number | null
+  text: string
 }
 
 interface VolatilityStyle {
@@ -50,9 +48,10 @@ const VOLATILITY_STYLES: Record<VolatilityLevel, VolatilityStyle> = {
 }
 
 export default function MarketInsightCard({
-  marketTemperature = 92,
+  marketTemperature,
+  text,
 }: MarketInsightCardProps) {
-  const { level, label } = getMarketVolatility(marketTemperature)
+  const { level, label } = getMarketVolatility(marketTemperature ?? 50)
   const style = VOLATILITY_STYLES[level]
   const VolatilityIcon = style.icon
 
@@ -68,9 +67,8 @@ export default function MarketInsightCard({
         {/* Header Badges */}
         <div className="mb-6 flex flex-wrap items-center justify-center gap-3">
           <div className="flex items-center gap-2 rounded-full border border-[#8B5CF6]/30 bg-[#8B5CF6]/15 px-3 py-1.5 shadow-[0_0_15px_rgba(139,92,246,0.2)] backdrop-blur-md">
-            <BrainCircuit className="h-4 w-4 text-[#8B5CF6]" />
             <span className="font-sans text-[10px] font-semibold uppercase tracking-widest text-[#F4F0FF]/90">
-              Análise Profunda IA
+              Leitura contextual
             </span>
           </div>
           <div
@@ -89,7 +87,7 @@ export default function MarketInsightCard({
 
         {/* Content */}
         <p className="font-sans text-base font-light leading-relaxed text-[#F4F0FF]/80 drop-shadow-md transition-colors duration-500 group-hover:text-[#F4F0FF]/95 sm:text-lg md:text-[1.15rem]">
-          &quot;{AI_ANALYSIS}&quot;
+          &quot;{text}&quot;
         </p>
 
         {/* Decorative elements below */}

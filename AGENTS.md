@@ -459,8 +459,8 @@ O repo usa **Spec Kit** (Anthropic) — fluxo documentado em [specs/](specs/). C
 NEXTAUTH_SECRET=               # openssl rand -base64 32
 NEXTAUTH_URL=http://localhost:3000
 DATABASE_URL=postgresql://bullcapital:bullcapital@localhost:5432/bullcapital
-BRAPI_KEY=                     # https://brapi.dev
-API_URL=http://localhost:8001  # FastAPI URL
+ANALYSIS_API_URL=http://localhost:8001/api/v1  # FastAPI URL
+API_SHARED_SECRET=             # mesmo valor no web e na API quando habilitado
 RESEND_API_KEY=                # planejado Sprint 2
 ```
 
@@ -470,6 +470,8 @@ RESEND_API_KEY=                # planejado Sprint 2
 DATABASE_URL=postgresql+asyncpg://bullcapital:bullcapital@db:5432/bullcapital
 DATABASE_SSL=false
 OPENAI_API_KEY=
+API_SHARED_SECRET=             # protege chamadas server-to-server Vercel -> Railway
+BRAPI_KEY=                     # https://brapi.dev — apenas no backend/API
 CORS_ORIGINS=http://localhost:3000
 ```
 

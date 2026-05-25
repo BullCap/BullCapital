@@ -1,7 +1,10 @@
+import { getMarketIndicators } from '@/lib/services/market'
+import { ANALYSIS_API_URL, internalApiHeaders } from '@/lib/internal-api'
+
 export type TemperatureLevel = 'panico' | 'medo' | 'neutro' | 'ganancia' | 'euforia'
 
 const MARKET_FETCH_TIMEOUT_MS = 10000
-const MARKET_API_URL = process.env.ANALYSIS_API_URL ?? 'http://localhost:8001/api/v1'
+const MARKET_API_URL = ANALYSIS_API_URL
 
 export interface ComputedTemperature {
   value: number
@@ -65,73 +68,52 @@ export function computeTemperature(
   return { value, label, level }
 }
 
-async function fetchBcbSeries(
-  seriesId: number,
-  lookbackDays: number,
-): Promise<{ value: number; date: string } | null> {
+export async function fetchSELIC(): Promise<{ rate: string; date: string } | null> {
   try {
-    const today = new Date()
-    const start = new Date(today)
-    start.setDate(start.getDate() - lookbackDays)
-    const fmt = (d: Date) =>
-      new Intl.DateTimeFormat('pt-BR', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        timeZone: 'America/Sao_Paulo',
-      }).format(d)
-    const url = new URL(`https://api.bcb.gov.br/dados/serie/bcdata.sgs.${seriesId}/dados`)
-    url.searchParams.set('formato', 'json')
-    url.searchParams.set('dataInicial', fmt(start))
-    url.searchParams.set('dataFinal', fmt(today))
-    const res = await fetch(url, {
-      next: { revalidate: 86400 },
-      signal: AbortSignal.timeout(MARKET_FETCH_TIMEOUT_MS),
-    })
-    if (!res.ok) return null
-    const data: Array<{ data: string; valor: string }> = await res.json()
-    const latest = data.at(-1)
+    const data = await getMarketIndicators()
+    const latest = data.selic?.[0]
     if (!latest) return null
-    const value = Number(latest.valor.replace(',', '.'))
-    if (!Number.isFinite(value)) return null
-    return { value, date: latest.data }
+    const numValue = typeof latest.value === 'number' ? latest.value : parseFloat(latest.value)
+    if (isNaN(numValue)) return null
+    return {
+      rate: `${numValue.toLocaleString('pt-BR', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}% a.a.`,
+      date: latest.date,
+    }
   } catch {
     return null
   }
 }
 
-export async function fetchSELIC(): Promise<{ rate: string; date: string } | null> {
-  const result = await fetchBcbSeries(432, 45)
-  if (!result) return null
-  return {
-    rate: `${result.value.toLocaleString('pt-BR', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })}% a.a.`,
-    date: result.date,
-  }
-}
-
 /** IPCA — inflação mensal acumulada 12 meses (série BCB 13522). */
 export async function fetchIPCA(): Promise<{ rate: string; date: string } | null> {
-  // Série 13522: IPCA acumulado 12 meses em %
-  const result = await fetchBcbSeries(13522, 90)
-  if (!result) return null
-  return {
-    rate: `${result.value.toLocaleString('pt-BR', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })}% a.a.`,
-    date: result.date,
+  try {
+    const data = await getMarketIndicators()
+    const latest = data.inflation?.[0]
+    if (!latest) return null
+    const numValue = typeof latest.value === 'number' ? latest.value : parseFloat(latest.value)
+    if (isNaN(numValue)) return null
+    return {
+      rate: `${numValue.toLocaleString('pt-BR', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}% a.a.`,
+      date: latest.date,
+    }
+  } catch {
+    return null
   }
 }
 
-// Single-symbol fetch from the local yfinance-backed API.
-export async function fetchIndexFromYfinance(
+// Single-symbol fetch through the FastAPI market boundary backed by Brapi PRO.
+export async function fetchMarketQuote(
   symbol: string
 ): Promise<{ price: number; changePercent: number; name: string | null } | null> {
   try {
     const res = await fetch(`${MARKET_API_URL}/market/quote/${encodeURIComponent(symbol)}`, {
+      headers: internalApiHeaders(),
       next: { revalidate: 60 },
       signal: AbortSignal.timeout(MARKET_FETCH_TIMEOUT_MS),
     })

@@ -59,7 +59,7 @@ export default function MetricStoryModal({
     title: metricLabel,
     category: 'Métrica Financeira',
     description: `Mapeamento e leitura de dados para ${metricLabel}.`,
-    whatItIs: `A métrica ${metricLabel} é um indicador financeiro que auxilia investidores e analistas na leitura de valuation, qualidade ou performance operacional de um ativo no mercado brasileiro.`,
+    whatItIs: `A métrica ${metricLabel} é um indicador financeiro que auxilia profissionais na leitura de valuation, qualidade ou performance operacional de um ativo no mercado brasileiro.`,
     howItWorks: `Valores são calculados a partir dos dados consolidados mais recentes disponibilizados por APIs financeiras de mercado (como a B3 ou o Banco Central).`,
     pocketImpact: `Métricas operacionais e de múltiplos servem como margem de segurança para tomada de decisões financeiras informadas, permitindo diferenciar ruído de movimentos sólidos de valor.`,
     yAxisDomain: ['auto', 'auto'],

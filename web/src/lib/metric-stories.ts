@@ -38,7 +38,7 @@ export const METRIC_STORIES: Record<string, MetricStory> = {
     description: 'A taxa básica de juros da economia brasileira, definida pelo COPOM (Banco Central).',
     whatItIs: 'A taxa SELIC (Sistema Especial de Liquidação e de Custódia) é o principal instrumento de política monetária do Banco Central para controlar a inflação. Ela influencia todas as outras taxas de juros do país, como empréstimos, financiamentos e rendimentos de investimentos.',
     howItWorks: 'O Comitê de Política Monetária (COPOM) se reúne a cada 45 dias para definir a taxa SELIC Meta. Quando a inflação está alta, o COPOM tende a subir a SELIC para encarecer o crédito, desacelerar o consumo e conter a alta de preços. Quando a inflação está controlada e há necessidade de estimular o PIB, a SELIC é reduzida.',
-    pocketImpact: '• **Renda Fixa**: Com a SELIC elevada, investimentos pós-fixados (CDBs, Tesouro SELIC, LCI/LCA) rendem mais e tornam-se extremamente atrativos.\n• **Renda Variável**: Juros altos encarecem as dívidas das empresas e aumentam o custo de capital, o que costuma deprimir o preço das ações.\n• **Financiamentos**: Com a SELIC em queda, financiar imóveis ou veículos fica substancialmente mais barato.',
+    pocketImpact: '• **Renda Fixa**: Com a SELIC elevada, investimentos pós-fixados (CDBs, Tesouro SELIC, LCI/LCA) passam a oferecer remuneração maior.\n• **Renda Variável**: Juros altos encarecem as dívidas das empresas e aumentam o custo de capital, o que costuma deprimir o preço das ações.\n• **Financiamentos**: Com a SELIC em queda, financiar imóveis ou veículos fica substancialmente mais barato.',
     yAxisDomain: [2, 14],
     chartData: [
       { date: '2020', value: 2.0 },
@@ -90,9 +90,9 @@ export const METRIC_STORIES: Record<string, MetricStory> = {
     title: 'Ibovespa',
     category: 'Índice de Mercado',
     description: 'O principal índice da Bolsa de Valores brasileira (B3), medindo o desempenho médio das maiores empresas.',
-    whatItIs: 'O IBOV é uma carteira teórica de ações que reúne as empresas mais negociadas e com maior valor de mercado na Bolsa brasileira. Ele funciona como o principal termômetro do humor do investidor em relação ao Brasil.',
+    whatItIs: 'O IBOV é uma carteira teórica de ações que reúne as empresas mais negociadas e com maior valor de mercado na Bolsa brasileira. Ele funciona como o principal termômetro do humor de mercado em relação ao Brasil.',
     howItWorks: 'As ações possuem pesos proporcionais à sua liquidez e tamanho de mercado na Bolsa. Setores como Commodities (Vale, Petrobras) e Financeiro (Itaú, Bradesco) representam uma parcela significativa do índice, fazendo com que oscilações nesses setores guiem o rumo geral do IBOV.',
-    pocketImpact: '• **Renda Variável**: É o maior benchmark para fundos de ações e carteiras pessoais brasileiras.\n• **Sentimento de Mercado**: Altas consistentes atraem fluxo de investidores estrangeiros, fortalecendo a economia e ajudando a valorizar o Real.\n• **Investimento Direto**: Através de ETFs como o BOVA11, você pode comprar a cesta inteira de ações de uma só vez.',
+    pocketImpact: '• **Renda Variável**: É o maior benchmark para fundos de ações e carteiras brasileiras.\n• **Sentimento de Mercado**: Altas consistentes atraem fluxo estrangeiro, fortalecendo a economia e ajudando a valorizar o Real.\n• **Exposição via ETF**: ETFs como o BOVA11 replicam a cesta do índice em uma única posição.',
     yAxisDomain: [90000, 140000],
     chartData: [
       { date: '2020', value: 119000 },
@@ -172,9 +172,9 @@ export const METRIC_STORIES: Record<string, MetricStory> = {
     title: 'Preço sobre Lucro (P/L)',
     category: 'Valuation de Ativos',
     description: 'Múltiplo de preço que indica quantos anos de lucro seriam necessários para reaver o capital investido.',
-    whatItIs: 'O P/L divide a cotação atual de uma ação pelo Lucro por Ação (LPA) acumulado nos últimos 12 meses. É a métrica mais tradicional para avaliar se um ativo está caro ou barato na Bolsa.',
+    whatItIs: 'O P/L divide a cotação atual de uma ação pelo Lucro por Ação (LPA) acumulado nos últimos 12 meses. É uma métrica tradicional para comparar preço e lucro entre empresas ou períodos.',
     howItWorks: 'Se uma empresa tem P/L de 10, teoricamente levaria 10 anos para recuperar o valor de compra da ação por meio do lucro gerado, assumindo que ele permaneça constante e seja todo distribuído.',
-    pocketImpact: '• **P/L Baixo**: Pode sugerir que a empresa está barata, ou que o mercado projeta uma forte queda nos lucros futuros.\n• **P/L Alto**: Indica que os investidores aceitam pagar mais devido a expectativas de grande crescimento dos lucros.\n• **Setoriais**: Multiplos de P/L devem ser comparados com concorrentes diretos ou com a média histórica do próprio ativo.',
+    pocketImpact: '• **P/L Baixo**: Pode indicar desconto relativo ou expectativa de queda nos lucros futuros.\n• **P/L Alto**: Pode refletir expectativa de crescimento maior dos lucros.\n• **Setoriais**: Múltiplos de P/L devem ser comparados com concorrentes diretos ou com a média histórica do próprio ativo.',
     yAxisDomain: ['auto', 'auto'],
     chartData: [
       { date: '2021', value: 14.5 },
@@ -272,7 +272,13 @@ export function getMetricStory(label: string): MetricStory | null {
   if (norm.includes('ibov') || norm.includes('bovespa')) return METRIC_STORIES.ibovespa
   if (norm.includes('dolar') || norm.includes('cambio') || norm.includes('usd')) return METRIC_STORIES.dolar
   if (norm.includes('cdi')) return METRIC_STORIES.cdi
-  if (norm.includes('p/l') || norm.includes('preco/lucro') || norm.includes('preco sobre lucro')) return METRIC_STORIES.pl
+  if (
+    norm.includes('p/l') ||
+    norm.includes('preco/lucro') ||
+    norm.includes('preço/lucro') ||
+    norm.includes('preco sobre lucro') ||
+    norm.includes('preço sobre lucro')
+  ) return METRIC_STORIES.pl
   if (norm.includes('dividend yield') || norm.includes('yield') || norm.includes('dy') || norm.includes('dividendo')) return METRIC_STORIES.dy
   if (norm.includes('p/vp') || norm.includes('valor patrimonial')) return METRIC_STORIES.pvp
   if (norm.includes('roe') || norm.includes('retorno sobre patrimonio')) return METRIC_STORIES.roe

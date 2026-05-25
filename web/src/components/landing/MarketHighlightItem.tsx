@@ -1,11 +1,11 @@
 'use client'
 
 import React from 'react'
-import Image from 'next/image'
-import type { StockSummary } from '@/mocks/topAssets.mock'
+import { CompanyIcon } from '@/components/atoms/CompanyIcon'
+import type { MarketListingItem } from '@/types/market'
 
 interface MarketHighlightItemProps {
-  asset: StockSummary
+  asset: MarketListingItem
 }
 
 export function MarketHighlightItem({ asset }: MarketHighlightItemProps) {
@@ -23,9 +23,7 @@ export function MarketHighlightItem({ asset }: MarketHighlightItemProps) {
   return (
     <div className="group/item relative flex items-center gap-4 rounded-2xl border border-white/5 bg-white/[0.02] px-4 py-3 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05),0_2px_4px_rgba(0,0,0,0.1)] transition-all duration-500 hover:-translate-y-0.5 hover:border-white/10 hover:bg-white/[0.05] hover:shadow-[inset_0_1px_1px_rgba(255,255,255,0.1),0_8px_16px_rgba(0,0,0,0.25)]">
       {/* Logo */}
-      <div className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-[#1A1625]/60 shadow-[inset_0_1px_2px_rgba(255,255,255,0.08)]">
-        <Image src={asset.logo} alt={asset.name} fill className="object-cover animate-pulse" unoptimized />
-      </div>
+      <CompanyIcon ticker={asset.stock} size={36} className="shrink-0" />
 
       {/* Ticker + Name */}
       <div className="flex min-w-0 flex-1 flex-col text-left">

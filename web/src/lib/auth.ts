@@ -5,6 +5,8 @@ import { compare } from 'bcryptjs'
 import { prisma } from '@/lib/db'
 import authConfig from '@/lib/auth.config'
 
+const isProduction = process.env.NODE_ENV === 'production'
+
 export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: PrismaAdapter(prisma),
   session: { strategy: 'jwt' },
@@ -44,27 +46,25 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   },
   events: {
     async signIn(message) {
-      console.log(
-        `✅ [AUTH LOG] User signed in! Provider: ${message.account?.provider} | Email: ${message.user.email}`
-      )
+      console.log(`[AUTH] Sign-in completed via ${message.account?.provider ?? 'credentials'}`)
     },
     async signOut() {
-      console.log('✅ [AUTH LOG] User signed out')
+      console.log('[AUTH] Sign-out completed')
     },
     async createUser(message) {
-      console.log(`✅ [AUTH LOG] New user created: ${message.user.email}`)
+      console.log(`[AUTH] User created: ${message.user.id}`)
     },
   },
   logger: {
     error(error) {
       const e = error as Error
-      console.error('❌ [AUTH ERROR]', e.name, e.message)
+      console.error('[AUTH ERROR]', e.name, e.message)
     },
     warn(code) {
-      console.warn('⚠️ [AUTH WARNING]', code)
+      console.warn('[AUTH WARNING]', code)
     },
     debug(code, metadata) {
-      console.debug('🐛 [AUTH DEBUG]', code, metadata)
+      if (!isProduction) console.debug('[AUTH DEBUG]', code, metadata)
     },
   },
 })

@@ -29,9 +29,11 @@ export default async function SearchPage() {
   return (
     <AppShell active="search">
       <header className="px-1">
-        <p className="bull-eyebrow">BullCapital</p>
+        <p className="bull-eyebrow">Busca</p>
         <h1 className="mt-2 font-serif text-3xl text-[#F4F0FF]">Buscar ativo</h1>
-        <p className="mt-1 text-sm text-[#DBEAFE]/55">Encontre ações, FIIs e BDRs da B3</p>
+        <p className="mt-1 text-sm text-[#DBEAFE]/55">
+          Encontre ativos da B3 e abra leituras com preço, histórico, fundamentos e notícias.
+        </p>
       </header>
 
       <ScrollFocus>

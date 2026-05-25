@@ -21,12 +21,16 @@ class Settings(BaseSettings):
 
     # API
     api_prefix: str = "/api/v1"
+    api_shared_secret: str = ""
 
     # Database (pgvector for AI)
     database_url: str = (
         "postgresql+asyncpg://bullcapital_ai:bullcapital_ai_dev@localhost:5433/bullcapital_ai"
     )
     database_ssl: bool = False
+
+    # Brapi
+    brapi_key: str = ""
 
     # OpenAI
     openai_api_key: str = ""

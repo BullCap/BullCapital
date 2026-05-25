@@ -16,23 +16,24 @@ import { ArrowUpRight } from 'lucide-react'
 import { fetchAssetHistory } from '@/lib/actions/market'
 import type { AssetHistoricalPrice } from '@/types/market'
 import { GlassHighlight } from '@/components/atoms/GlassHighlight'
-import { getMockAssetHistory } from '@/lib/market-history.mock'
 
-type Range = '1d' | '1mo' | '3mo'
+type Range = '1d' | '1mo' | '3mo' | '6mo' | '1y'
 
-const RANGE_LABELS: Record<Range, string> = { '1d': '1D', '1mo': '1M', '3mo': '3M' }
+const RANGE_LABELS: Record<Range, string> = {
+  '1d': '1D',
+  '1mo': '1M',
+  '3mo': '3M',
+  '6mo': '6M',
+  '1y': '1A',
+}
 const COLOR_UP = '#22C55E'
 const COLOR_DOWN = '#EF4444'
 
 interface PriceChartClientProps {
   ticker: string
   initialHistory: AssetHistoricalPrice[]
-  quotePrice: number | null
-  quoteChangePercent: number | null
   isMarketOpen: boolean
 }
-
-const MIN_SERIES_POINTS = 12
 
 function formatBRL(value: number) {
   return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
@@ -99,13 +100,9 @@ function PriceTooltip({
 
 function resolveHistory(
   history: AssetHistoricalPrice[],
-  range: Range,
-  quotePrice: number | null,
-  quoteChangePercent: number | null
 ) {
   if (history && history.length > 0) return { history, isMock: false }
-  const anchorPrice = quotePrice
-  return { history: getMockAssetHistory(range, anchorPrice, quoteChangePercent), isMock: true }
+  return { history: [], isMock: false }
 }
 
 function buildDomain(closes: number[]): [number, number] {
@@ -141,11 +138,9 @@ function CustomActiveDot(props: {
 export default function PriceChartClient({
   ticker,
   initialHistory,
-  quotePrice,
-  quoteChangePercent,
   isMarketOpen,
 }: PriceChartClientProps) {
-  const initialSeries = resolveHistory(initialHistory, '1mo', quotePrice, quoteChangePercent)
+  const initialSeries = resolveHistory(initialHistory)
   const [range, setRange] = useState<Range>('1mo')
   const [history, setHistory] = useState<AssetHistoricalPrice[]>(initialSeries.history)
   const [isMockHistory, setIsMockHistory] = useState(initialSeries.isMock)
@@ -153,7 +148,7 @@ export default function PriceChartClient({
 
   useEffect(() => {
     if (range === '1mo') {
-      const series = resolveHistory(initialHistory, range, quotePrice, quoteChangePercent)
+      const series = resolveHistory(initialHistory)
       setHistory(series.history)
       setIsMockHistory(series.isMock)
       setLoading(false)
@@ -166,10 +161,7 @@ export default function PriceChartClient({
       .then((result) => {
         if (!cancelled) {
           const series = resolveHistory(
-            result.results?.[0]?.history ?? [],
-            range,
-            quotePrice,
-            quoteChangePercent
+            result.results?.[0]?.history ?? []
           )
           setHistory(series.history)
           setIsMockHistory(series.isMock)
@@ -177,14 +169,14 @@ export default function PriceChartClient({
       })
       .catch(() => {
         if (!cancelled) {
-          setHistory(getMockAssetHistory(range, quotePrice, quoteChangePercent))
+          setHistory([])
           setIsMockHistory(true)
         }
       })
       .finally(() => { if (!cancelled) setLoading(false) })
 
     return () => { cancelled = true }
-  }, [initialHistory, quoteChangePercent, quotePrice, range, ticker])
+  }, [initialHistory, range, ticker])
 
   const { chartData, refPrice, seriesHigh, seriesLow, maxVal, minVal } = useMemo(() => {
     const ref = history[0]?.close ?? null
@@ -228,11 +220,6 @@ export default function PriceChartClient({
     return Math.max(0, Math.min(1, pct))
   }, [refPrice, maxVal, minVal])
 
-  // Last-point trend determines which color the stroke uses
-  const lastClose = chartData[chartData.length - 1]?.close ?? refPrice
-  const overallUp = refPrice !== null && lastClose !== null ? lastClose >= refPrice : true
-  const strokeColor = overallUp ? COLOR_UP : COLOR_DOWN
-
   return (
     <section className="bull-panel p-5">
       <GlassHighlight widthPercent={65} />
@@ -241,7 +228,7 @@ export default function PriceChartClient({
         <div>
           <p className="bull-eyebrow">Histórico de Preço</p>
           <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-[#DBEAFE]/45">
-            {isMockHistory && <span>Série modelo</span>}
+            {isMockHistory && <span>Série indisponível na fonte</span>}
             {typeof seriesHigh === 'number' && seriesHigh > 0 && (
               <span>Máxima: {formatBRL(seriesHigh)}</span>
             )}
@@ -253,7 +240,7 @@ export default function PriceChartClient({
         <div className="flex items-center gap-2">
           {isMockHistory && (
             <span className="rounded-full border border-[#60A5FA]/20 bg-[#3B82F6]/10 px-2 py-1 text-[10px] text-[#DBEAFE]/70">
-              Modelo
+              Indisponível
             </span>
           )}
           {!isMarketOpen && range === '1d' && (

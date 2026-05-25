@@ -1,7 +1,7 @@
 {
   "name": "BullCapital",
   "short_name": "Bull",
-  "description": "Radar de inteligência para o mercado brasileiro",
+  "description": "Inteligência de mercado brasileiro com dados Brapi PRO",
   "theme_color": "#0D0B14",
   "background_color": "#0D0B14",
   "display": "standalone",
