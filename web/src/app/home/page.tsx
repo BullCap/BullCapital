@@ -18,6 +18,7 @@ import { DailyBriefContent, DailyBriefSkeleton } from '@/components/home/DailyBr
 import type { SuggestedPrompt } from '@/components/home/DailyBriefHero'
 import MarketMapSection from '@/components/home/MarketMapSection'
 import MarketPlaybookSection from '@/components/home/MarketPlaybookSection'
+import MarketHighlightsSection from '@/components/home/MarketHighlightsSection'
 import WatchlistRadarSection from '@/components/home/WatchlistRadarSection'
 import type { RadarPulseItem } from '@/components/home/RadarPulseSection'
 import { StoryDigestLoader, StoryDigestSkeleton } from '@/components/home/StoryDigestLoader'
@@ -145,6 +146,7 @@ export default async function HomePage() {
     losersResult,
     historyResult,
     fxResult,
+    mostTradedResult,
   ] =
     await Promise.allSettled([
       fetchIndexFromYfinance('^BVSP'),
@@ -156,6 +158,7 @@ export default async function HomePage() {
       getMarketListings({ sortBy: 'change', sortOrder: 'asc', limit: 6, type: 'stock' }),
       getAssetHistory(['^BVSP', '^GSPC'], '1mo'),
       getCurrencyRates(['USD-BRL', 'EUR-BRL']),
+      getMarketListings({ sortBy: 'volume', sortOrder: 'desc', limit: 6, type: 'stock' }),
     ])
 
   const ibov = ibovResult.status === 'fulfilled' ? ibovResult.value : null
@@ -180,6 +183,7 @@ export default async function HomePage() {
 
   const gainersRaw = gainersResult.status === 'fulfilled' ? (gainersResult.value?.stocks ?? []) : []
   const losersRaw = losersResult.status === 'fulfilled' ? (losersResult.value?.stocks ?? []) : []
+  const mostTradedRaw = mostTradedResult.status === 'fulfilled' ? (mostTradedResult.value?.stocks ?? []) : []
 
   // Market breadth: % of visible movers with positive change (approx from top-6 each side)
   const allVisible = [...gainersRaw, ...losersRaw]
@@ -285,80 +289,81 @@ export default async function HomePage() {
         />
       </Suspense>
 
-      <div className="grid gap-5 xl:items-start xl:grid-cols-[minmax(0,1fr)_22rem] 2xl:grid-cols-[minmax(0,1fr)_24rem] 3xl:grid-cols-[minmax(0,1fr)_28rem]">
+      <div className="grid gap-5">
+        <ScrollFocus>
+          <Suspense fallback={<StoryDigestSkeleton />}>
+            <StoryDigestLoader />
+          </Suspense>
+        </ScrollFocus>
 
-        {/* ── Main column ── */}
-        <div className="grid content-start gap-5">
+        <ScrollFocus>
+          <TemperatureCard temperature={temperature} />
+        </ScrollFocus>
+        <ScrollFocus>
+          <MarketMapSection assets={bubbleAssets} />
+        </ScrollFocus>
+
+        <div className="px-1 pt-3">
+          <p className="bull-eyebrow">Panorama Macro</p>
+          <h2 className="mt-1 font-serif text-2xl tracking-tight text-[#F4F0FF]/80">Índices & Juros</h2>
+        </div>
+
+        <div className="grid gap-5 md:grid-cols-2 2xl:grid-cols-4">
           <ScrollFocus>
-            <Suspense fallback={<StoryDigestSkeleton />}>
-              <StoryDigestLoader />
-            </Suspense>
+            <IndexCard
+              name="IBOVESPA"
+              price={ibov?.price ?? null}
+              changePercent={ibov?.changePercent ?? null}
+              isOpen={marketOpen}
+              historyData={ibovCloses}
+            />
           </ScrollFocus>
-
           <ScrollFocus>
-            <TemperatureCard temperature={temperature} />
+            <IndexCard
+              name="S&P 500"
+              price={sp500?.price ?? null}
+              changePercent={sp500?.changePercent ?? null}
+              isOpen={marketOpen}
+              historyData={sp500Closes}
+            />
           </ScrollFocus>
           <ScrollFocus>
-            <MarketMapSection assets={bubbleAssets} />
+            <SELICCard selic={selicData} ipca={ipcaData} />
           </ScrollFocus>
-
-          <div className="px-1 pt-3">
-            <p className="bull-eyebrow">Panorama Macro</p>
-            <h2 className="mt-1 font-serif text-2xl tracking-tight text-[#F4F0FF]/80">Índices & Juros</h2>
-          </div>
-
-          <div className="grid gap-5 md:grid-cols-2 2xl:grid-cols-3">
-            <ScrollFocus>
-              <IndexCard
-                name="IBOVESPA"
-                price={ibov?.price ?? null}
-                changePercent={ibov?.changePercent ?? null}
-                isOpen={marketOpen}
-                historyData={ibovCloses}
-              />
-            </ScrollFocus>
-            <ScrollFocus>
-              <IndexCard
-                name="S&P 500"
-                price={sp500?.price ?? null}
-                changePercent={sp500?.changePercent ?? null}
-                isOpen={marketOpen}
-                historyData={sp500Closes}
-              />
-            </ScrollFocus>
-            <ScrollFocus className="md:col-span-2 2xl:col-span-1">
-              <SELICCard selic={selicData} ipca={ipcaData} />
-            </ScrollFocus>
-            <ScrollFocus className="md:col-span-2 xl:hidden">
-              <VixCard value={vix} />
-            </ScrollFocus>
-          </div>
-
-          <div className="px-1 pt-3">
-            <p className="bull-eyebrow">Fluxo do Pregão</p>
-            <h2 className="mt-1 font-serif text-2xl tracking-tight text-[#F4F0FF]/80">Destaques do Dia</h2>
-          </div>
-
-          <div className="grid gap-5 lg:grid-cols-2">
-            <ScrollFocus>
-              <MoversSection title="Maiores altas" icon="gainers" movers={gainers} />
-            </ScrollFocus>
-            <ScrollFocus>
-              <MoversSection title="Maiores baixas" icon="losers" movers={losers} />
-            </ScrollFocus>
-          </div>
-
           <ScrollFocus>
-            <MarketPlaybookSection actions={playbookActions} />
+            <VixCard value={vix} />
           </ScrollFocus>
         </div>
 
-        {/* ── Sticky right sidebar (xl+) ── */}
-        <div className="hidden xl:grid xl:content-start xl:gap-5 xl:sticky xl:top-24">
-          <VixCard value={vix} />
+        <div className="px-1 pt-3">
+          <p className="bull-eyebrow">Fluxo do Pregão</p>
+          <h2 className="mt-1 font-serif text-2xl tracking-tight text-[#F4F0FF]/80">Destaques do Dia</h2>
+        </div>
+
+        <div className="grid gap-5 lg:grid-cols-2">
+          <ScrollFocus>
+            <MoversSection title="Maiores altas" icon="gainers" movers={gainers} />
+          </ScrollFocus>
+          <ScrollFocus>
+            <MoversSection title="Maiores baixas" icon="losers" movers={losers} />
+          </ScrollFocus>
+        </div>
+
+        <ScrollFocus>
           <WatchlistRadarSection fallbackItems={radarItems} />
-        </div>
+        </ScrollFocus>
 
+        <ScrollFocus>
+          <MarketHighlightsSection
+            stockGainers={gainersRaw}
+            stockLosers={losersRaw}
+            stockMostTraded={mostTradedRaw}
+          />
+        </ScrollFocus>
+
+        <ScrollFocus>
+          <MarketPlaybookSection actions={playbookActions} />
+        </ScrollFocus>
       </div>
     </AppShell>
   )

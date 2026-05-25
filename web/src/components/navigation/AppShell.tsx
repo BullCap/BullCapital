@@ -3,6 +3,7 @@ import { cn } from '@/lib/utils'
 import { auth } from '@/lib/auth'
 import AppDock, { type AppDockSection } from './AppDock'
 import AppHeader from './AppHeader'
+import AppFooter from './AppFooter'
 import Grainient from '@/components/landing/Grainient'
 
 interface AppShellProps {
@@ -72,6 +73,7 @@ export default async function AppShell({ active, children, contentClassName }: A
         >
           {children}
         </section>
+        <AppFooter />
       </div>
 
       {/* Bottom dock — mobile only (desktop nav is in the header) */}
