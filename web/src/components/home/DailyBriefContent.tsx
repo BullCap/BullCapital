@@ -1,15 +1,14 @@
 import { getDailyBrief, type DailyBriefInput } from '@/lib/actions/daily-brief'
-import DailyBriefHero, { type SuggestedPrompt, type BriefPulseData } from './DailyBriefHero'
+import DailyBriefHero, { type BriefPulseData } from './DailyBriefHero'
 import { GlassHighlight } from '@/components/atoms/GlassHighlight'
-import type { MarketListingItem } from '@/types/market'
 
 // ── Fallback templates (used when AI is unavailable) ──────────────────────────
 
 function fallbackHeadline(ibovChange: number | null, storiesCount: number): string {
-  if (ibovChange === null) return 'O mercado aguarda sinais mais claros para definir direção.'
-  if (ibovChange >= 1) return `Pregão abre construtivo, com tração visível e ${storiesCount} histórias no radar.`
-  if (ibovChange <= -1) return `O dia abre pressionado, com humor mais frágil e ${storiesCount} pontos de atenção.`
-  return `Pregão equilibrado: movimento moderado no índice e histórias suficientes para separar ruído de sinal.`
+  if (ibovChange === null) return 'Mercado sem direção clara.'
+  if (ibovChange >= 1) return `Pregão construtivo, ${storiesCount} histórias no radar.`
+  if (ibovChange <= -1) return `Pregão pressionado, ${storiesCount} pontos de atenção.`
+  return 'Pregão equilibrado.'
 }
 
 function fallbackSummary(
@@ -23,22 +22,22 @@ function fallbackSummary(
   const status = marketOpen ? 'pregão em andamento' : 'fora do horário regular'
 
   const ibovLine = ibovChange === null
-    ? 'O Ibovespa ainda não formou leitura confiável.'
-    : `O Ibovespa opera em ${fmt(ibovChange)}, ${ibovChange >= 0 ? 'sinalizando algum apetite por risco local' : 'refletindo pressão no humor do mercado'}.`
+    ? 'Ibovespa sem leitura confiável.'
+    : `Ibovespa em ${fmt(ibovChange)}.`
 
   const extLine = sp500Change === null
-    ? 'O exterior segue sem leitura consolidada.'
-    : `Lá fora, o S&P 500 aparece em ${fmt(sp500Change)}, ${sp500Change >= 0 ? 'o que reduz parte da pressão externa' : 'adicionando mais cautela ao cenário global'}.`
+    ? 'Exterior sem leitura consolidada.'
+    : `S&P 500 em ${fmt(sp500Change)}.`
 
   const vixLine = vix !== null
-    ? `O VIX em ${vix.toFixed(1)} ${vix >= 20 ? 'indica volatilidade elevada — momento de calibrar convicção antes de reagir' : 'sugere um ambiente relativamente controlado de risco'}.`
-    : 'A volatilidade implícita segue sem referência clara.'
+    ? `VIX em ${vix.toFixed(1)}${vix >= 20 ? ', com volatilidade elevada' : ''}.`
+    : 'Volatilidade sem referência.'
 
   const ratesLine = selicValue
-    ? `Com SELIC em ${selicValue}, o custo de capital permanece como pano de fundo relevante para leitura de valor.`
-    : 'Os juros seguem como pano de fundo importante para separar impulso tático de narrativa estrutural.'
+    ? `SELIC em ${selicValue}.`
+    : 'Juros seguem no centro da leitura.'
 
-  return `${ibovLine} Com ${status}, o foco é separar movimentos técnicos de mudanças reais de narrativa. ${extLine} ${vixLine} ${ratesLine}`
+  return `${ibovLine} ${extLine} ${vixLine} ${ratesLine} ${status}.`
 }
 
 function fallbackFocusPoints(
@@ -48,9 +47,9 @@ function fallbackFocusPoints(
 ): [string, string, string] {
   const fmt = (v: number | null) => v === null ? 'n/d' : `${v >= 0 ? '+' : ''}${v.toFixed(2)}%`
   return [
-    `Ibovespa em ${fmt(ibovChange)} — principal leitura de apetite local.`,
-    vix !== null ? `VIX em ${vix.toFixed(1)}: ajuste convicção antes de seguir o fluxo.` : 'Volatilidade sem referência forte no momento.',
-    selicValue ? `SELIC em ${selicValue} — ancora de custo de capital no cenário.` : 'Juros seguem relevantes para separar impulso de narrativa.',
+    `Ibovespa ${fmt(ibovChange)}.`,
+    vix !== null ? `VIX ${vix.toFixed(1)}.` : 'Volatilidade sem leitura.',
+    selicValue ? `SELIC ${selicValue}.` : 'Juros no radar.',
   ]
 }
 
@@ -60,14 +59,12 @@ interface DailyBriefContentProps extends DailyBriefInput {
   contextLine: string
   dateLabel: string
   storiesCount: number
-  suggestedPrompts: SuggestedPrompt[]
   pulse: BriefPulseData
-  fixedIncomeHighlights: MarketListingItem[]
 }
 
 export async function DailyBriefContent({
   ibovChange, sp500Change, vix, selicValue, marketOpen, storyHeadlines,
-  contextLine, dateLabel, storiesCount, suggestedPrompts, pulse, fixedIncomeHighlights,
+  contextLine, dateLabel, storiesCount, pulse,
 }: DailyBriefContentProps) {
   const brief = await getDailyBrief({ ibovChange, sp500Change, vix, selicValue, marketOpen, storyHeadlines })
 
@@ -82,11 +79,9 @@ export async function DailyBriefContent({
       focusPoints={focusPoints}
       headline={headline}
       storiesCount={storiesCount}
-      suggestedPrompts={suggestedPrompts}
       summary={summary}
       aiGenerated={brief !== null}
       pulse={pulse}
-      fixedIncomeHighlights={fixedIncomeHighlights}
     />
   )
 }
@@ -116,17 +111,12 @@ export function DailyBriefSkeleton({ dateLabel, storiesCount }: { dateLabel: str
                 <div className="h-3.5 w-3/4 animate-pulse rounded-full bg-white/[0.04]" style={{ animationDelay: '220ms' }} />
               </div>
             </div>
-            <div className="grid gap-3 md:grid-cols-3">
+            <div className="grid gap-2 md:grid-cols-3">
               {[0, 1, 2].map((i) => (
-                <div key={i} className="bull-panel-quiet px-4 py-3">
+                <div key={i} className="h-8 rounded-full bg-white/[0.04] px-4 py-3">
                   <div className="h-3 w-full animate-pulse rounded-full bg-white/[0.06]" style={{ animationDelay: `${i * 60}ms` }} />
-                  <div className="mt-2 h-3 w-3/4 animate-pulse rounded-full bg-white/[0.05]" style={{ animationDelay: `${i * 60 + 40}ms` }} />
                 </div>
               ))}
-            </div>
-            <div className="flex gap-3">
-              <div className="h-12 w-48 animate-pulse rounded-2xl bg-white/[0.06]" />
-              <div className="h-12 w-40 animate-pulse rounded-2xl bg-white/[0.04]" />
             </div>
           </div>
           <div className="hidden lg:block">

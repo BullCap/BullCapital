@@ -1,6 +1,5 @@
 import { redirect } from 'next/navigation'
 import { auth } from '@/lib/auth'
-import { buildAssetHref } from '@/lib/market-routing'
 import { getMarketListings, getAssetHistory, getCurrencyRates, getMultipleQuotes } from '@/lib/services/market'
 import {
   fetchSELIC,
@@ -12,121 +11,14 @@ import IndexCard from '@/components/home/IndexCard'
 import SELICCard from '@/components/home/SELICCard'
 import VixCard from '@/components/home/VixCard'
 import { DailyBriefContent, DailyBriefSkeleton } from '@/components/home/DailyBriefContent'
-import type { SuggestedPrompt } from '@/components/home/DailyBriefHero'
 import MarketMapSection from '@/components/home/MarketMapSection'
-import MarketPlaybookSection from '@/components/home/MarketPlaybookSection'
 import MarketHighlightsSection from '@/components/home/MarketHighlightsSection'
-import WatchlistRadarSection from '@/components/home/WatchlistRadarSection'
 import { SECTOR_TREEMAP_TICKERS } from '@/components/home/SectorTreeMap'
-import type { RadarPulseItem } from '@/components/home/RadarPulseSection'
 import { StoryDigestLoader, StoryDigestSkeleton } from '@/components/home/StoryDigestLoader'
 import type { NewsRadarItem } from '@/lib/news-radar'
 import AppShell from '@/components/navigation/AppShell'
 import ScrollFocus from '@/components/ui/ScrollFocus'
 import { Suspense } from 'react'
-
-function formatPercent(value: number | null) {
-  if (value === null) return 'n/d'
-  return `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`
-}
-function buildSuggestedPrompts(
-  ibovChange: number | null,
-  vix: number | null,
-  topMover: { ticker: string; changePercent: number } | null,
-  leadStoryTicker: string | null,
-  marketOpen: boolean
-): SuggestedPrompt[] {
-  const prompts: SuggestedPrompt[] = []
-
-  if (ibovChange !== null) {
-    const direction = ibovChange >= 0 ? 'alta' : 'queda'
-    const label = `Por que o Ibovespa está em ${direction} hoje?`
-    prompts.push({
-      label,
-      href: `/analysis?ticker=%5EBVSP&q=${encodeURIComponent(label)}`,
-    })
-  }
-
-  if (topMover) {
-    const label = `O que explica o movimento de ${topMover.ticker}?`
-    prompts.push({
-      label,
-      href: `/analysis?ticker=${encodeURIComponent(topMover.ticker)}&q=${encodeURIComponent(label)}`,
-    })
-  }
-
-  if (vix !== null && vix >= 20) {
-    const label = `O VIX em ${vix.toFixed(1)} representa risco real para a B3?`
-    prompts.push({
-      label,
-      href: `/analysis?ticker=%5EBVSP&q=${encodeURIComponent(label)}`,
-    })
-  } else if (leadStoryTicker && leadStoryTicker !== (topMover?.ticker ?? '')) {
-    const label = `Qual o impacto de ${leadStoryTicker} no mercado hoje?`
-    prompts.push({
-      label,
-      href: `/analysis?ticker=${encodeURIComponent(leadStoryTicker)}&q=${encodeURIComponent(label)}`,
-    })
-  }
-
-  if (prompts.length < 3 && !marketOpen) {
-    prompts.push({
-      label: 'O que acompanhar antes da abertura de amanhã?',
-      href: `/analysis?ticker=%5EBVSP&q=${encodeURIComponent('O que acompanhar antes da abertura de amanhã?')}`,
-    })
-  }
-
-  return prompts.slice(0, 3)
-}
-
-function buildRadarItems(
-  gainers: Array<{ ticker: string; changePercent: number }>,
-  losers: Array<{ ticker: string; changePercent: number }>,
-  stories: NewsRadarItem[]
-): RadarPulseItem[] {
-  const items: RadarPulseItem[] = []
-
-  if (gainers[0]) {
-    items.push({
-      ticker: gainers[0].ticker,
-      label: 'Força entre as maiores altas',
-      description: `${gainers[0].ticker} sobe ${formatPercent(gainers[0].changePercent)} e ajuda a testar se o fluxo do pregão tem continuidade.`,
-      href: buildAssetHref(gainers[0].ticker),
-      tone: 'up',
-    })
-  }
-
-  if (losers[0]) {
-    items.push({
-      ticker: losers[0].ticker,
-      label: 'Pressão entre as maiores baixas',
-      description: `${losers[0].ticker} cai ${formatPercent(losers[0].changePercent)} e merece leitura de risco para ver se o movimento é isolado ou setorial.`,
-      href: buildAssetHref(losers[0].ticker),
-      tone: 'down',
-    })
-  }
-
-  const storyTicker = stories.find((story) => story.tickers[0] && !story.tickers[0].startsWith('^'))?.tickers[0]
-  if (storyTicker) {
-    items.push({
-      ticker: storyTicker,
-      label: 'História com chance de gerar follow-up',
-      description: `${storyTicker} apareceu no noticiário do dia e vale cruzar a manchete com preço, radar e leitura contextual.`,
-      href: `/analysis?ticker=${encodeURIComponent(storyTicker)}`,
-      tone: 'neutral',
-    })
-  }
-
-  items.push({
-    ticker: 'B3',
-    label: 'Leitura completa do mercado',
-    description: 'Abra a análise do mercado para juntar juros, humor local e os nomes que puxam a narrativa do pregão.',
-    href: '/analysis',
-    tone: 'neutral',
-  })
-
-  return items.slice(0, 4)
-}
 
 export default async function HomePage() {
   const session = await auth()
@@ -189,18 +81,6 @@ export default async function HomePage() {
   const cryptoRaw = cryptoResult.status === 'fulfilled' ? (cryptoResult.value?.stocks ?? []) : []
   const fixedIncomeRaw = fixedIncomeResult.status === 'fulfilled' ? (fixedIncomeResult.value?.stocks ?? []) : []
 
-  const gainers = gainersRaw.map((s) => ({
-    ticker: s.stock,
-    name: s.name,
-    price: s.close,
-    changePercent: s.change,
-  }))
-  const losers = losersRaw.map((s) => ({
-    ticker: s.stock,
-    name: s.name,
-    price: s.close,
-    changePercent: s.change,
-  }))
   const bubbleAssets = Array.from(
     new Map([...gainersRaw, ...losersRaw].map((asset) => [asset.stock, asset])).values()
   )
@@ -223,7 +103,6 @@ export default async function HomePage() {
 
   const topStories: NewsRadarItem[] = []
 
-  const radarItems = buildRadarItems(gainers, losers, topStories)
   const marketOpen = isMarketOpen()
   const selicValue = selicData?.rate ?? null
   const dateLabel = new Intl.DateTimeFormat('pt-BR', {
@@ -231,49 +110,14 @@ export default async function HomePage() {
     month: 'long',
   }).format(new Date())
   const contextLine = marketOpen ? 'pregão em andamento' : 'mercado fora do horário regular'
-  const leadStory = topStories[0]
-  const storyTicker = leadStory?.tickers.find((ticker) => !ticker.startsWith('^'))
-  const topMover = gainers[0] ?? losers[0] ?? null
-  const suggestedPrompts = buildSuggestedPrompts(
-    ibov?.changePercent ?? null,
-    vix,
-    topMover ?? null,
-    storyTicker ?? null,
-    marketOpen
-  )
-  const playbookActions = [
-    {
-      title: 'Ler o mercado por inteiro',
-      description: 'Abra a análise principal para juntar macro, narrativa e os nomes que puxam o dia.',
-      href: '/analysis',
-      label: 'análise guiada',
-      tone: 'analysis' as const,
-    },
-    {
-      title: storyTicker ? `Investigar ${storyTicker}` : 'Explorar o ativo em destaque',
-      description: storyTicker
-        ? `${storyTicker} apareceu no radar de notícias e vale cruzar manchete, preço e scores.`
-        : 'Use o detalhe do ativo para sair do painel e validar o movimento com mais contexto.',
-      href: storyTicker ? buildAssetHref(storyTicker) : '/search',
-      label: storyTicker ? 'detalhe do ativo' : 'buscar ativo',
-      tone: 'asset' as const,
-    },
-    {
-      title: 'Voltar para as histórias do dia',
-      description: 'Passe pelas manchetes com mais potencial de follow-up antes de entrar em tese.',
-      href: '#stories',
-      label: 'notícias priorizadas',
-      tone: 'news' as const,
-    },
-  ]
 
   const brt = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }))
   const hour = brt.getHours()
   const firstName = session.user.name?.trim().split(/\s+/)[0] ?? session.user.email?.split('@')[0] ?? 'você'
   const greetingStart = hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite'
   const storyLine = topStories.length > 0
-    ? `${topStories.length} históri${topStories.length === 1 ? 'a relevante' : 'as relevantes'} no radar de hoje.`
-    : 'Veja o radar do dia para acompanhar o mercado.'
+    ? `${topStories.length} históri${topStories.length === 1 ? 'a' : 'as'} no radar.`
+    : contextLine
 
   const briefPulse = {
     ibovPrice: ibov?.price ?? null,
@@ -295,15 +139,15 @@ export default async function HomePage() {
           <h1 className="mt-2 font-serif text-3xl tracking-tight text-[#F4F0FF] md:text-4xl">
             {greetingStart}, <span className="text-gradient-amethyst font-semibold">{firstName}</span>.
           </h1>
-          <p className="mt-1 max-w-2xl text-sm text-[#DBEAFE]/55">{storyLine}</p>
+          <p className="mt-1 text-sm text-[#DBEAFE]/50">{storyLine}</p>
         </div>
       </header>
 
       <div className="space-y-6">
         <section className="space-y-4">
           <div className="px-1">
-            <p className="bull-eyebrow">Panorama Macro</p>
-            <h2 className="mt-1 font-serif text-2xl tracking-tight text-[#F4F0FF]/80">Índices & Juros</h2>
+            <p className="bull-eyebrow">Mercado</p>
+            <h2 className="mt-1 font-serif text-2xl tracking-tight text-[#F4F0FF]/80">Agora</h2>
           </div>
 
           <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-4">
@@ -345,9 +189,7 @@ export default async function HomePage() {
             contextLine={contextLine}
             dateLabel={dateLabel}
             storiesCount={topStories.length}
-            suggestedPrompts={suggestedPrompts}
             pulse={briefPulse}
-            fixedIncomeHighlights={fixedIncomeRaw}
           />
         </Suspense>
 
@@ -360,16 +202,6 @@ export default async function HomePage() {
 
           <ScrollFocus>
             <MarketMapSection assets={mapAssets} />
-          </ScrollFocus>
-        </div>
-
-        <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr] xl:items-stretch">
-          <ScrollFocus>
-            <WatchlistRadarSection fallbackItems={radarItems} />
-          </ScrollFocus>
-
-          <ScrollFocus>
-            <MarketPlaybookSection actions={playbookActions} />
           </ScrollFocus>
         </div>
 

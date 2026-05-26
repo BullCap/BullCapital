@@ -98,21 +98,6 @@ function HighlightList({
         )}
       </div>
 
-      <Link
-        href="/search"
-        className="mt-4 flex items-center justify-center gap-2 rounded-xl border border-white/5 bg-white/[0.02] py-2.5 text-sm text-white/40 transition-all duration-300 hover:border-[#8B5CF6]/20 hover:bg-[#8B5CF6]/5 hover:text-[#A78BFA]"
-      >
-        Ver mais
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-          <path
-            d="M5.25 3.5L8.75 7L5.25 10.5"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-      </Link>
     </div>
   )
 }
@@ -150,13 +135,10 @@ export default function MarketHighlightsSection({
     <section>
       <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between px-1">
         <div>
-          <p className="bull-eyebrow">Radar do Pregão</p>
+          <p className="bull-eyebrow">Pregão</p>
           <h2 className="mt-1 font-serif text-2xl tracking-tight text-[#F4F0FF]/80">
-            Destaques do Mercado
+            Destaques
           </h2>
-          <p className="mt-1 text-sm text-[#DBEAFE]/55">
-            Os principais ativos e taxas monitorados do dia.
-          </p>
         </div>
 
         {/* Tab Selector */}
@@ -169,7 +151,7 @@ export default function MarketHighlightsSection({
                 : 'text-white/40 hover:text-white border border-transparent'
             }`}
           >
-            Ações B3
+            B3
           </button>
           <button
             onClick={() => setActiveTab('alt')}
@@ -179,21 +161,21 @@ export default function MarketHighlightsSection({
                 : 'text-white/40 hover:text-white border border-transparent'
             }`}
           >
-            Renda Fixa & Cripto
+            Renda fixa
           </button>
         </div>
       </div>
 
       {activeTab === 'b3' ? (
         <div className="mt-5 grid w-full grid-cols-1 gap-5 md:grid-cols-3">
-          <HighlightList title="Maiores Altas" icon={ICONS.gainers} data={gainers} />
-          <HighlightList title="Maiores Quedas" icon={ICONS.losers} data={losers} />
-          <HighlightList title="Mais Negociados" icon={ICONS.mostTraded} data={mostTraded} />
+          <HighlightList title="Altas" icon={ICONS.gainers} data={gainers} />
+          <HighlightList title="Quedas" icon={ICONS.losers} data={losers} />
+          <HighlightList title="Volume" icon={ICONS.mostTraded} data={mostTraded} />
         </div>
       ) : (
         <div className="mt-5 grid w-full grid-cols-1 gap-5 md:grid-cols-2">
-          <HighlightList title="Títulos do Tesouro Direto" icon={ICONS.fixedIncome} data={fixedIncome} />
-          <HighlightList title="Criptoativos (BRL)" icon={ICONS.crypto} data={crypto} />
+          <HighlightList title="Tesouro" icon={ICONS.fixedIncome} data={fixedIncome} />
+          <HighlightList title="Cripto" icon={ICONS.crypto} data={crypto} />
         </div>
       )}
     </section>

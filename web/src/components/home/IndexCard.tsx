@@ -67,7 +67,6 @@ export default function IndexCard({ name, price, changePercent, isOpen, historyD
           </p>
           <div className="flex items-center justify-between gap-4 mt-2">
             <div className="flex-1 max-w-[120px]">
-              <p className="text-[9px] uppercase tracking-wider font-semibold text-[#DBEAFE]/30 mb-1">Tendência</p>
               <svg viewBox="0 0 120 34" aria-hidden="true" className="h-7 w-full overflow-visible">
                 <path d={sparkline.area} fill={tone} fillOpacity="0.06" />
                 <path
@@ -82,7 +81,6 @@ export default function IndexCard({ name, price, changePercent, isOpen, historyD
               </svg>
             </div>
             <div className="flex flex-col items-end">
-              <p className="text-[9px] uppercase tracking-wider font-semibold text-[#DBEAFE]/30 mb-1">Variação</p>
               <VariationBadge variation={changePercent ?? 0} />
             </div>
           </div>

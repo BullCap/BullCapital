@@ -1,6 +1,6 @@
 import { Suspense } from 'react'
 import Link from 'next/link'
-import { ArrowRight, ArrowUpRight, Sparkles } from 'lucide-react'
+import { ArrowUpRight } from 'lucide-react'
 import { GlassHighlight } from '@/components/atoms/GlassHighlight'
 import { StoryNote, StoryNoteSkeleton } from './StoryNote'
 
@@ -32,18 +32,11 @@ export default function StoryDigestSection({ stories }: StoryDigestSectionProps)
     <section id="stories" className="bull-panel p-5 md:p-6">
       <GlassHighlight widthPercent={64} />
 
-      <div className="flex items-end justify-between gap-3">
+      <div>
         <div>
-          <p className="bull-eyebrow">Histórias do dia</p>
-          <h2 className="mt-2 font-serif text-xl text-[#F4F0FF]">O que mudou no radar</h2>
+          <p className="bull-eyebrow">Histórias</p>
+          <h2 className="mt-2 font-serif text-xl text-[#F4F0FF]">Radar</h2>
         </div>
-        <Link
-          href="/news"
-          className="inline-flex min-h-9 items-center gap-1 rounded-full border border-white/10 bg-white/[0.05] px-3 text-xs text-[#F4F0FF]/75 transition hover:bg-white/[0.1] hover:text-[#F4F0FF]"
-        >
-          Abrir radar
-          <ArrowRight size={13} />
-        </Link>
       </div>
 
       {stories.length === 0 ? (
@@ -54,8 +47,8 @@ export default function StoryDigestSection({ stories }: StoryDigestSectionProps)
         <div className="mt-5 flex flex-col gap-3">
           {stories.map((story) => (
             <article key={story.href} className="bull-panel-quiet p-3.5">
-              <div className="flex flex-wrap gap-2">
-                {story.tickers.map((ticker) => (
+              <div className="flex flex-wrap gap-1.5">
+                {story.tickers.slice(0, 3).map((ticker) => (
                   <span key={`${story.href}-${ticker}`} className="bull-chip min-h-7 px-2.5 py-1 text-[11px]">
                     {ticker}
                   </span>
@@ -87,31 +80,11 @@ export default function StoryDigestSection({ stories }: StoryDigestSectionProps)
                 />
               </Suspense>
 
-              <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+              <div className="mt-3 flex items-center justify-between gap-2">
                 <p className="text-[11px] uppercase tracking-[0.14em] text-[#DBEAFE]/42">
                   {story.publisher}
                   {story.publishedAt > 0 ? ` · ${timeAgo(story.publishedAt)}` : ''}
                 </p>
-                <div className="flex flex-wrap items-center gap-2">
-                  {story.askHref && (
-                    <Link
-                      href={story.askHref}
-                      className="inline-flex min-h-8 items-center gap-1.5 rounded-full border border-[#8B5CF6]/30 bg-[#8B5CF6]/10 px-3 text-xs font-medium text-[#C4B5FD] transition hover:bg-[#8B5CF6]/20 hover:text-[#DDD6FE]"
-                    >
-                      <Sparkles size={11} />
-                      Perguntar ao BullCapital
-                    </Link>
-                  )}
-                  {story.relatedHref && story.relatedLabel ? (
-                    <Link
-                      href={story.relatedHref}
-                      className="inline-flex min-h-8 items-center gap-1 rounded-full border border-white/10 bg-white/[0.05] px-3 text-xs text-[#F4F0FF]/76 transition hover:bg-white/[0.1] hover:text-[#F4F0FF]"
-                    >
-                      {story.relatedLabel}
-                      <ArrowRight size={13} />
-                    </Link>
-                  ) : null}
-                </div>
               </div>
             </article>
           ))}

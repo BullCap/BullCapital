@@ -36,9 +36,6 @@ export default function VixCard({ value }: VixCardProps) {
           <p className="mt-auto font-serif text-4xl leading-none text-[#F4F0FF]">
             {value.toFixed(1)}
           </p>
-          <p className="text-sm leading-5 text-[#F4F0FF]/62">
-            Mede a pressao de risco do mercado americano e ajuda a calibrar conviccao no dia.
-          </p>
         </>
       )}
     </div>

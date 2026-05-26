@@ -32,7 +32,7 @@ export default function SELICCard({ selic, ipca }: SELICCardProps) {
       label: 'SELIC',
       rate: selic.rate,
       date: selic.date,
-      description: 'Custo do dinheiro no Brasil. Define o piso de rentabilidade da renda fixa.',
+      description: 'Custo do dinheiro.',
       analysisQuery: 'Como a taxa SELIC está impactando o mercado de ações agora?',
     })
   }
@@ -41,7 +41,7 @@ export default function SELICCard({ selic, ipca }: SELICCardProps) {
       label: 'IPCA 12m',
       rate: ipca.rate,
       date: ipca.date,
-      description: 'Inflação oficial acumulada em 12 meses. Referência para o custo real do capital.',
+      description: 'Inflação em 12 meses.',
       analysisQuery: 'Como o IPCA atual está influenciando as decisões do Banco Central e o mercado?',
     })
   }

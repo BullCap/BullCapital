@@ -62,12 +62,12 @@ ${headlinesList}
 Gere um briefing diário em português brasileiro para profissionais financeiros que explicam o mercado B3 a clientes ou audiência.
 Retorne SOMENTE um objeto JSON válido, sem markdown, sem explicações, sem texto fora do JSON:
 {
-  "headline": "Uma frase direta e impactante sobre o humor do mercado hoje (máximo 18 palavras)",
-  "summary": "Dois parágrafos curtos separados por espaço duplo explicando o contexto do dia: conecte os dados macro com as manchetes, explique o que isso significa para quem acompanha B3. Seja analítico, não apenas repita os números.",
+  "headline": "Uma frase direta sobre o humor do mercado hoje (máximo 10 palavras)",
+  "summary": "Um parágrafo objetivo, com no máximo 45 palavras, conectando macro e manchetes sem recomendar compra ou venda.",
   "focusPoints": [
-    "Primeiro ponto de atenção prático para o profissional hoje (máximo 20 palavras)",
-    "Segundo ponto de atenção prático (máximo 20 palavras)",
-    "Terceiro ponto de atenção prático (máximo 20 palavras)"
+    "Primeiro ponto de atenção (máximo 12 palavras)",
+    "Segundo ponto de atenção (máximo 12 palavras)",
+    "Terceiro ponto de atenção (máximo 12 palavras)"
   ]
 }`
 
