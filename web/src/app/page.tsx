@@ -8,7 +8,6 @@ import Grainient from '@/components/landing/Grainient'
 import TopAssetsSection from '@/components/landing/TopAssetsSection'
 import MarketOverview from '@/components/landing/MarketOverview'
 import MarketHighlights from '@/components/landing/MarketHighlights'
-import Footer from '@/components/landing/Footer'
 import { getMarketListings, getCurrencyRates } from '@/lib/services/market'
 import { computeTemperature, fetchMarketQuote } from '@/lib/market-utils'
 import type { MarketListingItem } from '@/types/market'
@@ -186,7 +185,6 @@ export default async function HomePage() {
       </div>
 
       {/* Institutional Glass Footer */}
-      <Footer />
     </main>
   )
 }

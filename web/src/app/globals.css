@@ -4,49 +4,49 @@
 
 @layer base {
   :root {
-    --background: 220 32% 6%;
-    --foreground: 250 100% 97%;
+    --background: 222 22% 5.5%;
+    --foreground: 220 10% 86%;
 
-    --card: 220 28% 11%;
-    --card-foreground: 250 100% 97%;
+    --card: 222 16% 8%;
+    --card-foreground: 220 10% 86%;
 
-    --popover: 220 28% 9%;
-    --popover-foreground: 250 100% 97%;
+    --popover: 222 22% 6%;
+    --popover-foreground: 220 10% 86%;
 
-    --primary: 263 90% 66%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 220 12% 65%;
+    --primary-foreground: 0 0% 95%;
 
-    --secondary: 220 28% 11%;
-    --secondary-foreground: 250 100% 97%;
+    --secondary: 222 14% 10%;
+    --secondary-foreground: 220 10% 86%;
 
-    --muted: 220 18% 17%;
-    --muted-foreground: 223 12% 61%;
+    --muted: 222 10% 13%;
+    --muted-foreground: 220 8% 58%;
 
-    --accent: 263 90% 66%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 220 12% 65%;
+    --accent-foreground: 0 0% 95%;
 
     --destructive: 0 60% 50%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 0 0% 100% / 0.1;
-    --input: 0 0% 100% / 0.1;
-    --ring: 263 90% 66%;
+    --border: 0 0% 100% / 0.04;
+    --input: 0 0% 100% / 0.04;
+    --ring: 220 12% 65%;
 
-    --radius: 1.5rem;
+    --radius: 0.5rem;
 
     /* BullCapital Design System Tokens */
-    --void: #050409;
-    --surface: #0f0c18;
-    --surface-quiet: #0a0810;
-    --starlight: #f4f0ff;
-    --amethyst: #8b5cf6;
-    --cobalt: #3b82f6;
-    --mint: #4ade80;
-    --pearl: #dbeafe;
-    --glass-rim: rgba(255, 255, 255, 0.08);
-    --glass-rim-strong: rgba(255, 255, 255, 0.14);
-    --shadow-soft: rgba(0, 0, 0, 0.45);
-    --shadow-deep: rgba(0, 0, 0, 0.65);
+    --void: #0C0F15;
+    --surface: #12161F;
+    --surface-quiet: #090C12;
+    --starlight: #e2def0;
+    --amethyst: #82759F;
+    --cobalt: #4f71a6;
+    --mint: #5ebf86;
+    --pearl: #ccd6e8;
+    --glass-rim: rgba(255, 255, 255, 0.035);
+    --glass-rim-strong: rgba(255, 255, 255, 0.08);
+    --shadow-soft: rgba(0, 0, 0, 0.35);
+    --shadow-deep: rgba(0, 0, 0, 0.55);
     --sat: env(safe-area-inset-top, 0px);
   }
 }
@@ -62,11 +62,6 @@
 
   body {
     @apply bg-[var(--void)] text-[var(--starlight)];
-    background-image:
-      radial-gradient(ellipse 90% 55% at 50% 0%, rgba(139, 92, 246, 0.22) 0px, transparent 65%),
-      radial-gradient(ellipse 50% 40% at 0% 100%, rgba(59, 130, 246, 0.10) 0px, transparent 50%),
-      radial-gradient(ellipse 50% 40% at 100% 100%, rgba(244, 63, 94, 0.06) 0px, transparent 50%),
-      linear-gradient(180deg, rgba(5, 4, 9, 0.35) 0%, var(--void) 100%);
     font-family:
       var(--font-inter),
       system-ui,
@@ -90,83 +85,83 @@
   }
 
   .glass-card {
-    @apply rounded-[2rem] border border-white/[0.08] bg-[#0f0c18]/65 backdrop-blur-2xl transition-all duration-500;
+    @apply rounded-xl border border-white/[0.035] bg-[#111520]/60 backdrop-blur-2xl transition-all duration-500;
     transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
     box-shadow:
-      inset 0 1px 0px rgba(255, 255, 255, 0.08),
-      inset 0 -1px 0px rgba(255, 255, 255, 0.02),
-      0 12px 32px rgba(0, 0, 0, 0.5);
+      inset 0 1px 0px rgba(255, 255, 255, 0.035),
+      inset 0 -1px 0px rgba(255, 255, 255, 0.01),
+      0 12px 32px rgba(0, 0, 0, 0.4);
   }
   
   .glass-card:hover {
-    @apply -translate-y-1 border-white/[0.14] bg-[#0f0c18]/75;
+    @apply -translate-y-0.5 border-white/[0.08] bg-[#111520]/70;
     box-shadow:
-      inset 0 1px 1px rgba(255, 255, 255, 0.14),
-      inset 0 -1px 0px rgba(255, 255, 255, 0.04),
-      0 20px 40px rgba(0, 0, 0, 0.65),
-      0 0 24px rgba(139, 92, 246, 0.08);
+      inset 0 1px 1px rgba(255, 255, 255, 0.08),
+      inset 0 -1px 0px rgba(255, 255, 255, 0.02),
+      0 20px 40px rgba(0, 0, 0, 0.55),
+      0 0 24px rgba(255, 255, 255, 0.015);
   }
 
   .bull-panel {
-    @apply relative overflow-hidden rounded-[2rem] border border-white/[0.08] bg-[#0f0c18]/65 backdrop-blur-2xl transition-all duration-500;
+    @apply relative overflow-hidden rounded-xl border border-white/[0.035] bg-[#111520]/60 backdrop-blur-2xl transition-all duration-500;
     transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
     box-shadow:
-      inset 0 1px 0px rgba(255, 255, 255, 0.08),
-      inset 0 -1px 0px rgba(255, 255, 255, 0.02),
-      0 18px 48px rgba(0, 0, 0, 0.45);
+      inset 0 1px 0px rgba(255, 255, 255, 0.035),
+      inset 0 -1px 0px rgba(255, 255, 255, 0.01),
+      0 18px 48px rgba(0, 0, 0, 0.35);
   }
 
   .bull-panel:hover {
-    @apply -translate-y-1 border-white/[0.14] bg-[#0f0c18]/75;
+    @apply -translate-y-0.5 border-white/[0.08] bg-[#111520]/70;
     box-shadow:
-      inset 0 1px 1px rgba(255, 255, 255, 0.14),
-      inset 0 -1px 0px rgba(255, 255, 255, 0.04),
+      inset 0 1px 1px rgba(255, 255, 255, 0.08),
+      inset 0 -1px 0px rgba(255, 255, 255, 0.02),
       0 24px 56px rgba(0, 0, 0, 0.6),
-      0 0 28px rgba(139, 92, 246, 0.08);
+      0 0 28px rgba(255, 255, 255, 0.015);
   }
 
   .bull-panel-focus {
-    @apply relative overflow-hidden rounded-[2rem] border border-[#8b5cf6]/20 backdrop-blur-2xl transition-all duration-500;
+    @apply relative overflow-hidden rounded-xl border border-[#82759F]/[0.08] backdrop-blur-2xl transition-all duration-500;
     transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
-    background: linear-gradient(150deg, rgba(139, 92, 246, 0.12) 0%, rgba(15, 12, 24, 0.75) 50%, rgba(15, 12, 24, 0.95) 100%);
+    background: linear-gradient(150deg, rgba(130, 117, 159, 0.04) 0%, rgba(14, 11, 20, 0.7) 50%, rgba(14, 11, 20, 0.9) 100%);
     box-shadow:
-      inset 0 1px 1px rgba(255, 255, 255, 0.12),
-      inset 0 -1px 0px rgba(255, 255, 255, 0.03),
-      0 20px 52px rgba(0, 0, 0, 0.5),
-      0 0 32px rgba(139, 92, 246, 0.06);
+      inset 0 1px 1px rgba(255, 255, 255, 0.05),
+      inset 0 -1px 0px rgba(255, 255, 255, 0.015),
+      0 20px 52px rgba(0, 0, 0, 0.4),
+      0 0 32px rgba(130, 117, 159, 0.015);
   }
 
   .bull-panel-focus:hover {
-    @apply -translate-y-1 border-[#8b5cf6]/35;
+    @apply -translate-y-0.5 border-[#82759F]/[0.16];
     box-shadow:
-      inset 0 1.5px 1.5px rgba(255, 255, 255, 0.18),
-      inset 0 -1px 0px rgba(255, 255, 255, 0.05),
-      0 28px 64px rgba(0, 0, 0, 0.65),
-      0 0 40px rgba(139, 92, 246, 0.15);
+      inset 0 1.5px 1.5px rgba(255, 255, 255, 0.08),
+      inset 0 -1px 0px rgba(255, 255, 255, 0.02),
+      0 28px 64px rgba(0, 0, 0, 0.55),
+      0 0 40px rgba(130, 117, 159, 0.05);
   }
 
   .bull-panel-quiet {
-    @apply relative overflow-hidden rounded-[1.75rem] border border-white/[0.06] bg-[#0a0810]/80 backdrop-blur-xl transition-all duration-300;
+    @apply relative overflow-hidden rounded-lg border border-white/[0.025] bg-[#0D1018]/80 backdrop-blur-xl transition-all duration-300;
     transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
     box-shadow:
-      inset 0 1px 0px rgba(255, 255, 255, 0.04),
-      0 10px 24px rgba(0, 0, 0, 0.35);
+      inset 0 1px 0px rgba(255, 255, 255, 0.02),
+      0 10px 24px rgba(0, 0, 0, 0.25);
   }
 
   .bull-panel-quiet:hover {
-    @apply border-white/[0.12] bg-[#0a0810]/90;
+    @apply border-white/[0.05] bg-[#0D1018]/90;
     box-shadow:
-      inset 0 1px 0px rgba(255, 255, 255, 0.08),
-      0 14px 32px rgba(0, 0, 0, 0.45);
+      inset 0 1px 0px rgba(255, 255, 255, 0.04),
+      0 14px 32px rgba(0, 0, 0, 0.35);
   }
 
   .bull-eyebrow {
-    @apply text-[12px] font-extrabold uppercase text-[#8B5CF6]/90;
+    @apply text-[12px] font-extrabold uppercase text-amethyst/70;
     letter-spacing: 0.18em;
   }
 
   .bull-chip {
-    @apply inline-flex min-h-9 items-center gap-2 rounded-full border border-[#8B5CF6]/25 bg-[#8b5cf6]/5 px-3.5 py-1.5 text-[13px] font-bold text-[#C4B5FD];
+    @apply inline-flex min-h-9 items-center gap-2 rounded-full border border-amethyst/[0.15] bg-amethyst/5 px-3.5 py-1.5 text-[13px] font-bold text-[#CBD5E1];
   }
 
   .bull-wordmark {
@@ -194,14 +189,14 @@
   .bull-asset-hero,
   .bull-advisor-stage,
   .bull-digest-panel {
-    @apply relative overflow-hidden rounded-[2rem] border border-white/10 backdrop-blur-2xl;
+    @apply relative overflow-hidden rounded-xl border border-white/[0.06] backdrop-blur-2xl;
     background:
-      linear-gradient(180deg, rgba(16, 27, 43, 0.98), rgba(5, 8, 16, 0.94)),
-      linear-gradient(135deg, rgba(96, 165, 250, 0.18), transparent 54%);
+      linear-gradient(180deg, rgba(13, 10, 19, 0.98), rgba(5, 3, 8, 0.94)),
+      linear-gradient(135deg, rgba(130, 117, 159, 0.12), transparent 54%);
     box-shadow:
-      inset 0 1px 1px rgba(255, 255, 255, 0.14),
-      inset 0 -18px 42px rgba(5, 10, 24, 0.52),
-      0 22px 54px rgba(0, 0, 0, 0.42);
+      inset 0 1px 1px rgba(255, 255, 255, 0.08),
+      inset 0 -18px 42px rgba(5, 3, 8, 0.35),
+      0 22px 54px rgba(0, 0, 0, 0.32);
   }
 
   .bull-asset-hero::after,
@@ -210,7 +205,7 @@
     position: absolute;
     inset: auto 0 0;
     height: 42%;
-    background: linear-gradient(180deg, transparent, rgba(36, 87, 188, 0.18));
+    background: linear-gradient(180deg, transparent, rgba(124, 110, 150, 0.08));
     content: '';
     pointer-events: none;
   }
@@ -223,14 +218,14 @@
   }
 
   .bull-asset-emblem {
-    @apply inline-flex h-16 w-16 items-center justify-center rounded-[1.35rem] border border-white/[0.11] bg-white/[0.06] text-lg font-semibold text-[#F4F0FF];
+    @apply inline-flex h-16 w-16 items-center justify-center rounded-lg border border-white/[0.08] bg-white/[0.03] text-lg font-semibold text-[#E5E7EB];
     box-shadow:
-      inset 0 1px 10px rgba(255, 255, 255, 0.12),
-      0 18px 30px rgba(0, 0, 0, 0.34);
+      inset 0 1px 10px rgba(255, 255, 255, 0.08),
+      0 18px 30px rgba(0, 0, 0, 0.25);
   }
 
   .bull-dock-shell {
-    @apply rounded-[1.8rem] border border-white/10 bg-[#070B13]/90 shadow-[inset_0_1px_1px_rgba(255,255,255,0.11),0_18px_52px_rgba(0,0,0,0.62)] backdrop-blur-2xl;
+    @apply rounded-xl border border-white/[0.06] bg-[#0C0F15]/90 shadow-[inset_0_1px_1px_rgba(255,255,255,0.08),0_18px_52px_rgba(0,0,0,0.5)] backdrop-blur-2xl;
     animation: bull-dock-rise 520ms cubic-bezier(0.16, 1, 0.3, 1) both;
     transition:
       transform 420ms cubic-bezier(0.16, 1, 0.3, 1),
@@ -293,10 +288,10 @@
 
 
   .bull-command-bar {
-    @apply rounded-[1.35rem] border border-white/[0.1] bg-white/[0.06];
+    @apply rounded-lg border border-white/[0.08] bg-white/[0.04];
     box-shadow:
-      inset 0 1px 1px rgba(255, 255, 255, 0.11),
-      inset 0 -10px 20px rgba(0, 0, 0, 0.2);
+      inset 0 1px 1px rgba(255, 255, 255, 0.08),
+      inset 0 -10px 20px rgba(0, 0, 0, 0.15);
   }
 
   @keyframes bull-dock-rise {
@@ -311,24 +306,24 @@
   }
 
   .bull-advisor-orb {
-    @apply flex h-24 w-24 items-center justify-center rounded-full border border-[#60A5FA]/20 bg-[#0B1223]/80;
+    @apply flex h-24 w-24 items-center justify-center rounded-full border border-amethyst/[0.15] bg-[#060408]/85;
     box-shadow:
-      inset 0 1px 14px rgba(255, 255, 255, 0.12),
-      0 0 0 1px rgba(255, 255, 255, 0.04),
-      0 0 46px rgba(59, 130, 246, 0.22);
+      inset 0 1px 14px rgba(255, 255, 255, 0.08),
+      0 0 0 1px rgba(255, 255, 255, 0.02),
+      0 0 34px rgba(130, 117, 159, 0.04);
   }
 
   .bull-suggestion-pill {
-    @apply shrink-0 rounded-full px-5 py-2.5 text-[11px] font-semibold leading-relaxed text-[#C4B5FD] transition-all duration-300;
-    border: 1px solid rgba(139, 92, 246, 0.15);
-    background-color: rgba(139, 92, 246, 0.05);
+    @apply shrink-0 rounded-full px-5 py-2.5 text-[11px] font-semibold leading-relaxed text-[#CBD5E1] transition-all duration-300;
+    border: 1px solid rgba(130, 117, 159, 0.12);
+    background-color: rgba(130, 117, 159, 0.03);
   }
 
   .bull-suggestion-pill:hover:not(:disabled) {
-    @apply text-[#DDD6FE] -translate-y-0.5;
-    border-color: rgba(139, 92, 246, 0.35);
-    background-color: rgba(139, 92, 246, 0.14);
-    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.1);
+    @apply text-[#E5E7EB] -translate-y-0.5;
+    border-color: rgba(130, 117, 159, 0.25);
+    background-color: rgba(130, 117, 159, 0.08);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   }
 
   .bull-suggestion-pill:active:not(:disabled) {
@@ -336,7 +331,7 @@
   }
 
   .bull-recap-surface {
-    @apply rounded-[1.6rem] border border-white/[0.08] bg-black/25 shadow-[inset_0_1px_20px_rgba(0,0,0,0.35)];
+    @apply rounded-lg border border-white/[0.05] bg-black/15 shadow-[inset_0_1px_20px_rgba(0,0,0,0.2)];
   }
 
   /* Global scrollbar — todo elemento rolável herda o estilo do design system.
@@ -555,12 +550,12 @@
   }
 
   .bull-input {
-    @apply h-11 rounded-xl border border-white/10 bg-[#1A1625]/60 px-4 text-sm font-semibold text-[#F4F0FF] placeholder:text-[#F4F0FF]/30 focus:outline-none focus:border-[#8B5CF6]/50 focus:ring-1 focus:ring-[#8B5CF6]/50 transition-all duration-300;
+    @apply h-11 rounded-lg border border-white/[0.06] bg-[#111520]/40 px-4 text-sm font-semibold text-[#E5E7EB] placeholder:text-[#E5E7EB]/25 focus:outline-none focus:border-amethyst/40 focus:ring-1 focus:ring-amethyst/30 transition-all duration-300;
   }
 
   .bull-select {
-    @apply h-11 rounded-xl border border-white/10 bg-[#1A1625]/60 pl-4 pr-10 text-sm font-semibold text-[#F4F0FF] focus:outline-none focus:border-[#8B5CF6]/50 focus:ring-1 focus:ring-[#8B5CF6]/50 transition-all duration-300 appearance-none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%238B5CF6' stroke-width='2.5'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19.5 8.25l-7.5 7.5-7.5-7.5' /%3E%3C/svg%3E");
+    @apply h-11 rounded-lg border border-white/[0.06] bg-[#111520]/40 pl-4 pr-10 text-sm font-semibold text-[#E5E7EB] focus:outline-none focus:border-amethyst/40 focus:ring-1 focus:ring-amethyst/30 transition-all duration-300 appearance-none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2382759F' stroke-width='2.5'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19.5 8.25l-7.5 7.5-7.5-7.5' /%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right 0.75rem center;
     background-size: 1rem;
