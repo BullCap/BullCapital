@@ -11,8 +11,6 @@ import {
   YAxis,
   Tooltip,
 } from 'recharts'
-import Link from 'next/link'
-import { ArrowUpRight } from 'lucide-react'
 import { fetchAssetHistory } from '@/lib/actions/market'
 import type { AssetHistoricalPrice } from '@/types/market'
 import { GlassHighlight } from '@/components/atoms/GlassHighlight'
@@ -221,12 +219,12 @@ export default function PriceChartClient({
   }, [refPrice, maxVal, minVal])
 
   return (
-    <section className="bull-panel p-5">
+    <section className="bull-panel p-4 md:p-5">
       <GlassHighlight widthPercent={65} />
 
-      <div className="mb-4 flex items-center justify-between">
+      <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
         <div>
-          <p className="bull-eyebrow">Histórico de Preço</p>
+          <p className="bull-eyebrow">Preço</p>
           <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-[#DBEAFE]/45">
             {isMockHistory && <span>Série indisponível na fonte</span>}
             {typeof seriesHigh === 'number' && seriesHigh > 0 && (
@@ -237,7 +235,7 @@ export default function PriceChartClient({
             )}
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 md:justify-end">
           {isMockHistory && (
             <span className="rounded-full border border-[#60A5FA]/20 bg-[#3B82F6]/10 px-2 py-1 text-[10px] text-[#DBEAFE]/70">
               Indisponível
@@ -248,37 +246,33 @@ export default function PriceChartClient({
               Mercado fechado
             </span>
           )}
+          <div className="inline-flex rounded-xl border border-white/[0.08] bg-black/20 p-0.5">
+            {(Object.keys(RANGE_LABELS) as Range[]).map((r) => (
+              <button
+                key={r}
+                onClick={() => setRange(r)}
+                className={`relative min-h-8 min-w-10 rounded-lg px-2.5 text-xs font-medium transition-colors ${
+                  range === r ? 'bg-[#3B82F6]/18 text-[#F4F0FF]' : 'text-[#F4F0FF]/40 hover:text-[#F4F0FF]/70'
+                }`}
+              >
+                {RANGE_LABELS[r]}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
-
-      <div className="mb-4 inline-flex rounded-[1.1rem] border border-white/[0.08] bg-black/20 p-1 shadow-[inset_0_2px_8px_rgba(0,0,0,0.38)]">
-        {(Object.keys(RANGE_LABELS) as Range[]).map((r) => (
-          <button
-            key={r}
-            onClick={() => setRange(r)}
-            className={`relative min-h-9 min-w-[3rem] rounded-[0.85rem] px-3 py-1 text-xs font-medium transition-colors ${
-              range === r ? 'text-[#F4F0FF]' : 'text-[#F4F0FF]/40 hover:text-[#F4F0FF]/70'
-            }`}
-          >
-            {range === r && (
-              <span className="absolute inset-0 rounded-[0.85rem] border border-[#60A5FA]/25 bg-[#3B82F6]/20 shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),0_8px_20px_rgba(59,130,246,0.16)]" />
-            )}
-            <span className="relative z-10">{RANGE_LABELS[r]}</span>
-          </button>
-        ))}
       </div>
 
       {loading ? (
-        <div className="flex h-[224px] items-center justify-center">
+        <div className="flex h-[260px] items-center justify-center">
           <p className="text-sm text-[#F4F0FF]/40">Carregando...</p>
         </div>
       ) : chartData.length === 0 ? (
-        <div className="flex h-[224px] items-center justify-center">
+        <div className="flex h-[260px] items-center justify-center">
           <p className="text-sm text-[#F4F0FF]/40">Histórico indisponível</p>
         </div>
       ) : (
-        <div className="rounded-[1.5rem] border border-white/[0.06] bg-black/15 pb-2 pt-4 shadow-[inset_0_1px_18px_rgba(0,0,0,0.32)]">
-          <ResponsiveContainer width="100%" height={224}>
+        <div className="rounded-2xl border border-white/[0.06] bg-black/15 pb-2 pt-3 shadow-[inset_0_1px_14px_rgba(0,0,0,0.28)]">
+          <ResponsiveContainer width="100%" height={260}>
             <AreaChart data={chartData} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
               <defs>
                 {/* Green fill — fades downward from line toward reference */}
@@ -378,17 +372,6 @@ export default function PriceChartClient({
           </ResponsiveContainer>
         </div>
       )}
-
-      <Link
-        href={`/analysis?ticker=${ticker}`}
-        className="mt-4 flex min-h-12 items-center justify-between gap-3 rounded-[1.5rem] border border-[#60A5FA]/15 bg-[#3B82F6]/10 px-4 text-sm text-[#F4F0FF]/80 transition hover:border-[#60A5FA]/30 hover:bg-[#3B82F6]/15"
-      >
-        <span>
-          <span className="block text-xs text-[#DBEAFE]/45">Advisor</span>
-          Explicar movimento
-        </span>
-        <ArrowUpRight size={16} />
-      </Link>
     </section>
   )
 }

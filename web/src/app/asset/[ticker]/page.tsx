@@ -74,7 +74,7 @@ export default async function AssetPage({ params }: AssetPageProps) {
   }
 
   return (
-    <AppShell active="market">
+    <AppShell active="market" contentClassName="md:max-w-none xl:max-w-[1560px] 2xl:max-w-[1720px]">
       <ScrollFocus>
         <AssetHeader
           ticker={ticker}
@@ -84,18 +84,16 @@ export default async function AssetPage({ params }: AssetPageProps) {
           followButton={<FollowButton ticker={ticker} initialFollowing={following} />}
         />
       </ScrollFocus>
-      <ScrollFocus>
-        <PriceChartClient
-          ticker={ticker}
-          initialHistory={initialHistory}
-          isMarketOpen={isMarketOpen()}
-        />
-      </ScrollFocus>
 
-      {/* Grid de Duas Colunas para Telas Grandes */}
-      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1fr_22rem] 2xl:grid-cols-[1fr_24rem] items-start w-full">
-        {/* Coluna Esquerda: Indicadores de Score, Cotações e Notícias */}
-        <div className="flex flex-col gap-5 min-w-0">
+      <div className="grid w-full grid-cols-1 items-start gap-5 xl:grid-cols-[minmax(0,1fr)_22rem] 2xl:grid-cols-[minmax(0,1fr)_24rem]">
+        <div className="flex min-w-0 flex-col gap-5">
+          <ScrollFocus>
+            <PriceChartClient
+              ticker={ticker}
+              initialHistory={initialHistory}
+              isMarketOpen={isMarketOpen()}
+            />
+          </ScrollFocus>
           <ScrollFocus>
             <RadarSection data={radarPoints} />
           </ScrollFocus>
@@ -107,15 +105,14 @@ export default async function AssetPage({ params }: AssetPageProps) {
           </ScrollFocus>
         </div>
 
-        {/* Coluna Direita (Sticky): Perfil e Ações do Copiloto */}
-        <div className="flex flex-col gap-5 xl:sticky xl:top-24 w-full">
+        <aside className="flex w-full flex-col gap-5 xl:sticky xl:top-24">
           <ScrollFocus>
             <AssetProfileCard ticker={ticker} profile={profile} />
           </ScrollFocus>
           <ScrollFocus>
             <AssetAnalysisCTA ticker={ticker} />
           </ScrollFocus>
-        </div>
+        </aside>
       </div>
     </AppShell>
   )

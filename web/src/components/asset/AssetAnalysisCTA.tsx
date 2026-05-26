@@ -7,22 +7,19 @@ interface AssetAnalysisCTAProps {
 
 export default function AssetAnalysisCTA({ ticker }: AssetAnalysisCTAProps) {
   return (
-    <section className="bull-panel-focus p-6">
+    <section className="bull-panel-focus p-4">
       <GlassHighlight widthPercent={70} />
 
-      <p className="bull-eyebrow">Próxima leitura</p>
-      <div className="mt-3 flex flex-col gap-5">
+      <div className="flex flex-col gap-4">
         <div>
-          <h2 className="font-serif text-2xl text-[#F4F0FF]">Analisar {ticker.toUpperCase()}</h2>
-          <p className="mt-2 text-sm leading-6 text-[#F4F0FF]/60">
-            Veja preço, qualidade e contexto do ativo antes de tirar uma conclusão.
-          </p>
+          <p className="bull-eyebrow">Análise</p>
+          <h2 className="mt-2 font-serif text-xl text-[#F4F0FF]">{ticker.toUpperCase()}</h2>
         </div>
         <Link
           href={'/analysis?ticker=' + ticker}
-          className="inline-flex min-h-12 items-center justify-center rounded-2xl border border-[#60A5FA]/25 bg-[#3B82F6]/15 px-6 py-3 text-sm font-medium text-[#F4F0FF] transition hover:-translate-y-0.5 hover:bg-[#3B82F6]/25"
+          className="inline-flex min-h-11 items-center justify-center rounded-xl border border-[#60A5FA]/20 bg-[#3B82F6]/12 px-4 text-sm font-medium text-[#F4F0FF]/90 transition hover:bg-[#3B82F6]/18"
         >
-          Abrir leitura de {ticker.toUpperCase()}
+          Abrir leitura
         </Link>
       </div>
     </section>

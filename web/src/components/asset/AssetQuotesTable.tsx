@@ -84,20 +84,18 @@ export default function AssetQuotesTable({ ticker, history }: AssetQuotesTablePr
   }
 
   return (
-    <section className="bull-panel p-5 relative overflow-hidden">
+    <section className="bull-panel relative overflow-hidden p-4 md:p-5">
       <GlassHighlight widthPercent={55} />
 
-      <div className="mb-4 flex items-start justify-between gap-3">
+      <div className="mb-4 flex items-center justify-between gap-3">
         <div>
-          <p className="bull-eyebrow">Histórico Brapi PRO</p>
-          <h3 className="mt-1.5 font-serif text-lg text-[#F4F0FF]">
-            OHLCV diário de {ticker.toUpperCase()}
-          </h3>
+          <p className="bull-eyebrow">OHLCV</p>
+          <h3 className="mt-1 font-serif text-lg text-[#F4F0FF]">{ticker.toUpperCase()}</h3>
         </div>
 
         <button
           onClick={handleExportCSV}
-          className="inline-flex shrink-0 min-h-[2.25rem] items-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.04] px-3.5 text-xs text-[#F4F0FF]/60 transition hover:bg-white/[0.08] hover:text-[#F4F0FF] active:scale-[0.98]"
+          className="inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.04] px-3 text-xs text-[#F4F0FF]/60 transition hover:bg-white/[0.08] hover:text-[#F4F0FF] active:scale-[0.98]"
           title="Copiar dados como CSV"
         >
           {copied ? (
@@ -115,8 +113,8 @@ export default function AssetQuotesTable({ ticker, history }: AssetQuotesTablePr
       </div>
 
       {/* Spreadsheet container with fixed height scroll */}
-      <div className="overflow-hidden rounded-2xl border border-white/[0.08] bg-black/25">
-        <div className="bull-scroll max-h-[300px] overflow-y-auto">
+      <div className="overflow-hidden rounded-2xl border border-white/[0.08] bg-black/20">
+        <div className="bull-scroll max-h-[260px] overflow-y-auto">
           <table className="w-full text-left text-xs border-collapse">
             <thead className="sticky top-0 bg-[#161222] text-[#F4F0FF]/40 border-b border-white/[0.08] z-10 select-none">
               <tr>

@@ -15,56 +15,45 @@ interface AssetHeaderProps {
 
 export default function AssetHeader({ ticker, name, price, changePercent, followButton }: AssetHeaderProps) {
   return (
-    <section className="bull-asset-hero p-5">
+    <section className="bull-panel p-4">
       <GlassHighlight widthPercent={70} />
 
-      <div className="relative flex items-center justify-between min-h-9">
-        <Link
-          href="/home"
-          aria-label="Voltar ao mercado"
-          className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/[0.05] text-[#F4F0FF]/70 transition hover:bg-white/[0.09] hover:text-[#F4F0FF] z-10"
-        >
-          <ArrowLeft size={15} />
-        </Link>
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex min-w-0 items-center gap-3">
+          <Link
+            href="/home"
+            aria-label="Voltar ao mercado"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] text-[#F4F0FF]/65 transition hover:bg-white/[0.08] hover:text-[#F4F0FF]"
+          >
+            <ArrowLeft size={15} />
+          </Link>
 
-        {/* Perfectly centered absolute-positioned brand logo */}
-        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none flex items-center">
-          <span className="bull-wordmark flex items-center">
-            <span className="bull-brand-mark" />
-            <span className="flex items-baseline font-serif font-bold text-[#F4F0FF] text-[20px] tracking-wide">
-              BCAP
-            </span>
-          </span>
-        </div>
+          <CompanyIcon ticker={ticker} size={44} className="shrink-0 rounded-xl border-white/10 bg-[#09111D]/70 p-1" />
 
-        <div className="z-10">
-          {followButton ?? <span className="h-9 w-9" aria-hidden="true" />}
-        </div>
-      </div>
-
-      <div className="relative mt-8 flex flex-col items-center text-center">
-        <CompanyIcon ticker={ticker} size={64} className="bull-asset-emblem p-1.5 bg-[#09111D]/80 border-white/20" />
-        <p className="mt-4 max-w-[15rem] truncate text-sm text-[#DBEAFE]/60">{name ?? ticker}</p>
-        <h1 className="mt-1 font-serif text-3xl text-[#F4F0FF]">{ticker.toUpperCase()}</h1>
-      </div>
-
-      {price !== null ? (
-        <div className="relative mt-5 rounded-[1.6rem] border border-white/[0.08] bg-black/25 px-4 py-5 text-center shadow-[inset_0_1px_18px_rgba(0,0,0,0.32)]">
-          <div className="flex flex-col items-center gap-3">
-            <p className="text-4xl font-medium tracking-tight text-[#F4F0FF]">
-              {price.toLocaleString('pt-BR', {
-                style: 'currency',
-                currency: 'BRL',
-                minimumFractionDigits: 2,
-              })}
-            </p>
-            <VariationBadge variation={changePercent ?? 0} />
+          <div className="min-w-0">
+            <p className="truncate text-sm text-[#DBEAFE]/48">{name ?? ticker}</p>
+            <h1 className="font-serif text-2xl leading-tight text-[#F4F0FF]">{ticker.toUpperCase()}</h1>
           </div>
-          <p className="mt-3 text-xs text-[#DBEAFE]/40">Preço, fundamentos e contexto no mesmo fluxo.</p>
         </div>
-      ) : (
-        <p className="mt-5 text-sm text-[#F4F0FF]/40">Dados indisponíveis</p>
-      )}
+
+        <div className="flex flex-wrap items-center gap-3 lg:justify-end">
+          {price !== null ? (
+            <div className="flex items-center gap-3 rounded-2xl border border-white/[0.06] bg-black/20 px-4 py-2.5">
+              <p className="text-2xl font-medium tracking-tight text-[#F4F0FF]">
+                {price.toLocaleString('pt-BR', {
+                  style: 'currency',
+                  currency: 'BRL',
+                  minimumFractionDigits: 2,
+                })}
+              </p>
+              <VariationBadge variation={changePercent ?? 0} />
+            </div>
+          ) : (
+            <p className="text-sm text-[#F4F0FF]/40">Dados indisponíveis</p>
+          )}
+          {followButton}
+        </div>
+      </div>
     </section>
   )
 }

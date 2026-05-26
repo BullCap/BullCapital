@@ -37,38 +37,50 @@ export default function AssetProfileCard({ ticker, profile }: AssetProfileCardPr
   const customSummary = LOCAL_SUMMARIES[uppercaseTicker]
   const summaryText = customSummary || profile?.longBusinessSummary || 'Sem descrição institucional detalhada disponível para este ativo no momento.'
 
-  const isLongDescription = summaryText.length > 280
+  const isLongDescription = summaryText.length > 220
 
   return (
-    <section className="bull-panel p-5 relative overflow-hidden">
+    <section className="bull-panel relative overflow-hidden p-4">
       <GlassHighlight widthPercent={60} />
 
-      <p className="bull-eyebrow mb-4">Sobre a empresa</p>
+      <p className="bull-eyebrow">Empresa</p>
 
-      {/* Description text area */}
-      <div className="relative">
+      {(profile?.sector || profile?.industry) && (
+        <div className="mt-3 flex flex-wrap gap-2 text-[11px] text-[#F4F0FF]/55">
+          {profile.sector && (
+            <span className="rounded-lg border border-white/[0.06] bg-white/[0.03] px-2 py-1">
+              {profile.sector}
+            </span>
+          )}
+          {profile.industry && (
+            <span className="rounded-lg border border-white/[0.06] bg-white/[0.03] px-2 py-1">
+              {profile.industry}
+            </span>
+          )}
+        </div>
+      )}
+
+      <div className="relative mt-4">
         <motion.div
-          animate={{ height: isLongDescription && !isExpanded ? '4.5rem' : 'auto' }}
+          animate={{ height: isLongDescription && !isExpanded ? '5.25rem' : 'auto' }}
           transition={{ duration: 0.3, ease: 'easeInOut' }}
           className="overflow-hidden"
         >
-          <p className="text-sm leading-relaxed text-[#F4F0FF]/70 whitespace-pre-line">
+          <p className="whitespace-pre-line text-sm leading-6 text-[#F4F0FF]/66">
             {summaryText}
           </p>
         </motion.div>
 
-        {/* Shading/Fade layer for collapsed state */}
         {isLongDescription && !isExpanded && (
           <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-[#0f0c18] to-transparent pointer-events-none" />
         )}
       </div>
 
-      {/* Accordion Toggle trigger */}
       {isLongDescription && (
         <div className="mt-3 flex justify-end">
           <button
             onClick={() => setIsExpanded(!isExpanded)}
-            className="inline-flex items-center gap-1 text-xs font-semibold text-[#C4B5FD] hover:text-white transition duration-300"
+            className="inline-flex items-center gap-1 text-xs font-semibold text-[#C4B5FD]/85 transition duration-300 hover:text-white"
           >
             {isExpanded ? (
               <>
