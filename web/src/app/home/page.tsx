@@ -193,6 +193,16 @@ export default async function HomePage() {
           />
         </Suspense>
 
+        <ScrollFocus>
+          <MarketHighlightsSection
+            stockGainers={gainersRaw}
+            stockLosers={losersRaw}
+            stockMostTraded={mostTradedRaw}
+            cryptoHighlights={cryptoRaw}
+            fixedIncomeHighlights={fixedIncomeRaw}
+          />
+        </ScrollFocus>
+
         <div className="grid gap-6 2xl:grid-cols-[0.9fr_1.1fr] 2xl:items-stretch">
           <ScrollFocus>
             <Suspense fallback={<StoryDigestSkeleton />}>
@@ -204,16 +214,6 @@ export default async function HomePage() {
             <MarketMapSection assets={mapAssets} />
           </ScrollFocus>
         </div>
-
-        <ScrollFocus>
-          <MarketHighlightsSection
-            stockGainers={gainersRaw}
-            stockLosers={losersRaw}
-            stockMostTraded={mostTradedRaw}
-            cryptoHighlights={cryptoRaw}
-            fixedIncomeHighlights={fixedIncomeRaw}
-          />
-        </ScrollFocus>
       </div>
     </AppShell>
   )
