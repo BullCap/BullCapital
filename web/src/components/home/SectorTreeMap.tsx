@@ -51,13 +51,39 @@ const SECTOR_SHORT_LABEL: Record<string, string> = {
   'Petróleo e Energia': 'Petróleo',
   'Consumo Não Cíclico': 'Consumo NC',
   'Consumo Cíclico': 'Consumo C',
-  'Utilidade Pública': 'Utilities',
-  'Bens Industriais': 'Industrial',
+  'Utilidade Pública': 'Utilidades',
+  'Bens Industriais': 'Indústria',
   'Energia': 'Energia',
   'Saúde': 'Saúde',
   'Comunicações': 'Telecom',
   'Construção e Imobiliário': 'Imobiliário',
   'Outros setores': 'Outros',
+}
+
+// Translations from English API sectors to clean Portuguese names
+const SECTOR_TRANSLATIONS: Record<string, string> = {
+  'Financial Services': 'Serviços Financeiros',
+  'Financial': 'Serviços Financeiros',
+  'Basic Materials': 'Materiais Básicos',
+  'Energy': 'Petróleo e Energia',
+  'Consumer Defensive': 'Consumo Não Cíclico',
+  'Consumer Cyclical': 'Consumo Cíclico',
+  'Utilities': 'Utilidade Pública',
+  'Industrials': 'Bens Industriais',
+  'Healthcare': 'Saúde',
+  'Technology': 'Tecnologia',
+  'Communication Services': 'Comunicações',
+  'Real Estate': 'Construção e Imobiliário',
+  'Equities': 'Ações',
+  'FINANCIAL SERVICES': 'Serviços Financeiros',
+  'BASIC MATERIALS': 'Materiais Básicos',
+  'ENERGY': 'Petróleo e Energia',
+  'CONSUMER DEFENSIVE': 'Consumo Não Cíclico',
+  'CONSUMER CYCLICAL': 'Consumo Cíclico',
+  'UTILITIES': 'Utilidade Pública',
+  'INDUSTRIALS': 'Bens Industriais',
+  'HEALTHCARE': 'Saúde',
+  'EQUITIES': 'Ações',
 }
 
 // Fallback sector labels when the live quote response is missing one.
@@ -206,7 +232,8 @@ export default function SectorTreeMap({ assets, showHeader = true }: SectorTreeM
 
     for (const { ticker, weight } of IBOV_WEIGHTS) {
       const live = liveByTicker.get(ticker)
-      const sector = live?.sector || SECTOR_FALLBACK[ticker] || 'Outros'
+      const rawSector = live?.sector || SECTOR_FALLBACK[ticker] || 'Outros'
+      const sector = SECTOR_TRANSLATIONS[rawSector] || rawSector
       const change = live && Number.isFinite(live.change) ? live.change : null
 
       if (!grouped.has(sector)) {
@@ -241,7 +268,7 @@ export default function SectorTreeMap({ assets, showHeader = true }: SectorTreeM
   }, [visibleSectors])
 
   const content = (
-    <div className="relative h-[420px] overflow-hidden rounded-[1.75rem] border border-white/[0.08] bg-[#080B12] p-1 shadow-2xl sm:h-[340px]">
+    <div className="relative h-[520px] overflow-hidden rounded-[1.75rem] border border-white/[0.08] bg-[#080B12] p-1 shadow-2xl sm:h-[620px]">
       <div className="relative h-full w-full">
         {visibleSectors.map((sector, idx) => {
           const rect = layout[idx]
