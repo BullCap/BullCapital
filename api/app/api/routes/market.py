@@ -33,9 +33,28 @@ async def status_endpoint() -> dict:
 
 @router.get("/radar/{symbol}")
 async def radar(symbol: str) -> dict:
-    """Get radar scores from deterministic market data, with yfinance as secondary fallback."""
+    """Get radar scores from yfinance, enriched with Brapi PRO fundamentals from the DB cache."""
     result = await asyncio.to_thread(yfinance_market.get_radar, symbol)
-    return result or {}
+    if not result:
+        return {}
+
+    # yfinance often returns None for sector/industry/summary on B3 tickers.
+    # Substitute with Brapi PRO data from the DB cache when available.
+    db_quote = await market_db.get_db_quote(symbol)
+    if db_quote:
+        existing_profile = result.get("profile") or {}
+        result["profile"] = {
+            "longBusinessSummary": db_quote.get("longBusinessSummary") or existing_profile.get("longBusinessSummary"),
+            "sector": db_quote.get("sector") or existing_profile.get("sector"),
+            "industry": db_quote.get("industry") or existing_profile.get("industry"),
+            "website": db_quote.get("website") or existing_profile.get("website"),
+            "fullTimeEmployees": db_quote.get("fullTimeEmployees") or existing_profile.get("fullTimeEmployees"),
+        }
+        if result.get("quote"):
+            result["quote"]["marketCap"] = db_quote.get("marketCap") or result["quote"].get("marketCap")
+            result["quote"]["longName"] = db_quote.get("longName") or result["quote"].get("longName")
+
+    return result
 
 
 @router.get("/listings")

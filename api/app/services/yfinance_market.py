@@ -18,7 +18,7 @@ import yfinance as yf
 from app.core.config import settings
 
 # Set a socket default timeout to prevent third-party integrations (yfinance, requests, etc.) from hanging
-socket.setdefaulttimeout(3.0)
+socket.setdefaulttimeout(10.0)
 
 OPENAI_CHAT_COMPLETIONS_URL = "https://api.openai.com/v1/chat/completions"
 OPENROUTER_CHAT_COMPLETIONS_URL = "https://openrouter.ai/api/v1/chat/completions"

@@ -312,18 +312,22 @@ async def upsert_quote_record(quote_data: dict, ticker: str) -> bool:
                     "price": stmt.excluded.price,
                     "change_percent": stmt.excluded.change_percent,
                     "volume": stmt.excluded.volume,
-                    "market_cap": stmt.excluded.market_cap,
-                    "high_52w": stmt.excluded.high_52w,
-                    "low_52w": stmt.excluded.low_52w,
-                    "pe_ratio": stmt.excluded.pe_ratio,
-                    "dividend_yield": stmt.excluded.dividend_yield,
-                    "ev_ebitda": stmt.excluded.ev_ebitda,
-                    "roe": stmt.excluded.roe,
-                    "roic": stmt.excluded.roic,
-                    "p_vp": stmt.excluded.p_vp,
-                    "sector": stmt.excluded.sector,
-                    "industry": stmt.excluded.industry,
-                    "business_summary": stmt.excluded.business_summary,
+                    # Price-adjacent fields: keep existing value when incoming is null
+                    "market_cap": func.coalesce(stmt.excluded.market_cap, AssetQuote.__table__.c.market_cap),
+                    "high_52w": func.coalesce(stmt.excluded.high_52w, AssetQuote.__table__.c.high_52w),
+                    "low_52w": func.coalesce(stmt.excluded.low_52w, AssetQuote.__table__.c.low_52w),
+                    # Fundamentals: never wipe a previously-populated value with null.
+                    # Brapi batch calls update price every 5 min but may not re-send module
+                    # data (defaultKeyStatistics, financialData) on every request.
+                    "pe_ratio": func.coalesce(stmt.excluded.pe_ratio, AssetQuote.__table__.c.pe_ratio),
+                    "dividend_yield": func.coalesce(stmt.excluded.dividend_yield, AssetQuote.__table__.c.dividend_yield),
+                    "ev_ebitda": func.coalesce(stmt.excluded.ev_ebitda, AssetQuote.__table__.c.ev_ebitda),
+                    "roe": func.coalesce(stmt.excluded.roe, AssetQuote.__table__.c.roe),
+                    "roic": func.coalesce(stmt.excluded.roic, AssetQuote.__table__.c.roic),
+                    "p_vp": func.coalesce(stmt.excluded.p_vp, AssetQuote.__table__.c.p_vp),
+                    "sector": func.coalesce(stmt.excluded.sector, AssetQuote.__table__.c.sector),
+                    "industry": func.coalesce(stmt.excluded.industry, AssetQuote.__table__.c.industry),
+                    "business_summary": func.coalesce(stmt.excluded.business_summary, AssetQuote.__table__.c.business_summary),
                     "updated_at": func.now(),
                 },
             )
@@ -457,11 +461,11 @@ async def ingest_asset_history(ticker: str, period: str = "3y") -> int:
                 stmt = stmt.on_conflict_do_update(
                     constraint="uq_ticker_date",
                     set_={
-                        "open": record.get("open"),
-                        "high": record.get("high"),
-                        "low": record.get("low"),
+                        "open": func.coalesce(record.get("open"), AssetHistoricalPrice.__table__.c.open),
+                        "high": func.coalesce(record.get("high"), AssetHistoricalPrice.__table__.c.high),
+                        "low": func.coalesce(record.get("low"), AssetHistoricalPrice.__table__.c.low),
                         "close": record["close"],
-                        "volume": record["volume"],
+                        "volume": func.coalesce(record.get("volume"), AssetHistoricalPrice.__table__.c.volume),
                     },
                 )
                 await session.execute(stmt)

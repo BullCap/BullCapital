@@ -25,8 +25,6 @@ import AppShell from '@/components/navigation/AppShell'
 import ScrollFocus from '@/components/ui/ScrollFocus'
 import { Suspense } from 'react'
 
-
-
 function formatPercent(value: number | null) {
   if (value === null) return 'n/d'
   return `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`
@@ -302,23 +300,6 @@ export default async function HomePage() {
       </header>
 
       <div className="space-y-6">
-        <Suspense fallback={<DailyBriefSkeleton dateLabel={dateLabel} storiesCount={topStories.length} />}>
-          <DailyBriefContent
-            ibovChange={ibov?.changePercent ?? null}
-            sp500Change={sp500?.changePercent ?? null}
-            vix={vix}
-            selicValue={selicValue}
-            marketOpen={marketOpen}
-            storyHeadlines={topStories.map((s) => s.headline)}
-            contextLine={contextLine}
-            dateLabel={dateLabel}
-            storiesCount={topStories.length}
-            suggestedPrompts={suggestedPrompts}
-            pulse={briefPulse}
-            fixedIncomeHighlights={fixedIncomeRaw}
-          />
-        </Suspense>
-
         <section className="space-y-4">
           <div className="px-1">
             <p className="bull-eyebrow">Panorama Macro</p>
@@ -352,6 +333,23 @@ export default async function HomePage() {
             </ScrollFocus>
           </div>
         </section>
+
+        <Suspense fallback={<DailyBriefSkeleton dateLabel={dateLabel} storiesCount={topStories.length} />}>
+          <DailyBriefContent
+            ibovChange={ibov?.changePercent ?? null}
+            sp500Change={sp500?.changePercent ?? null}
+            vix={vix}
+            selicValue={selicValue}
+            marketOpen={marketOpen}
+            storyHeadlines={topStories.map((s) => s.headline)}
+            contextLine={contextLine}
+            dateLabel={dateLabel}
+            storiesCount={topStories.length}
+            suggestedPrompts={suggestedPrompts}
+            pulse={briefPulse}
+            fixedIncomeHighlights={fixedIncomeRaw}
+          />
+        </Suspense>
 
         <div className="grid gap-6 2xl:grid-cols-[0.9fr_1.1fr] 2xl:items-stretch">
           <ScrollFocus>
