@@ -1,8 +1,11 @@
 import type { ReactNode } from 'react'
+import { cookies } from 'next/headers'
 import { cn } from '@/lib/utils'
 import { auth } from '@/lib/auth'
 import AppDock, { type AppDockSection } from './AppDock'
 import B2BSidebar from './B2BSidebar'
+
+const SIDEBAR_COLLAPSED_COOKIE = 'bull-sidebar-collapsed'
 
 interface AppShellProps {
   active: AppDockSection
@@ -22,6 +25,8 @@ function getInitials(name: string | null, email: string | null): string {
 
 export default async function AppShell({ active, children, contentClassName }: AppShellProps) {
   const session = await auth()
+  const cookieStore = await cookies()
+  const initialSidebarCollapsed = cookieStore.get(SIDEBAR_COLLAPSED_COOKIE)?.value === 'true'
   const initials = session?.user
     ? getInitials(session.user.name ?? null, session.user.email ?? null)
     : undefined
@@ -30,6 +35,7 @@ export default async function AppShell({ active, children, contentClassName }: A
     <main className="flex min-h-screen text-[#F4F0FF]">
       {/* Collapsible left sidebar — desktop only, pushes content in the same flex layer */}
       <B2BSidebar
+        initialCollapsed={initialSidebarCollapsed}
         initials={initials}
         userName={session?.user?.name ?? undefined}
         userEmail={session?.user?.email ?? undefined}

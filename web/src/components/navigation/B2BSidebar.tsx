@@ -33,27 +33,31 @@ const COPILOT_PROMPTS = [
 ]
 
 const SIDEBAR_STORAGE_KEY = 'bull-sidebar-collapsed'
+const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 365
 
 interface B2BSidebarProps {
+  initialCollapsed?: boolean
   initials?: string
   userName?: string
   userEmail?: string
 }
 
-export default function B2BSidebar({ initials = 'BC', userName = 'Consultor', userEmail }: B2BSidebarProps) {
-  const [collapsed, setCollapsed] = useState(false)
+export default function B2BSidebar({
+  initialCollapsed = false,
+  initials = 'BC',
+  userName = 'Consultor',
+  userEmail,
+}: B2BSidebarProps) {
+  const [collapsed, setCollapsed] = useState(initialCollapsed)
   const [chatQuery, setChatQuery] = useState('')
   const pathname = usePathname()
   const router = useRouter()
 
-  useEffect(() => {
-    setCollapsed(window.localStorage.getItem(SIDEBAR_STORAGE_KEY) === 'true')
-  }, [])
-
-  // Sync collapsed state to document root for smooth main content padding transition
+  // Sync collapsed state to persistent storage for the next server-rendered navigation.
   useEffect(() => {
     const root = document.documentElement
     window.localStorage.setItem(SIDEBAR_STORAGE_KEY, String(collapsed))
+    document.cookie = `${SIDEBAR_STORAGE_KEY}=${String(collapsed)}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}; samesite=lax`
 
     if (collapsed) {
       root.classList.add('sidebar-collapsed')
