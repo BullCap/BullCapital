@@ -18,7 +18,7 @@ const TABS: { id: MapViewMode; label: string; width: number }[] = [
 ]
 
 export default function MarketMapSection({ assets }: MarketMapSectionProps) {
-  const [viewMode, setViewMode] = useState<MapViewMode>('ranking')
+  const [viewMode, setViewMode] = useState<MapViewMode>('sectors')
   const activeIndex = TABS.findIndex((tab) => tab.id === viewMode)
   const slideLeft = TABS.slice(0, activeIndex).reduce((sum, tab) => sum + tab.width, 0)
   const slideWidth = TABS[activeIndex]?.width ?? 84
