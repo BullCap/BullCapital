@@ -11,7 +11,6 @@ import {
 import IndexCard from '@/components/home/IndexCard'
 import SELICCard from '@/components/home/SELICCard'
 import VixCard from '@/components/home/VixCard'
-import MoversSection from '@/components/home/MoversSection'
 import { DailyBriefContent, DailyBriefSkeleton } from '@/components/home/DailyBriefContent'
 import type { SuggestedPrompt } from '@/components/home/DailyBriefHero'
 import MarketMapSection from '@/components/home/MarketMapSection'
@@ -291,38 +290,90 @@ export default async function HomePage() {
   }
 
   return (
-    <AppShell active="market" contentClassName="md:max-w-none">
-      <header className="px-1 pb-2">
-        <p className="bull-eyebrow">{dateLabel}</p>
-        <h1 className="mt-2 font-serif text-3xl md:text-4xl tracking-tight text-[#F4F0FF]">
-          {greetingStart}, <span className="text-gradient-amethyst font-semibold">{firstName}</span>.
-        </h1>
-        <p className="mt-1 text-sm text-[#DBEAFE]/55">{storyLine}</p>
+    <AppShell active="market" contentClassName="md:max-w-none xl:max-w-[1560px] 2xl:max-w-[1720px]">
+      <header className="flex flex-col gap-4 px-1 pb-1 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="bull-eyebrow">{dateLabel}</p>
+          <h1 className="mt-2 font-serif text-3xl tracking-tight text-[#F4F0FF] md:text-4xl">
+            {greetingStart}, <span className="text-gradient-amethyst font-semibold">{firstName}</span>.
+          </h1>
+          <p className="mt-1 max-w-2xl text-sm text-[#DBEAFE]/55">{storyLine}</p>
+        </div>
       </header>
 
-      <Suspense fallback={<DailyBriefSkeleton dateLabel={dateLabel} storiesCount={topStories.length} />}>
-        <DailyBriefContent
-          ibovChange={ibov?.changePercent ?? null}
-          sp500Change={sp500?.changePercent ?? null}
-          vix={vix}
-          selicValue={selicValue}
-          marketOpen={marketOpen}
-          storyHeadlines={topStories.map((s) => s.headline)}
-          contextLine={contextLine}
-          dateLabel={dateLabel}
-          storiesCount={topStories.length}
-          suggestedPrompts={suggestedPrompts}
-          pulse={briefPulse}
-          fixedIncomeHighlights={fixedIncomeRaw}
-        />
-      </Suspense>
+      <div className="space-y-6">
+        <Suspense fallback={<DailyBriefSkeleton dateLabel={dateLabel} storiesCount={topStories.length} />}>
+          <DailyBriefContent
+            ibovChange={ibov?.changePercent ?? null}
+            sp500Change={sp500?.changePercent ?? null}
+            vix={vix}
+            selicValue={selicValue}
+            marketOpen={marketOpen}
+            storyHeadlines={topStories.map((s) => s.headline)}
+            contextLine={contextLine}
+            dateLabel={dateLabel}
+            storiesCount={topStories.length}
+            suggestedPrompts={suggestedPrompts}
+            pulse={briefPulse}
+            fixedIncomeHighlights={fixedIncomeRaw}
+          />
+        </Suspense>
 
-      <div className="grid gap-5">
-        <ScrollFocus>
-          <Suspense fallback={<StoryDigestSkeleton />}>
-            <StoryDigestLoader />
-          </Suspense>
-        </ScrollFocus>
+        <section className="space-y-4">
+          <div className="px-1">
+            <p className="bull-eyebrow">Panorama Macro</p>
+            <h2 className="mt-1 font-serif text-2xl tracking-tight text-[#F4F0FF]/80">Índices & Juros</h2>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-4">
+            <ScrollFocus>
+              <IndexCard
+                name="IBOVESPA"
+                price={ibov?.price ?? null}
+                changePercent={ibov?.changePercent ?? null}
+                isOpen={marketOpen}
+                historyData={ibovCloses}
+              />
+            </ScrollFocus>
+            <ScrollFocus>
+              <IndexCard
+                name="S&P 500"
+                price={sp500?.price ?? null}
+                changePercent={sp500?.changePercent ?? null}
+                isOpen={marketOpen}
+                historyData={sp500Closes}
+              />
+            </ScrollFocus>
+            <ScrollFocus>
+              <SELICCard selic={selicData} ipca={ipcaData} />
+            </ScrollFocus>
+            <ScrollFocus>
+              <VixCard value={vix} />
+            </ScrollFocus>
+          </div>
+        </section>
+
+        <div className="grid gap-6 2xl:grid-cols-[0.9fr_1.1fr] 2xl:items-stretch">
+          <ScrollFocus>
+            <Suspense fallback={<StoryDigestSkeleton />}>
+              <StoryDigestLoader />
+            </Suspense>
+          </ScrollFocus>
+
+          <ScrollFocus>
+            <MarketMapSection assets={mapAssets} />
+          </ScrollFocus>
+        </div>
+
+        <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr] xl:items-stretch">
+          <ScrollFocus>
+            <WatchlistRadarSection fallbackItems={radarItems} />
+          </ScrollFocus>
+
+          <ScrollFocus>
+            <MarketPlaybookSection actions={playbookActions} />
+          </ScrollFocus>
+        </div>
 
         <ScrollFocus>
           <MarketHighlightsSection
@@ -332,64 +383,6 @@ export default async function HomePage() {
             cryptoHighlights={cryptoRaw}
             fixedIncomeHighlights={fixedIncomeRaw}
           />
-        </ScrollFocus>
-
-        <ScrollFocus>
-          <MarketMapSection assets={mapAssets} />
-        </ScrollFocus>
-
-        <div className="px-1 pt-3">
-          <p className="bull-eyebrow">Panorama Macro</p>
-          <h2 className="mt-1 font-serif text-2xl tracking-tight text-[#F4F0FF]/80">Índices & Juros</h2>
-        </div>
-
-        <div className="grid gap-5 md:grid-cols-2 2xl:grid-cols-4">
-          <ScrollFocus>
-            <IndexCard
-              name="IBOVESPA"
-              price={ibov?.price ?? null}
-              changePercent={ibov?.changePercent ?? null}
-              isOpen={marketOpen}
-              historyData={ibovCloses}
-            />
-          </ScrollFocus>
-          <ScrollFocus>
-            <IndexCard
-              name="S&P 500"
-              price={sp500?.price ?? null}
-              changePercent={sp500?.changePercent ?? null}
-              isOpen={marketOpen}
-              historyData={sp500Closes}
-            />
-          </ScrollFocus>
-          <ScrollFocus>
-            <SELICCard selic={selicData} ipca={ipcaData} />
-          </ScrollFocus>
-          <ScrollFocus>
-            <VixCard value={vix} />
-          </ScrollFocus>
-        </div>
-
-        <div className="px-1 pt-3">
-          <p className="bull-eyebrow">Fluxo do Pregão</p>
-          <h2 className="mt-1 font-serif text-2xl tracking-tight text-[#F4F0FF]/80">Destaques do Dia</h2>
-        </div>
-
-        <div className="grid gap-5 lg:grid-cols-2">
-          <ScrollFocus>
-            <MoversSection title="Maiores altas" icon="gainers" movers={gainers} />
-          </ScrollFocus>
-          <ScrollFocus>
-            <MoversSection title="Maiores baixas" icon="losers" movers={losers} />
-          </ScrollFocus>
-        </div>
-
-        <ScrollFocus>
-          <WatchlistRadarSection fallbackItems={radarItems} />
-        </ScrollFocus>
-
-        <ScrollFocus>
-          <MarketPlaybookSection actions={playbookActions} />
         </ScrollFocus>
       </div>
     </AppShell>

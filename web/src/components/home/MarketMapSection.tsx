@@ -24,7 +24,7 @@ export default function MarketMapSection({ assets }: MarketMapSectionProps) {
   const slideWidth = TABS[activeIndex]?.width ?? 84
 
   return (
-    <section className="bull-panel p-5 relative overflow-hidden">
+    <section className="bull-panel relative flex h-full flex-col overflow-hidden p-5">
       <div className="absolute -left-10 -top-10 -z-10 h-32 w-32 rounded-full bg-[#8B5CF6]/10 blur-[40px]" />
 
       <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -59,7 +59,7 @@ export default function MarketMapSection({ assets }: MarketMapSectionProps) {
         </div>
       </div>
 
-      <div className="relative">
+      <div className="relative flex-1">
         <AnimatePresence mode="wait">
           {viewMode === 'ranking' ? (
             <motion.div
@@ -69,7 +69,7 @@ export default function MarketMapSection({ assets }: MarketMapSectionProps) {
               exit={{ opacity: 0, y: -5 }}
               transition={{ duration: 0.2 }}
             >
-              <MarketImpactBars assets={assets} showHeader={false} />
+              <MarketImpactBars assets={assets} maxRows={18} showHeader={false} />
             </motion.div>
           ) : (
             <motion.div

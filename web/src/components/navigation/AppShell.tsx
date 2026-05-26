@@ -2,9 +2,7 @@ import type { ReactNode } from 'react'
 import { cn } from '@/lib/utils'
 import { auth } from '@/lib/auth'
 import AppDock, { type AppDockSection } from './AppDock'
-import AppHeader from './AppHeader'
-import AppFooter from './AppFooter'
-import Grainient from '@/components/landing/Grainient'
+import B2BSidebar from './B2BSidebar'
 
 interface AppShellProps {
   active: AppDockSection
@@ -29,42 +27,16 @@ export default async function AppShell({ active, children, contentClassName }: A
     : undefined
 
   return (
-    <main className="relative min-h-screen w-full overflow-x-hidden text-[#F4F0FF]">
-      {/* Fixed WebGL Background — same visual language as landing, calmer for dashboard use */}
-      <div className="pointer-events-none fixed inset-0 -z-50 h-screen w-screen opacity-[0.28]">
-        <Grainient
-          color1="#0D0B14"
-          color2="#8B5CF6"
-          color3="#0D0B14"
-          timeSpeed={0.12}
-          colorBalance={0}
-          warpStrength={1.8}
-          warpFrequency={5}
-          warpSpeed={1.0}
-          warpAmplitude={45}
-          blendAngle={0}
-          blendSoftness={0.08}
-          rotationAmount={280}
-          noiseScale={2}
-          grainAmount={0.05}
-          grainScale={2}
-          grainAnimated={true}
-          contrast={1.3}
-          gamma={1}
-          saturation={0.9}
-          centerX={0}
-          centerY={0}
-          zoom={0.9}
-          className="h-full w-full"
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#050409]/30 via-[#050409]/65 to-[#050409]" />
-      </div>
+    <main className="flex min-h-screen text-[#F4F0FF]">
+      {/* Collapsible left sidebar — desktop only, pushes content in the same flex layer */}
+      <B2BSidebar
+        initials={initials}
+        userName={session?.user?.name ?? undefined}
+        userEmail={session?.user?.email ?? undefined}
+      />
 
-      {/* Fixed glass pill header with nav (desktop) + notch animation */}
-      <AppHeader initials={initials} />
-
-      {/* Content — top padding clears the fixed header */}
-      <div className="mx-auto flex w-full max-w-6xl xl:max-w-7xl 2xl:max-w-[1440px] 3xl:max-w-[1760px] flex-col gap-5 px-4 pb-40 pt-[calc(5.5rem_+_var(--sat))] sm:px-6 md:pb-10 lg:px-8 lg:pt-24">
+      {/* Content — flex-1 takes remaining space after sidebar */}
+      <div className="flex-1 min-w-0 flex flex-col gap-5 px-3 pb-40 pt-6 sm:px-5 md:pb-10 lg:px-6 lg:pt-8 2xl:px-8">
         <section
           className={cn(
             'mx-auto flex w-full max-w-sm flex-col gap-5 md:max-w-3xl lg:max-w-none',
@@ -73,10 +45,9 @@ export default async function AppShell({ active, children, contentClassName }: A
         >
           {children}
         </section>
-        <AppFooter />
       </div>
 
-      {/* Bottom dock — mobile only (desktop nav is in the header) */}
+      {/* Bottom dock — mobile only */}
       <AppDock active={active} />
     </main>
   )

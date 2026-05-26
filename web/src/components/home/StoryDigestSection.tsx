@@ -34,7 +34,7 @@ export default function StoryDigestSection({ stories }: StoryDigestSectionProps)
 
       <div className="flex items-end justify-between gap-3">
         <div>
-          <p className="bull-eyebrow">Historias do dia</p>
+          <p className="bull-eyebrow">Histórias do dia</p>
           <h2 className="mt-2 font-serif text-xl text-[#F4F0FF]">O que mudou no radar</h2>
         </div>
         <Link
@@ -48,7 +48,7 @@ export default function StoryDigestSection({ stories }: StoryDigestSectionProps)
 
       {stories.length === 0 ? (
         <div className="mt-5 flex h-28 items-center justify-center rounded-[1.5rem] border border-white/[0.06] bg-black/15 px-6 text-center">
-          <p className="text-sm text-[#F4F0FF]/42">Nenhuma historia relevante disponivel agora.</p>
+          <p className="text-sm text-[#F4F0FF]/42">Nenhuma história relevante disponível agora.</p>
         </div>
       ) : (
         <div className="mt-5 flex flex-col gap-3">

@@ -48,7 +48,7 @@ export default function DailyBriefHero({
   fixedIncomeHighlights,
 }: DailyBriefHeroProps) {
   return (
-    <section className="bull-panel-focus p-8 md:p-10">
+    <section className="bull-panel-focus p-6 md:p-8">
       <GlassHighlight widthPercent={74} />
 
       <div className="flex flex-col gap-6">
@@ -63,14 +63,14 @@ export default function DailyBriefHero({
           )}
         </div>
 
-        <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start">
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] 2xl:grid-cols-[minmax(0,1fr)_22rem] lg:items-start">
           <div className="flex flex-col gap-6 min-w-0">
             <div className="max-w-3xl">
               <p className="bull-eyebrow">Briefing diário</p>
-              <h2 className="mt-3 font-serif text-[2.5rem] leading-tight text-white tracking-tight md:text-[3.15rem]">
+              <h2 className="mt-3 font-serif text-[2.1rem] leading-tight text-white tracking-tight md:text-[2.65rem]">
                 {headline}
               </h2>
-              <p className="mt-4 max-w-2xl text-base font-semibold leading-relaxed text-[#F4F0FF]/85 md:text-[17px]">
+              <p className="mt-4 max-w-2xl text-[15px] font-semibold leading-relaxed text-[#F4F0FF]/82 md:text-base">
                 {summary}
               </p>
               <p className="mt-4 text-[10px] uppercase tracking-[0.16em] font-extrabold text-[#DBEAFE]/40">
@@ -78,10 +78,10 @@ export default function DailyBriefHero({
               </p>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid gap-3 md:grid-cols-3">
               {focusPoints.map((point) => (
-                <div key={point} className="bull-panel-quiet px-5 py-4.5 flex items-center">
-                  <p className="text-[15px] font-bold leading-relaxed text-white">{point}</p>
+                <div key={point} className="bull-panel-quiet px-4 py-3.5 flex items-center">
+                  <p className="text-[13px] font-bold leading-relaxed text-white">{point}</p>
                 </div>
               ))}
             </div>

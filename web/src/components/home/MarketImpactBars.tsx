@@ -11,7 +11,7 @@ interface MarketImpactBarsProps {
   showHeader?: boolean
 }
 
-const DEFAULT_MAX_ROWS = 14
+const DEFAULT_MAX_ROWS = 18
 
 function formatChange(change: number) {
   return `${change >= 0 ? '+' : ''}${change.toFixed(2)}%`
@@ -48,20 +48,20 @@ export default function MarketImpactBars({
   }, [assets, maxRows])
 
   const content = (
-    <div className="relative overflow-hidden rounded-[1.75rem] border border-white/[0.07] bg-[#080B12]/75 p-4 shadow-[inset_0_1px_16px_rgba(0,0,0,0.5)]">
+    <div className="relative flex min-h-[620px] flex-col overflow-hidden rounded-[1.75rem] border border-white/[0.07] bg-[#080B12]/75 p-4 shadow-[inset_0_1px_16px_rgba(0,0,0,0.5)]">
       {/* Center zero divider */}
       <div className="pointer-events-none absolute bottom-3 left-1/2 top-3 w-px bg-white/[0.08]" />
 
       {rows.length === 0 ? (
         <p className="py-12 text-center text-sm text-[#F4F0FF]/40">Mapa de impacto indisponível</p>
       ) : (
-        <ul className="flex flex-col gap-1.5">
+        <ul className="flex flex-1 flex-col justify-between gap-1.5">
           {rows.map(({ asset, widthPercent }) => {
             const isDown = asset.change < 0
             const barColor = isDown
-              ? 'from-[#F43F5E]/55 to-[#F43F5E]/15'
-              : 'from-[#8B5CF6]/55 to-[#8B5CF6]/15'
-            const textColor = isDown ? 'text-[#FBA5AE]' : 'text-[#C4B5FD]'
+              ? 'from-[#F43F5E]/70 to-[#F43F5E]/18'
+              : 'from-[#4ADE80]/70 to-[#4ADE80]/18'
+            const textColor = isDown ? 'text-[#FDA4AF]' : 'text-[#86EFAC]'
 
             return (
               <li key={asset.stock}>
@@ -106,9 +106,9 @@ export default function MarketImpactBars({
         </ul>
       )}
 
-      <div className="mt-3 flex items-center justify-between px-2 text-[10px] uppercase tracking-[0.18em] text-[#DBEAFE]/35">
-        <span>Pressão</span>
-        <span>Tração</span>
+      <div className="mt-3 flex items-center justify-between px-2 text-[10px] uppercase tracking-[0.18em]">
+        <span className="text-[#FDA4AF]/50">Pressão</span>
+        <span className="text-[#86EFAC]/50">Tração</span>
       </div>
     </div>
   )

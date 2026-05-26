@@ -28,10 +28,10 @@ export default function MarketPlaybookSection({ actions }: MarketPlaybookSection
       <p className="bull-eyebrow">Playbook</p>
       <div className="mt-3 max-w-xl">
         <h2 className="font-serif text-[1.95rem] leading-tight text-[#F4F0FF]">
-          Proximos passos para transformar sinal em contexto
+          Próximos passos para transformar sinal em contexto
         </h2>
         <p className="mt-2 text-sm leading-6 text-[#F4F0FF]/62">
-          Use o fluxo abaixo para sair do painel e entrar no motivo por tras do movimento.
+          Use o fluxo abaixo para sair do painel e entrar no motivo por trás do movimento.
         </p>
       </div>
 
