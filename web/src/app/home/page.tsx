@@ -20,6 +20,10 @@ import AppShell from '@/components/navigation/AppShell'
 import ScrollFocus from '@/components/ui/ScrollFocus'
 import { Suspense } from 'react'
 
+function normalizeQuoteSymbol(symbol: string) {
+  return symbol.toUpperCase().replace(/\.SA$/, '').replace(/[^A-Z0-9]/g, '')
+}
+
 export default async function HomePage() {
   const session = await auth()
   if (!session?.user) redirect('/auth/sign-in')
@@ -87,7 +91,7 @@ export default async function HomePage() {
 
   const treemapQuotes = treemapResult.status === 'fulfilled' ? (treemapResult.value?.results ?? []) : []
   const treemapAssets = treemapQuotes.map((q) => ({
-    stock: q.symbol,
+    stock: normalizeQuoteSymbol(q.symbol),
     name: q.shortName ?? q.longName ?? q.symbol,
     close: q.regularMarketPrice,
     change: q.regularMarketChangePercent,

@@ -136,8 +136,15 @@ function colorForChange(change: number | null): string {
 }
 
 function formatChange(change: number | null) {
-  if (change === null) return 's/ dado'
+  if (change === null) return 'n/d'
   return `${change >= 0 ? '+' : ''}${change.toFixed(2)}%`
+}
+
+function normalizeStockSymbol(symbol: string | null | undefined): string {
+  return (symbol ?? '')
+    .toUpperCase()
+    .replace(/\.SA$/, '')
+    .replace(/[^A-Z0-9]/g, '')
 }
 
 // Squarified treemap inside a rectangle. Returns [{w%, h%, left%, top%}].
@@ -226,7 +233,7 @@ export default function SectorTreeMap({ assets, showHeader = true }: SectorTreeM
 
   const sectors = useMemo<SectorNode[]>(() => {
     const liveByTicker = new Map(
-      assets.map((a) => [a.stock?.toUpperCase() ?? '', a])
+      assets.map((a) => [normalizeStockSymbol(a.stock), a])
     )
     const grouped = new Map<string, SectorNode>()
 

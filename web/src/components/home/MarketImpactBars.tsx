@@ -49,9 +49,6 @@ export default function MarketImpactBars({
 
   const content = (
     <div className="relative flex min-h-[620px] flex-col overflow-hidden rounded-[1.75rem] border border-white/[0.07] bg-[#080B12]/75 p-4 shadow-[inset_0_1px_16px_rgba(0,0,0,0.5)]">
-      {/* Center zero divider */}
-      <div className="pointer-events-none absolute bottom-3 left-1/2 top-3 w-px bg-white/[0.08]" />
-
       {rows.length === 0 ? (
         <p className="py-12 text-center text-sm text-[#F4F0FF]/40">Mapa de impacto indisponível</p>
       ) : (
@@ -67,16 +64,15 @@ export default function MarketImpactBars({
               <li key={asset.stock}>
                 <Link
                   href={buildAssetHref(asset.stock)}
-                  className="group relative flex items-center gap-2 rounded-xl px-1.5 py-1.5 transition hover:bg-white/[0.04] sm:gap-3 sm:px-2"
+                  className="group grid grid-cols-[3.75rem_minmax(0,1fr)_4.5rem] items-center gap-3 rounded-xl px-2 py-1.5 transition hover:bg-white/[0.04] sm:grid-cols-[4.5rem_minmax(0,1fr)_5.25rem_5.75rem]"
                   aria-label={`${asset.stock}, variação ${formatChange(asset.change)}`}
                 >
-                  {/* Ticker */}
-                  <span className="w-14 shrink-0 text-[11px] font-semibold tracking-wide text-[#F4F0FF]/85 group-hover:text-[#F4F0FF] sm:w-16 sm:text-[12px]">
+                  <span className="truncate text-[11px] font-semibold tracking-wide text-[#F4F0FF]/85 group-hover:text-[#F4F0FF] sm:text-[12px]">
                     {asset.stock}
                   </span>
 
-                  {/* Bar lane: half-width per side of the zero line */}
                   <div className="relative h-5 flex-1 sm:h-6">
+                    <span className="pointer-events-none absolute bottom-[-0.35rem] left-1/2 top-[-0.35rem] w-px bg-white/[0.08]" />
                     {isDown ? (
                       <div
                         className={`absolute inset-y-0 right-1/2 rounded-l-md bg-gradient-to-l ${barColor} shadow-[inset_0_1px_1px_rgba(255,255,255,0.08)]`}
@@ -90,13 +86,11 @@ export default function MarketImpactBars({
                     )}
                   </div>
 
-                  {/* Change % */}
-                  <span className={`w-[68px] shrink-0 text-right text-[11px] font-semibold tabular-nums sm:w-20 sm:text-[12px] ${textColor}`}>
+                  <span className={`text-right text-[11px] font-semibold tabular-nums sm:text-[12px] ${textColor}`}>
                     {formatChange(asset.change)}
                   </span>
 
-                  {/* Price (hidden on small phones) */}
-                  <span className="hidden w-24 shrink-0 text-right text-[11px] tabular-nums text-[#F4F0FF]/45 sm:block">
+                  <span className="hidden text-right text-[11px] tabular-nums text-[#F4F0FF]/45 sm:block">
                     {formatPrice(asset.close)}
                   </span>
                 </Link>
