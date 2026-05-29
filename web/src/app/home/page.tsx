@@ -3,11 +3,11 @@ import { Suspense, cache } from 'react'
 import { auth } from '@/lib/auth'
 import { getHomeHighlightsSnapshot, getMarketPulseSnapshot } from '@/lib/services/market'
 import { isMarketOpen } from '@/lib/market-utils'
-import IndexCard from '@/components/home/IndexCard'
-import SELICCard from '@/components/home/SELICCard'
-import VixCard from '@/components/home/VixCard'
-import { DailyBriefContent } from '@/components/home/DailyBriefContent'
-import DailyBriefHero, { type BriefPulseData } from '@/components/home/DailyBriefHero'
+import IndexCard, { IndexCardSkeleton } from '@/components/home/IndexCard'
+import SELICCard, { SELICCardSkeleton } from '@/components/home/SELICCard'
+import VixCard, { VixCardSkeleton } from '@/components/home/VixCard'
+import { DailyBriefContent, DailyBriefSkeleton } from '@/components/home/DailyBriefContent'
+import type { BriefPulseData } from '@/components/home/DailyBriefHero'
 import MarketMapSection from '@/components/home/MarketMapSection'
 import MarketHighlightsSection from '@/components/home/MarketHighlightsSection'
 import { StoryDigestLoader, StoryDigestSkeleton } from '@/components/home/StoryDigestLoader'
@@ -230,10 +230,10 @@ function MarketNowFallback() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-4">
-        <IndexCard name="IBOVESPA" price={null} changePercent={null} isOpen={marketOpen} />
-        <IndexCard name="S&P 500" price={null} changePercent={null} isOpen={marketOpen} />
-        <SELICCard selic={null} ipca={null} />
-        <VixCard value={null} />
+        <ScrollFocus><IndexCardSkeleton name="IBOVESPA" isOpen={marketOpen} /></ScrollFocus>
+        <ScrollFocus><IndexCardSkeleton name="S&P 500" isOpen={marketOpen} /></ScrollFocus>
+        <ScrollFocus><SELICCardSkeleton /></ScrollFocus>
+        <ScrollFocus><VixCardSkeleton /></ScrollFocus>
       </div>
     </section>
   )
@@ -258,29 +258,6 @@ async function DailyBriefPanel({ dateLabel }: { dateLabel: string }) {
   )
 }
 
-function DailyBriefFallback({ dateLabel, contextLine }: { dateLabel: string; contextLine: string }) {
-  return (
-    <DailyBriefHero
-      contextLine={contextLine}
-      dateLabel={dateLabel}
-      focusPoints={['Ibovespa em leitura.', 'Volatilidade em atualização.', 'Juros no radar.']}
-      headline="Preparando briefing do dia."
-      storiesCount={0}
-      summary="A leitura de mercado está sendo montada com os dados mais recentes disponíveis."
-      pulse={{
-        ibovPrice: null,
-        ibovChange: null,
-        ibovHistory: [],
-        sp500Change: null,
-        vix: null,
-        selicValue: null,
-        usdBrlPrice: null,
-        usdBrlChange: null,
-        marketOpen: isMarketOpen(),
-      }}
-    />
-  )
-}
 
 async function MarketHighlightsPanel() {
   const highlights = await getMarketHighlightsData()
@@ -352,7 +329,7 @@ export default async function HomePage() {
           <MarketNowSection />
         </Suspense>
 
-        <Suspense fallback={<DailyBriefFallback dateLabel={dateLabel} contextLine={contextLine} />}>
+        <Suspense fallback={<DailyBriefSkeleton dateLabel={dateLabel} storiesCount={0} />}>
           <DailyBriefPanel dateLabel={dateLabel} />
         </Suspense>
 

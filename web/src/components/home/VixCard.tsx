@@ -12,6 +12,28 @@ function getVixLabel(value: number | null) {
   return 'Calmo'
 }
 
+export function VixCardSkeleton() {
+  return (
+    <div className="bull-panel flex h-full min-h-[9.5rem] flex-col gap-4 p-5" aria-hidden="true">
+      <GlassHighlight widthPercent={58} />
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <p className="bull-eyebrow">Volatilidade</p>
+          <p className="mt-2 font-serif text-2xl text-[#F4F0FF]">VIX</p>
+        </div>
+        <div
+          className="h-6 w-20 animate-pulse rounded-full bg-white/[0.06]"
+          style={{ animationDelay: '60ms' }}
+        />
+      </div>
+      <div
+        className="mt-auto h-10 w-20 animate-pulse rounded-lg bg-white/[0.08]"
+        style={{ animationDelay: '120ms' }}
+      />
+    </div>
+  )
+}
+
 export default function VixCard({ value }: VixCardProps) {
   const label = getVixLabel(value)
 

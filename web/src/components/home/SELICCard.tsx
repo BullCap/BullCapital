@@ -18,6 +18,38 @@ interface SELICCardProps {
   ipca?: { rate: string; date: string } | null
 }
 
+export function SELICCardSkeleton() {
+  return (
+    <div
+      className="bull-panel grid h-full min-h-[9.5rem] grid-cols-2 divide-x divide-white/[0.06]"
+      aria-hidden="true"
+    >
+      <GlassHighlight widthPercent={60} />
+      {(['SELIC', 'IPCA 12m'] as const).map((label, i) => (
+        <div key={label} className="flex flex-col justify-between gap-3 p-5">
+          <div>
+            <p className="bull-eyebrow">{label}</p>
+            <div
+              className="mt-2 h-3 w-20 animate-pulse rounded-full bg-white/[0.05]"
+              style={{ animationDelay: `${i * 80 + 40}ms` }}
+            />
+          </div>
+          <div>
+            <div
+              className="h-8 w-20 animate-pulse rounded-lg bg-white/[0.08]"
+              style={{ animationDelay: `${i * 80 + 80}ms` }}
+            />
+            <div
+              className="mt-1.5 h-2.5 w-14 animate-pulse rounded-full bg-white/[0.04]"
+              style={{ animationDelay: `${i * 80 + 120}ms` }}
+            />
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 export default function SELICCard({ selic, ipca }: SELICCardProps) {
   const [activeModal, setActiveModal] = useState<MacroIndicator | null>(null)
   const router = useRouter()

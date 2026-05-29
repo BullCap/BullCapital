@@ -35,6 +35,27 @@ function getSparklinePath(values: number[]) {
   }
 }
 
+export function IndexCardSkeleton({ name, isOpen }: { name: string; isOpen: boolean }) {
+  return (
+    <div className="bull-panel flex h-full min-h-[10rem] flex-col gap-2 p-6" aria-hidden="true">
+      <GlassHighlight widthPercent={80} />
+      <div className="flex items-center justify-between gap-2">
+        <p className="bull-eyebrow font-semibold">{name}</p>
+        {!isOpen && (
+          <span className="rounded-full border border-[#F43F5E]/30 bg-[#F43F5E]/10 px-2 py-0.5 text-[9px] uppercase tracking-wider font-semibold text-[#F43F5E]/90">
+            Fechado
+          </span>
+        )}
+      </div>
+      <div className="mt-auto h-7 w-28 animate-pulse rounded-lg bg-white/[0.08]" />
+      <div className="mt-2 flex items-center justify-between gap-4">
+        <div className="h-7 w-[120px] animate-pulse rounded-md bg-white/[0.05]" style={{ animationDelay: '80ms' }} />
+        <div className="h-6 w-16 animate-pulse rounded-full bg-white/[0.06]" style={{ animationDelay: '140ms' }} />
+      </div>
+    </div>
+  )
+}
+
 export default function IndexCard({ name, price, changePercent, isOpen, historyData }: IndexCardProps) {
   const modelSeries = historyData && historyData.length >= 2
     ? historyData
