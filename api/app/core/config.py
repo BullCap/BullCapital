@@ -1,7 +1,7 @@
 import json
 from functools import lru_cache
 
-from pydantic import Field
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -33,6 +33,11 @@ class Settings(BaseSettings):
 
     # Brapi
     brapi_key: str = ""
+
+    @field_validator("brapi_key", "openai_api_key", "openrouter_api_key", "api_shared_secret", mode="before")
+    @classmethod
+    def strip_whitespace(cls, v: str) -> str:
+        return v.strip() if isinstance(v, str) else v
 
     # OpenAI
     openai_api_key: str = ""
