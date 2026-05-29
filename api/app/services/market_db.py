@@ -2,10 +2,11 @@
 
 import asyncio
 import logging
+import math
 from datetime import UTC, datetime, timedelta
 from zoneinfo import ZoneInfo
 
-from sqlalchemy import desc, select
+from sqlalchemy import desc, func, select
 
 from app.core.database import async_session_maker
 from app.models.market import AssetHistoricalPrice, AssetQuote, CurrencyQuote, MacroIndicator, NewsArticle
