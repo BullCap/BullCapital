@@ -45,14 +45,12 @@ PUBLIC_PATHS = {"/", "/docs", "/redoc", "/openapi.json"}
 
 
 async def quotes_scheduler_loop():
-    """Background task to sync quotes periodically during market hours (every 5 minutes)."""
-    # Wait 30 seconds after startup to let app boot
+    """Background task to sync quotes: every 2 min during B3 session, every 30 min outside."""
+    from app.services.market_db import _is_b3_session
     await asyncio.sleep(30)
     while True:
         try:
-            from app.services.market_db import _is_b3_session
             if _is_b3_session():
-                # Acquire advisory lock via connection
                 async with engine.connect() as conn:
                     result = await conn.execute(text("SELECT pg_try_advisory_lock(1001)"))
                     locked = bool(result.scalar())
@@ -60,7 +58,6 @@ async def quotes_scheduler_loop():
                         logger.info("Scheduler: Triggering scheduled quotes ingestion...")
                         try:
                             from app.services.market_ingest import ingest_all_quotes
-
                             await ingest_all_quotes()
                         finally:
                             await conn.execute(text("SELECT pg_advisory_unlock(1001)"))
@@ -68,7 +65,8 @@ async def quotes_scheduler_loop():
                         logger.debug("Scheduler: Quotes ingestion already running on another worker.")
         except Exception as e:
             logger.error(f"Scheduler error in quotes_scheduler_loop: {e}", exc_info=True)
-        await asyncio.sleep(300)
+        # Re-check session after ingest (may cross market open/close boundary)
+        await asyncio.sleep(120 if _is_b3_session() else 1800)
 
 
 async def macro_news_scheduler_loop():

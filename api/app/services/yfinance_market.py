@@ -25,60 +25,100 @@ OPENROUTER_CHAT_COMPLETIONS_URL = "https://openrouter.ai/api/v1/chat/completions
 NEWS_TRANSLATION_TIMEOUT_SECONDS = 6
 
 B3_UNIVERSE = [
-    "PETR4",
-    "PETR3",
-    "VALE3",
-    "ITUB4",
-    "BBDC4",
-    "BBAS3",
-    "B3SA3",
-    "ABEV3",
-    "WEGE3",
-    "RENT3",
-    "SUZB3",
-    "PRIO3",
-    "GGBR4",
-    "CSNA3",
-    "USIM5",
-    "MGLU3",
-    "LREN3",
-    "RAIL3",
-    "RADL3",
-    "TIMS3",
-    "HAPV3",
-    "EQTL3",
-    "CMIG4",
-    "TAEE11",
-    "SBSP3",
-    "TOTS3",
-    "BPAC11",
-    "SANB11",
-    "BBSE3",
-    "IRBR3",
-    "YDUQ3",
-    "COGN3",
-    "MRVE3",
-    "CYRE3",
-    "MULT3",
-    "BRAP4",
-    "KLBN11",
-    "RAIZ4",
-    "UGPA3",
-    "VBBR3",
-    "CSAN3",
-    "GOAU4",
-    "SLCE3",
-    "SMTO3",
-    "ALOS3",
-    "ASAI3",
-    "PCAR3",
-    # Ibovespa constituents required by HOME_TREEMAP_TICKERS / SectorTreeMap
-    "AXIA3",
-    "ITSA4",
-    "EMBJ3",
-    "ENEVE3",
-    "CPLE3",
-    "RDOR3",
+    # ── Ibovespa core (large caps) ────────────────────────────────────────────
+    "PETR4", "PETR3", "VALE3", "ITUB4", "BBDC4", "BBAS3", "B3SA3", "ABEV3",
+    "WEGE3", "RENT3", "SUZB3", "PRIO3", "GGBR4", "CSNA3", "USIM5", "MGLU3",
+    "LREN3", "RAIL3", "RADL3", "TIMS3", "HAPV3", "EQTL3", "CMIG4", "TAEE11",
+    "SBSP3", "TOTS3", "BPAC11", "SANB11", "BBSE3", "IRBR3", "YDUQ3", "COGN3",
+    "MRVE3", "CYRE3", "MULT3", "BRAP4", "KLBN11", "RAIZ4", "UGPA3", "VBBR3",
+    "CSAN3", "GOAU4", "SLCE3", "SMTO3", "ALOS3", "ASAI3", "PCAR3",
+    # Ibovespa constituents also used by HOME_TREEMAP_TICKERS / SectorTreeMap
+    "AXIA3", "ITSA4", "EMBJ3", "ENEVE3", "CPLE3", "RDOR3",
+
+    # ── Additional Ibovespa / large-mid caps ──────────────────────────────────
+    "CCRO3",   # CCR Rodovias
+    "JBSS3",   # JBS
+    "BEEF3",   # Minerva Foods
+    "BRFS3",   # BRF
+    "CMIN3",   # CSN Mineração
+    "ELET3",   # Eletrobras ON
+    "ELET6",   # Eletrobras PNB
+    "FLRY3",   # Fleury
+    "HYPE3",   # Hypera Pharma
+    "VIVT3",   # Telefônica Vivo
+    "NTCO3",   # Natura&Co
+    "BRKM5",   # Braskem
+    "CPFE3",   # CPFL Energia
+    "EGIE3",   # Engie Brasil
+    "ENGI11",  # Energisa
+    "ENBR3",   # EDP Brasil
+    "CRFB3",   # Atacadão / Carrefour BR
+    "AZUL4",   # Azul Linhas Aéreas
+    "GOLL4",   # Gol
+    "EMBR3",   # Embraer
+    "DXCO3",   # Dexco
+    "ODPV3",   # Odontoprev
+    "CIEL3",   # Cielo
+    "QUAL3",   # Qualicorp
+    "STBP3",   # Santos Brasil
+    "GMAT3",   # Grupo Mateus
+    "RECV3",   # PetroRecôncavo
+    "RRRP3",   # 3R Petroleum
+    "SAPR11",  # Sanepar
+    "CGAS5",   # Comgás
+    "SIMH3",   # Simpar
+    "TUPY3",   # Tupy
+    "INTB3",   # Intelbras
+    "IGTI11",  # Iguatemi
+    "SBFG3",   # Grupo SBF / Centauro
+    "ALPA4",   # Alpargatas
+    "PORTO3",  # Porto Seguro
+    "CAML3",   # Camil
+    "PETZ3",   # Petz
+    "LWSA3",   # Locaweb
+    "MDIA3",   # M. Dias Branco
+    "JHSF3",   # JHSF
+    "CEAB3",   # C&A Modas
+    "ZAMP3",   # Zamp (Burger King BR)
+    "GRND3",   # Grendene
+    "RAPT4",   # Randon
+    "FESA4",   # Ferbasa
+    "SMFT3",   # SmartFit
+    "EZTC3",   # EZTEC
+    "POMO4",   # Marcopolo
+
+    # ── FIIs (Fundos Imobiliários) ────────────────────────────────────────────
+    "MXRF11",  # Maxi Renda
+    "XPML11",  # XP Malls
+    "KNRI11",  # Kinea Renda Imobiliária
+    "HGBS11",  # CSHG Brasil Shopping
+    "BCFF11",  # BTG Pactual Fundo de Fundos
+    "VISC11",  # Vinci Shopping Centers
+    "BTLG11",  # BTG Pactual Logística
+    "HSML11",  # HSI Malls
+    "HGCR11",  # CSHG Recebíveis Imobiliários
+    "KNCR11",  # Kinea Crédito Real
+    "IRDM11",  # Iridium Recebíveis
+    "VILG11",  # Vinci Logística
+    "XPCI11",  # XP Crédito Imobiliário
+    "BRCO11",  # Brookfield Real Estate
+    "HGRU11",  # CSHG Renda Urbana
+    "PVBI11",  # VBI Prime Properties
+    "RZTR11",  # Riza Terrax
+    "TRXF11",  # TRX Real Estate
+    "JSRE11",  # JS Real Estate
+    "AFHI11",  # AF Invest CRI
+
+    # ── ETFs listados na B3 ───────────────────────────────────────────────────
+    "BOVA11",  # iShares Ibovespa
+    "IVVB11",  # iShares S&P 500
+    "SMAL11",  # iShares Small Cap
+    "HASH11",  # Hashdex Crypto
+    "GOLD11",  # Trend Ouro
+    "NASD11",  # Trend Nasdaq
+    "DIVO11",  # It Now IDIV
+    "SPXI11",  # SPX Investor
+    "TECK11",  # Trend TI
 ]
 
 INDEX_NAMES = {
