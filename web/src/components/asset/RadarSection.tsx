@@ -16,6 +16,49 @@ interface RadarSectionProps {
   data: MarketRadarDataPoint[] | null
 }
 
+export function RadarSectionSkeleton() {
+  return (
+    <section className="bull-panel p-4 md:p-5" aria-hidden="true">
+      <GlassHighlight widthPercent={60} />
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <div>
+          <p className="bull-eyebrow">Perfil</p>
+          <h2 className="mt-1 font-serif text-xl text-[#F4F0FF]">Scores do ativo</h2>
+        </div>
+        <div className="h-7 w-14 animate-pulse rounded-lg bg-white/[0.07]" />
+      </div>
+      <div className="grid gap-5 lg:grid-cols-[18rem_minmax(0,1fr)] lg:items-center">
+        <div
+          className="h-[232px] animate-pulse rounded-2xl bg-white/[0.04]"
+          style={{ animationDelay: '60ms' }}
+        />
+        <div className="grid gap-2">
+          {[0, 1, 2, 3, 4].map((i) => (
+            <div key={i} className="grid grid-cols-[minmax(0,1fr)_2rem] items-center gap-3">
+              <div>
+                <div
+                  className="mb-1.5 h-2.5 w-24 animate-pulse rounded-full bg-white/[0.05]"
+                  style={{ animationDelay: `${80 + i * 35}ms` }}
+                />
+                <div className="h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
+                  <div
+                    className="h-full animate-pulse rounded-full bg-white/[0.09]"
+                    style={{ width: `${55 + i * 7}%`, animationDelay: `${110 + i * 35}ms` }}
+                  />
+                </div>
+              </div>
+              <div
+                className="h-3 w-6 animate-pulse rounded-full bg-white/[0.07] ml-auto"
+                style={{ animationDelay: `${145 + i * 35}ms` }}
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
 export default function RadarSection({ data }: RadarSectionProps) {
   const averageScore =
     data && data.length > 0

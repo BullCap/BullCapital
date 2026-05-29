@@ -9,7 +9,7 @@ import VixCard, { VixCardSkeleton } from '@/components/home/VixCard'
 import { DailyBriefContent, DailyBriefSkeleton } from '@/components/home/DailyBriefContent'
 import type { BriefPulseData } from '@/components/home/DailyBriefHero'
 import MarketMapSection from '@/components/home/MarketMapSection'
-import MarketHighlightsSection from '@/components/home/MarketHighlightsSection'
+import MarketHighlightsSection, { MarketHighlightsSkeleton } from '@/components/home/MarketHighlightsSection'
 import { StoryDigestLoader, StoryDigestSkeleton } from '@/components/home/StoryDigestLoader'
 import AppShell from '@/components/navigation/AppShell'
 import ScrollFocus from '@/components/ui/ScrollFocus'
@@ -274,17 +274,7 @@ async function MarketHighlightsPanel() {
 }
 
 function MarketHighlightsFallback() {
-  const highlights = emptyMarketHighlightsData()
-
-  return (
-    <MarketHighlightsSection
-      stockGainers={highlights.gainers}
-      stockLosers={highlights.losers}
-      stockMostTraded={highlights.mostTraded}
-      cryptoHighlights={highlights.crypto}
-      fixedIncomeHighlights={highlights.fixedIncome}
-    />
-  )
+  return <MarketHighlightsSkeleton />
 }
 
 async function MarketMapPanel() {

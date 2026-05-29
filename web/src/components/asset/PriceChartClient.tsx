@@ -15,6 +15,37 @@ import { fetchAssetHistory } from '@/lib/actions/market'
 import type { AssetHistoricalPrice } from '@/types/market'
 import { GlassHighlight } from '@/components/atoms/GlassHighlight'
 
+export function PriceChartSkeleton() {
+  return (
+    <section className="bull-panel p-4 md:p-5" aria-hidden="true">
+      <GlassHighlight widthPercent={65} />
+      <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+        <div>
+          <p className="bull-eyebrow">Preço</p>
+          <div className="mt-1.5 flex gap-3">
+            <div className="h-2.5 w-24 animate-pulse rounded-full bg-white/[0.05]" />
+            <div className="h-2.5 w-20 animate-pulse rounded-full bg-white/[0.04]" style={{ animationDelay: '40ms' }} />
+          </div>
+        </div>
+        <div className="inline-flex rounded-xl border border-white/[0.08] bg-black/20 p-0.5">
+          {['1D', '1M', '3M', '6M', '1A'].map((label, i) => (
+            <div
+              key={label}
+              className="min-h-8 min-w-10 rounded-lg px-2.5 text-xs font-medium text-[#F4F0FF]/20 flex items-center justify-center"
+            >
+              {label}
+            </div>
+          ))}
+        </div>
+      </div>
+      <div
+        className="h-[260px] animate-pulse rounded-2xl bg-white/[0.04]"
+        style={{ animationDelay: '80ms' }}
+      />
+    </section>
+  )
+}
+
 type Range = '1d' | '1mo' | '3mo' | '6mo' | '1y'
 
 const RANGE_LABELS: Record<Range, string> = {

@@ -108,6 +108,70 @@ function toDisplay(m: MarketListingItem | { stock: string; name: string; close: 
 
 import { useState } from 'react'
 
+export function MarketHighlightsSkeleton() {
+  const titles = ['Altas', 'Quedas', 'Volume'] as const
+  return (
+    <section aria-hidden="true">
+      <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between px-1">
+        <div>
+          <p className="bull-eyebrow">Pregão</p>
+          <h2 className="mt-1 font-serif text-2xl tracking-tight text-[#F4F0FF]/80">Destaques</h2>
+        </div>
+      </div>
+      <div className="mt-5 grid w-full grid-cols-1 gap-5 md:grid-cols-3">
+        {titles.map((title, cardIdx) => (
+          <div
+            key={title}
+            className="group relative flex flex-1 flex-col overflow-hidden rounded-[2rem] border border-white/[0.08] bg-[#0f0c18]/50 p-6 shadow-[inset_0_1px_0px_rgba(255,255,255,0.08),0_10px_32px_rgba(0,0,0,0.4)] backdrop-blur-2xl"
+          >
+            <div className="pointer-events-none absolute -top-16 left-1/2 h-48 w-48 -translate-x-1/2 rounded-full bg-[#8B5CF6]/10 blur-[80px]" />
+            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
+            <GlassHighlight widthPercent={50} />
+            <div className="mb-5 flex items-center gap-3 px-1">
+              <div
+                className="h-4 w-4 animate-pulse rounded bg-white/[0.07]"
+                style={{ animationDelay: `${cardIdx * 60}ms` }}
+              />
+              <h3 className="font-serif text-xl tracking-tight text-[#F4F0FF]">{title}</h3>
+            </div>
+            <div className="flex flex-col gap-2">
+              {[0, 1, 2, 3, 4].map((i) => (
+                <div
+                  key={i}
+                  className="flex items-center gap-3 rounded-2xl border border-white/5 bg-white/[0.02] px-4 py-3"
+                >
+                  <div
+                    className="h-9 w-9 shrink-0 animate-pulse rounded-xl bg-white/[0.07]"
+                    style={{ animationDelay: `${cardIdx * 60 + i * 35}ms` }}
+                  />
+                  <div className="min-w-0 flex-1">
+                    <div
+                      className="h-3 w-14 animate-pulse rounded-full bg-white/[0.06]"
+                      style={{ animationDelay: `${cardIdx * 60 + i * 35 + 15}ms` }}
+                    />
+                    <div
+                      className="mt-1.5 h-2.5 w-24 animate-pulse rounded-full bg-white/[0.04]"
+                      style={{ animationDelay: `${cardIdx * 60 + i * 35 + 30}ms` }}
+                    />
+                  </div>
+                  <div
+                    className="h-3 w-14 animate-pulse rounded-full bg-white/[0.06]"
+                    style={{ animationDelay: `${cardIdx * 60 + i * 35 + 45}ms` }}
+                  />
+                  <div
+                    className="h-6 w-16 animate-pulse rounded-full bg-white/[0.05]"
+                    style={{ animationDelay: `${cardIdx * 60 + i * 35 + 60}ms` }}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  )
+}
+
 interface MarketHighlightsSectionProps {
   stockGainers: MarketListingItem[]
   stockLosers: MarketListingItem[]

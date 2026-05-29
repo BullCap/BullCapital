@@ -10,6 +10,55 @@ interface AssetQuotesTableProps {
   history: AssetHistoricalPrice[]
 }
 
+export function AssetQuotesTableSkeleton({ ticker }: { ticker: string }) {
+  const cols = ['Data', 'Abertura', 'Fechamento', 'Variação', 'Mínimo', 'Máximo', 'Volume']
+  return (
+    <section className="bull-panel relative overflow-hidden p-4 md:p-5" aria-hidden="true">
+      <GlassHighlight widthPercent={55} />
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <div>
+          <p className="bull-eyebrow">OHLCV</p>
+          <h3 className="mt-1 font-serif text-lg text-[#F4F0FF]">{ticker.toUpperCase()}</h3>
+        </div>
+        <div className="h-9 w-28 animate-pulse rounded-xl bg-white/[0.05]" />
+      </div>
+      <div className="overflow-hidden rounded-2xl border border-white/[0.08] bg-black/20">
+        <table className="w-full text-left text-xs border-collapse">
+          <thead className="bg-[#161222] text-[#F4F0FF]/40 border-b border-white/[0.08]">
+            <tr>
+              {cols.map((h, j) => (
+                <th
+                  key={h}
+                  className={`px-4 py-3 font-semibold uppercase tracking-wider ${j > 0 ? 'text-right' : ''}`}
+                >
+                  {h}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-white/[0.03]">
+            {[0, 1, 2, 3, 4].map((i) => (
+              <tr key={i}>
+                {cols.map((_, j) => (
+                  <td key={j} className={`px-4 py-3 ${j > 0 ? 'text-right' : ''}`}>
+                    <div
+                      className="inline-block h-3 animate-pulse rounded-full bg-white/[0.05]"
+                      style={{
+                        width: j === 0 ? '5rem' : '3.5rem',
+                        animationDelay: `${i * 25 + j * 8}ms`,
+                      }}
+                    />
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  )
+}
+
 export default function AssetQuotesTable({ ticker, history }: AssetQuotesTableProps) {
   const [copied, setCopied] = useState(false)
 

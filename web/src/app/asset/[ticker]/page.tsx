@@ -4,14 +4,14 @@ import { auth } from '@/lib/auth'
 import { getMarketRadarData, getAssetHistory, getAssetNews } from '@/lib/services/market'
 import { fetchMarketQuote, isMarketOpen } from '@/lib/market-utils'
 import { normalizeTicker } from '@/lib/market-routing'
-import AssetHeader from '@/components/asset/AssetHeader'
+import AssetHeader, { AssetHeaderSkeleton } from '@/components/asset/AssetHeader'
 import FollowButton from '@/components/asset/FollowButton'
-import PriceChartClient from '@/components/asset/PriceChartClient'
-import RadarSection from '@/components/asset/RadarSection'
+import PriceChartClient, { PriceChartSkeleton } from '@/components/asset/PriceChartClient'
+import RadarSection, { RadarSectionSkeleton } from '@/components/asset/RadarSection'
 import AssetAnalysisCTA from '@/components/asset/AssetAnalysisCTA'
-import AssetNewsSection from '@/components/asset/AssetNewsSection'
+import AssetNewsSection, { AssetNewsSectionSkeleton } from '@/components/asset/AssetNewsSection'
 import AssetProfileCard from '@/components/asset/AssetProfileCard'
-import AssetQuotesTable from '@/components/asset/AssetQuotesTable'
+import AssetQuotesTable, { AssetQuotesTableSkeleton } from '@/components/asset/AssetQuotesTable'
 import { isFollowing } from '@/lib/actions/watchlist'
 import AppShell from '@/components/navigation/AppShell'
 import ScrollFocus from '@/components/ui/ScrollFocus'
@@ -98,17 +98,7 @@ export default async function AssetPage({ params }: AssetPageProps) {
       sessionUser={session.user}
     >
       <ScrollFocus>
-        <Suspense
-          fallback={
-            <AssetHeader
-              ticker={ticker}
-              name={ticker}
-              price={null}
-              changePercent={null}
-              followButton={<FollowButton ticker={ticker} initialFollowing={false} />}
-            />
-          }
-        >
+        <Suspense fallback={<AssetHeaderSkeleton ticker={ticker} />}>
           <AssetHeaderPanel ticker={ticker} />
         </Suspense>
       </ScrollFocus>
@@ -116,22 +106,22 @@ export default async function AssetPage({ params }: AssetPageProps) {
       <div className="grid w-full grid-cols-1 items-start gap-5 xl:grid-cols-[minmax(0,1fr)_22rem] 2xl:grid-cols-[minmax(0,1fr)_24rem]">
         <div className="flex min-w-0 flex-col gap-5">
           <ScrollFocus>
-            <Suspense fallback={<PriceChartClient ticker={ticker} initialHistory={[]} isMarketOpen={isMarketOpen()} />}>
+            <Suspense fallback={<PriceChartSkeleton />}>
               <PriceChartPanel ticker={ticker} />
             </Suspense>
           </ScrollFocus>
           <ScrollFocus>
-            <Suspense fallback={<RadarSection data={null} />}>
+            <Suspense fallback={<RadarSectionSkeleton />}>
               <RadarPanel ticker={ticker} />
             </Suspense>
           </ScrollFocus>
           <ScrollFocus>
-            <Suspense fallback={<AssetQuotesTable ticker={ticker} history={[]} />}>
+            <Suspense fallback={<AssetQuotesTableSkeleton ticker={ticker} />}>
               <QuotesTablePanel ticker={ticker} />
             </Suspense>
           </ScrollFocus>
           <ScrollFocus>
-            <Suspense fallback={<AssetNewsSection news={[]} />}>
+            <Suspense fallback={<AssetNewsSectionSkeleton />}>
               <AssetNewsPanel ticker={ticker} />
             </Suspense>
           </ScrollFocus>

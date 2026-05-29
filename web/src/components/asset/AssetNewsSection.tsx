@@ -14,6 +14,41 @@ interface AssetNewsSectionProps {
   news: AssetNewsItem[]
 }
 
+export function AssetNewsSectionSkeleton() {
+  return (
+    <section className="bull-panel p-5" aria-hidden="true">
+      <GlassHighlight widthPercent={55} />
+      <p className="bull-eyebrow mb-4">Notícias recentes</p>
+      <div className="flex flex-col divide-y divide-white/[0.05]">
+        {[0, 1, 2].map((i) => (
+          <div key={i} className="flex gap-4 py-4 first:pt-0 last:pb-0">
+            <div
+              className="h-20 w-20 sm:h-20 sm:w-28 shrink-0 animate-pulse rounded-xl bg-white/[0.06]"
+              style={{ animationDelay: `${i * 60}ms` }}
+            />
+            <div className="min-w-0 flex-1 flex flex-col justify-between py-0.5">
+              <div className="space-y-2">
+                <div
+                  className="h-3.5 w-full animate-pulse rounded-full bg-white/[0.06]"
+                  style={{ animationDelay: `${i * 60 + 25}ms` }}
+                />
+                <div
+                  className="h-3.5 w-4/5 animate-pulse rounded-full bg-white/[0.05]"
+                  style={{ animationDelay: `${i * 60 + 50}ms` }}
+                />
+              </div>
+              <div
+                className="h-2.5 w-28 animate-pulse rounded-full bg-white/[0.04]"
+                style={{ animationDelay: `${i * 60 + 75}ms` }}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  )
+}
+
 export default function AssetNewsSection({ news }: AssetNewsSectionProps) {
   return (
     <section className="bull-panel p-5">

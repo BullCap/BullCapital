@@ -5,6 +5,38 @@ import { VariationBadge } from '@/components/atoms/VariationBadge'
 import { GlassHighlight } from '@/components/atoms/GlassHighlight'
 import { CompanyIcon } from '@/components/atoms/CompanyIcon'
 
+export function AssetHeaderSkeleton({ ticker }: { ticker: string }) {
+  return (
+    <section className="bull-panel p-4" aria-hidden="true">
+      <GlassHighlight widthPercent={70} />
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04]">
+            <ArrowLeft size={15} className="text-[#F4F0FF]/30" />
+          </div>
+          <div className="h-11 w-11 shrink-0 animate-pulse rounded-xl bg-white/[0.07]" />
+          <div className="min-w-0">
+            <div className="h-3 w-32 animate-pulse rounded-full bg-white/[0.05]" />
+            <p className="mt-1.5 font-serif text-2xl leading-tight text-[#F4F0FF]">
+              {ticker.toUpperCase()}
+            </p>
+          </div>
+        </div>
+        <div className="flex flex-wrap items-center gap-3 lg:justify-end">
+          <div
+            className="h-12 w-44 animate-pulse rounded-2xl bg-white/[0.06]"
+            style={{ animationDelay: '80ms' }}
+          />
+          <div
+            className="h-9 w-24 animate-pulse rounded-xl bg-white/[0.05]"
+            style={{ animationDelay: '140ms' }}
+          />
+        </div>
+      </div>
+    </section>
+  )
+}
+
 interface AssetHeaderProps {
   ticker: string
   name: string | null
