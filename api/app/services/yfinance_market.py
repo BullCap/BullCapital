@@ -72,6 +72,13 @@ B3_UNIVERSE = [
     "ALOS3",
     "ASAI3",
     "PCAR3",
+    # Ibovespa constituents required by HOME_TREEMAP_TICKERS / SectorTreeMap
+    "AXIA3",
+    "ITSA4",
+    "EMBJ3",
+    "ENEVE3",
+    "CPLE3",
+    "RDOR3",
 ]
 
 INDEX_NAMES = {
