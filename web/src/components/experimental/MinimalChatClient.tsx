@@ -32,7 +32,6 @@ import {
 } from 'lucide-react'
 import type { ConversationArtifact } from '@/lib/actions/conversation'
 import { ConversationArtifacts } from '@/components/analysis/ConversationArtifacts'
-import { getFreeModels } from '@/lib/actions/analysis'
 import { GlassHighlight } from '@/components/atoms/GlassHighlight'
 import { MarkdownBody } from '@/components/atoms/MarkdownBody'
 import { cn } from '@/lib/utils'
@@ -560,27 +559,6 @@ export default function MinimalChatClient() {
   const [renamingId, setRenamingId] = useState<string | null>(null)
   const searchInputRef = useRef<HTMLInputElement>(null)
 
-  // Available free models
-  const [openrouterActive, setOpenrouterActive] = useState(false)
-  const [models, setModels] = useState<Array<{ id: string; name: string }>>([])
-  const [selectedModel, setSelectedModel] = useState<string>('')
-
-  useEffect(() => {
-    async function loadModels() {
-      const data = await getFreeModels()
-      if (data && data.openrouter_active && data.models.length > 0) {
-        setOpenrouterActive(true)
-        setModels(data.models)
-        const hasDeepseek = data.models.some(m => m.id === 'deepseek/deepseek-v4-flash:free')
-        if (hasDeepseek) {
-          setSelectedModel('deepseek/deepseek-v4-flash:free')
-        } else {
-          setSelectedModel(data.models[0].id)
-        }
-      }
-    }
-    loadModels()
-  }, [])
 
   // Conversations — initialConv ref ensures both useState calls share the same ID
   const initialConv = useRef(createConversation())
@@ -744,7 +722,7 @@ export default function MinimalChatClient() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           messages: [...history, { role: 'user', content: question }],
-          model: selectedModel || undefined,
+          model: undefined,
         }),
       })
 
