@@ -138,10 +138,34 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
             )
         )
         
+    # Cold-start: populate DB if quotes table is empty (happens on first deploy or after wipe)
+    async def cold_start_ingest() -> None:
+        await asyncio.sleep(5)
+        try:
+            async with engine.connect() as conn:
+                row = await conn.execute(text("SELECT COUNT(*) FROM ai.asset_quotes"))
+                count = row.scalar() or 0
+            if count == 0:
+                logger.info("Cold-start: asset_quotes is empty — triggering initial ingestion")
+                from app.services.market_ingest import ingest_all_quotes
+                from app.services.bcb_sgs import ingest_macro_indicators, ingest_ptax_dollar
+                from app.services.news_ingest import ingest_brazilian_news
+                await asyncio.gather(
+                    ingest_all_quotes(),
+                    ingest_macro_indicators(),
+                    ingest_ptax_dollar(),
+                    ingest_brazilian_news(),
+                    return_exceptions=True,
+                )
+                logger.info("Cold-start ingestion complete")
+        except Exception as e:
+            logger.error("Cold-start ingestion failed: %s", e, exc_info=True)
+
     # Start background scheduler loops
     scheduler_tasks = [
+        asyncio.create_task(cold_start_ingest()),
         asyncio.create_task(quotes_scheduler_loop()),
-        asyncio.create_task(macro_news_scheduler_loop())
+        asyncio.create_task(macro_news_scheduler_loop()),
     ]
     yield
     # Shutdown: Cancel background scheduler tasks
