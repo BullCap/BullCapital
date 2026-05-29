@@ -315,8 +315,9 @@ api/app/
 | 005 | ai-conversation | entregue |
 | 006 | unified-ui-flow | entregue (PWA + Capacitor prep) |
 | 007 | daily-market-brief | entregue (vira base do email do Sprint 2) |
+| 008 | terminal-dashboard | em andamento — Sprint 1 (absorveu `/comparador`) |
 
-Novas specs do MVP B2B: **008-comparador**, **009-briefing-diario-email**, **010-export-pdf** (a criar — §13).
+Novas specs do MVP B2B: **008-terminal-dashboard** (em andamento), **009-briefing-diario-email**, **010-export-pdf** (a criar — §13).
 
 ---
 
@@ -520,7 +521,7 @@ docker compose up               # Postgres + API
 | Sprint | Janela | Foco |
 |---|---|---|
 | 0 | 24-31/mai | Pivô narrativo + arquivamento de telas fora do escopo + specs novas |
-| 1 | 01-07/jun | Comparador de ativos top-level (`/comparador`) |
+| 1 | 01-07/jun | Terminal — Mesa do Analista (`/terminal` absorve comparador) |
 | 2 | 08-14/jun | Briefing diário por email (cron + Resend) |
 | 3 | 15-21/jun | Exportação PDF/imagem (Puppeteer) |
 | 4 | 22-28/jun | Polimento + perfil profissional + onboarding novo |
@@ -541,19 +542,26 @@ docker compose up               # Postgres + API
 
 **Entrega**: nova narrativa pública + 3 specs prontas + Resend operacional.
 
-### 13.3 Sprint 1 — Comparador top-level (01-07/jun)
+### 13.3 Sprint 1 — Terminal: Mesa do Analista (01-07/jun)
 
-**Objetivo**: rota `/comparador` permite selecionar 2-4 ativos e gerar análise comparativa.
+**Objetivo**: `/terminal` vira workspace completo — watchlist persistida + comparador 2-4 ativos + copiloto contextual. Rota `/comparador` cancelada (absorvida aqui). Spec: `specs/008-terminal-dashboard/spec.md`.
 
-- [ ] Rota `/comparador` com picker de tickers (usa `searchAssets`)
-- [ ] Layout grid responsivo (1 col mobile, 2 col tablet, 4 col desktop)
-- [ ] Cards por ativo: header + radar + métricas-chave + variação
-- [ ] Endpoint `/api/v1/comparator` (FastAPI) que recebe N tickers e retorna narrativa IA
+**Decisão** (28-mai-2026): rota `/comparador` top-level cancelada. Gorila domina consolidação de carteira; a Bull se diferencia como mesa de trabalho do analista (CFP/influencer) — watchlist de ativos sob radar, não portfolio do usuário.
+
+- [ ] `Watchlist.tsx` — lista persistida em `localStorage`, add/remove via `searchAssets`, 6 defaults
+- [ ] `WatchlistItem.tsx` — linha: ticker · nome · preço · variação badge
+- [ ] `AssetFocus.tsx` — painel "Focar": card grande de 1 ativo (preço, variação, 6 métricas)
+- [ ] `MarketStatusBar.tsx` — barra topo: IBOV · USD/BRL · status aberto/fechado
+- [ ] `AssetComparator.tsx` refatorado — remove selects; recebe `tickers: string[]`; suporta 2-4 ativos
+- [ ] `TerminalClient.tsx` refatorado — grid 3-colunas (watchlist · workspace · copiloto)
+- [ ] `TerminalCopilot.tsx` atualizado — recebe `CopilotContext` enriquecido (watchlist + compareSet + métricas)
+- [ ] `app/terminal/page.tsx` — pré-carrega quotes dos tickers da watchlist padrão; copy atualizado
+- [ ] Endpoint `/api/v1/comparator` (FastAPI) — recebe N tickers, retorna narrativa IA pt-BR
 - [ ] Server action `comparator.ts` em `web/src/lib/actions/`
-- [ ] CTA "Exportar comparação" (botão presente mas com placeholder até Sprint 3)
-- [ ] Reaproveitar `AssetComparator.tsx` do terminal (extrair lógica)
+- [ ] Botão "Exportar" presente mas desabilitado (placeholder Sprint 3)
+- [ ] Mobile: watchlist como drawer, workspace em tela cheia, copiloto como drawer
 
-**Entrega**: CFP/influencer consegue comparar PETR4 vs VALE3 vs ITUB4 e ler narrativa pt-BR.
+**Entrega**: CFP abre o terminal, monta watchlist com 3-4 ativos do cliente, compara lado a lado e consulta copiloto com contexto automático.
 
 ### 13.4 Sprint 2 — Briefing diário por email (08-14/jun)
 

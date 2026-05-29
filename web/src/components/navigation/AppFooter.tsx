@@ -6,7 +6,7 @@ const footerLinks = {
     { label: 'Mercado', href: '/home' },
     { label: 'Buscar ativos', href: '/search' },
     { label: 'Notícias', href: '/news' },
-    { label: 'Comparador', href: '/terminal' },
+    { label: 'Carteira de trabalho', href: '/terminal' },
   ],
   Recursos: [
     { label: 'Análise contextual', href: '/analysis' },

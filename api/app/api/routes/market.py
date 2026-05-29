@@ -1,6 +1,8 @@
 """Market data endpoints backed by PostgreSQL cache and Brapi PRO ingestion."""
 
 import asyncio
+import math
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, BackgroundTasks, status
 
@@ -35,12 +37,35 @@ async def status_endpoint() -> dict:
 async def radar(symbol: str) -> dict:
     """Get radar scores from yfinance, enriched with Brapi PRO fundamentals from the DB cache."""
     result = await asyncio.to_thread(yfinance_market.get_radar, symbol)
+    db_quote = await market_db.get_db_quote(symbol)
+
     if not result:
-        return {}
+        if not db_quote:
+            return {}
+
+        return {
+            "timestamp": datetime.now(UTC).isoformat(),
+            "ticker": symbol.strip().upper(),
+            "data": [],
+            "profile": {
+                "longBusinessSummary": db_quote.get("longBusinessSummary"),
+                "sector": db_quote.get("sector"),
+                "industry": db_quote.get("industry"),
+                "website": db_quote.get("website"),
+                "fullTimeEmployees": db_quote.get("fullTimeEmployees"),
+            },
+            "quote": {
+                "regularMarketPrice": db_quote.get("regularMarketPrice", 0.0),
+                "regularMarketChangePercent": db_quote.get("regularMarketChangePercent", 0.0),
+                "fiftyTwoWeekHigh": db_quote.get("fiftyTwoWeekHigh", 0.0),
+                "fiftyTwoWeekLow": db_quote.get("fiftyTwoWeekLow", 0.0),
+                "marketCap": db_quote.get("marketCap"),
+                "longName": db_quote.get("longName"),
+            },
+        }
 
     # yfinance often returns None for sector/industry/summary on B3 tickers.
     # Substitute with Brapi PRO data from the DB cache when available.
-    db_quote = await market_db.get_db_quote(symbol)
     if db_quote:
         existing_profile = result.get("profile") or {}
         result["profile"] = {
@@ -121,8 +146,62 @@ async def treasury_endpoint() -> dict:
 
 @router.get("/search")
 async def search(q: str, limit: int = 10, page: int = 1) -> dict:
-    """Search assets. Fallback to B3 universe search."""
-    return await asyncio.to_thread(yfinance_market.search_assets, q, limit, page)
+    """Search assets: DB-first (full B3 universe by ticker and name), supplemented by yfinance."""
+    seen: set[str] = set()
+    results: list[dict] = []
+
+    # 1. DB search — fast, offline-capable, searches both symbol and long name
+    try:
+        db_data = await market_db.get_db_listings(
+            limit=limit * 3,
+            page=1,
+            sort_by="name",
+            sort_order="asc",
+            item_type=None,
+            search=q,
+        )
+        for item in db_data.get("stocks", []):
+            symbol = item.get("stock") or ""
+            if not symbol or symbol in seen:
+                continue
+            seen.add(symbol)
+            results.append({
+                "symbol": symbol,
+                "name": item.get("name") or symbol,
+                "logo": None,
+                "type": item.get("type") or "stock",
+                "sector": item.get("sector"),
+            })
+    except Exception:
+        pass
+
+    # 2. yfinance supplement — catches US stocks, ETFs and anything not yet in the DB
+    if len(results) < limit:
+        try:
+            yf_data = await asyncio.to_thread(
+                yfinance_market.search_assets, q, limit - len(results), page
+            )
+            for item in yf_data.get("results", []):
+                sym = item.get("symbol") or ""
+                if sym and sym not in seen:
+                    results.append(item)
+                    seen.add(sym)
+        except Exception:
+            pass
+
+    total_count = len(results)
+    page_size = max(1, limit)
+    total_pages = max(1, math.ceil(total_count / page_size))
+    current_page = max(1, min(page, total_pages))
+    start = (current_page - 1) * page_size
+    return {
+        "results": results[start : start + page_size],
+        "currentPage": current_page,
+        "totalPages": total_pages,
+        "itemsPerPage": page_size,
+        "totalCount": total_count,
+        "hasNextPage": current_page < total_pages,
+    }
 
 
 def _normalize_title(value: str) -> str:

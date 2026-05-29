@@ -136,7 +136,11 @@ export default async function HomePage() {
   }
 
   return (
-    <AppShell active="market" contentClassName="md:max-w-none xl:max-w-[1560px] 2xl:max-w-[1720px]">
+    <AppShell
+      active="market"
+      contentClassName="md:max-w-none xl:max-w-[1560px] 2xl:max-w-[1720px]"
+      sessionUser={session.user}
+    >
       <header className="flex flex-col gap-4 px-1 pb-1 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="bull-eyebrow">{dateLabel}</p>

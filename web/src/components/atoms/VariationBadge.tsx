@@ -19,7 +19,7 @@ export function VariationBadge({ variation }: VariationBadgeProps) {
 
   return (
     <span
-      className={`rounded-full border px-2.5 py-1 text-xs font-medium text-[#F4F0FF] shadow-[inset_0_1px_2px_rgba(255,255,255,0.1)] ${variationBg}`}
+      className={`rounded-sm border px-2 py-0.5 text-xs font-medium text-[#F4F0FF] ${variationBg}`}
     >
       {isPositive ? '+' : ''}
       {formattedVariation}%

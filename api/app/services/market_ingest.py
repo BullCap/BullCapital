@@ -18,7 +18,7 @@ from app.services.yfinance_market import B3_UNIVERSE
 logger = logging.getLogger(__name__)
 
 BRAPI_QUOTE_URL = "https://brapi.dev/api/quote/{ticker}"
-TIMEOUT_SECONDS = 15
+TIMEOUT_SECONDS = 5
 BRAPI_QUOTE_MODULES = "summaryProfile,defaultKeyStatistics,financialData"
 VALID_BRAPI_RANGES = {"1d", "5d", "1mo", "3mo", "6mo", "1y", "2y", "5y", "10y", "ytd", "max"}
 BRAPI_RANGE_ALIASES = {
@@ -252,6 +252,7 @@ async def upsert_quote_record(quote_data: dict, ticker: str) -> bool:
         pe = _to_float(
             quote_data.get("priceEarnings")
             or quote_data.get("pe")
+            or quote_data.get("trailingPE")
             or key_stats.get("trailingPE")
             or key_stats.get("forwardPE")
         )
@@ -260,14 +261,25 @@ async def upsert_quote_record(quote_data: dict, ticker: str) -> bool:
             or quote_data.get("dy")
             or key_stats.get("dividendYield")
             or key_stats.get("trailingAnnualDividendYield")
+            or key_stats.get("yield")
         )
-        # Normalize Dividend Yield to percent standard
-        if dy is not None and dy > 0.0 and dy < 1.0:
+        # Normalize Dividend Yield to percent standard only for yfinance (which is decimal-based)
+        is_yfinance = not (summary_profile or key_stats or financial_data)
+        if is_yfinance and dy is not None and 0.0 < dy < 1.0:
             dy = dy * 100.0
 
         # Advanced B2B fundamentals from Brapi PRO
-        p_vp = _to_float(quote_data.get("priceToBook") or quote_data.get("p_vp") or key_stats.get("priceToBook"))
-        roe = _to_float(quote_data.get("roe") or quote_data.get("returnOnEquity") or financial_data.get("returnOnEquity"))
+        p_vp = _to_float(
+            quote_data.get("priceToBook")
+            or quote_data.get("p_vp")
+            or quote_data.get("pBook")
+            or key_stats.get("priceToBook")
+        )
+        roe = _to_float(
+            quote_data.get("roe")
+            or quote_data.get("returnOnEquity")
+            or financial_data.get("returnOnEquity")
+        )
         roic = _to_float(
             quote_data.get("roic")
             or quote_data.get("returnOnInvestedCapital")
@@ -283,7 +295,12 @@ async def upsert_quote_record(quote_data: dict, ticker: str) -> bool:
         async with async_session_maker() as session:
             stmt = insert(AssetQuote).values(
                 ticker=ticker_upper,
-                name=quote_data.get("longName") or quote_data.get("shortName") or ticker,
+                name=(
+                    quote_data.get("longName")
+                    or summary_profile.get("name")
+                    or quote_data.get("shortName")
+                    or ticker
+                ),
                 price=price,
                 change_percent=change_pct,
                 volume=volume,
@@ -302,6 +319,7 @@ async def upsert_quote_record(quote_data: dict, ticker: str) -> bool:
                     quote_data.get("longBusinessSummary")
                     or quote_data.get("businessSummary")
                     or summary_profile.get("longBusinessSummary")
+                    or summary_profile.get("description")
                 ),
             )
             # Upsert on conflict
@@ -484,12 +502,21 @@ async def ingest_all_histories(period: str = "3y") -> int:
     tickers = list(B3_UNIVERSE)
     tickers.extend(["^BVSP", "^GSPC"])
 
-    total_assets = 0
-    for ticker in tickers:
-        count = await ingest_asset_history(ticker, period)
-        if count > 0:
-            total_assets += 1
-        await asyncio.sleep(0.5)
+    sem = asyncio.Semaphore(5)
 
+    async def _safe_ingest(ticker: str) -> int:
+        async with sem:
+            try:
+                res = await ingest_asset_history(ticker, period)
+                await asyncio.sleep(0.1)
+                return res
+            except Exception as e:
+                logger.error(f"Failed to ingest history for {ticker}: {e}")
+                return 0
+
+    tasks = [_safe_ingest(t) for t in tickers]
+    results = await asyncio.gather(*tasks, return_exceptions=True)
+
+    total_assets = sum(1 for r in results if isinstance(r, int) and r > 0)
     logger.info(f"Historical prices ingestion complete. Processed {total_assets}/{len(tickers)} assets.")
     return total_assets

@@ -3,7 +3,7 @@
 from datetime import date, datetime
 from uuid import uuid4
 
-from sqlalchemy import Date, DateTime, Float, Integer, String, Text, UniqueConstraint, func
+from sqlalchemy import Date, DateTime, Float, Index, Integer, String, Text, UniqueConstraint, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -28,9 +28,15 @@ class MacroIndicator(Base):
         DateTime(timezone=True),
         server_default=func.now(),
     )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
 
     __table_args__ = (
         UniqueConstraint("series_id", "date", name="uq_series_date"),
+        Index("idx_macro_name_date", "name", "date"),
         {"schema": "ai"},
     )
 
@@ -108,6 +114,7 @@ class AssetHistoricalPrice(Base):
 
     __table_args__ = (
         UniqueConstraint("ticker", "date", name="uq_ticker_date"),
+        Index("idx_history_ticker_date", "ticker", "date"),
         {"schema": "ai"},
     )
 
@@ -137,5 +144,6 @@ class NewsArticle(Base):
 
     __table_args__ = (
         UniqueConstraint("ticker", "link", name="uq_news_ticker_link"),
+        Index("idx_news_ticker_published", "ticker", "published_at"),
         {"schema": "ai"},
     )

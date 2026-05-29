@@ -68,6 +68,61 @@ class MarketAnalysisAgent(BaseAgent):
             )
         return self._stream_conv_agent
 
+    @staticmethod
+    def _append_terminal_context(context_lines: list[str], sim_data: dict) -> None:
+        """Append Terminal — Mesa do Analista context without inventing market numbers."""
+        context_lines.append("Superfície: Terminal — Mesa do Analista")
+
+        watchlist = sim_data.get("watchlist")
+        if isinstance(watchlist, list) and watchlist:
+            context_lines.append(f"Watchlist: {', '.join(str(item) for item in watchlist[:20])}")
+
+        focused = sim_data.get("focusedTicker")
+        if focused:
+            context_lines.append(f"Ativo em foco: {focused}")
+
+        compare_set = sim_data.get("compareSet")
+        if isinstance(compare_set, list) and compare_set:
+            context_lines.append(f"Ativos em comparação: {', '.join(str(item) for item in compare_set[:4])}")
+
+        selected_assets = sim_data.get("selectedAssets")
+        if not isinstance(selected_assets, list):
+            return
+
+        for asset in selected_assets[:4]:
+            if not isinstance(asset, dict):
+                continue
+
+            symbol = asset.get("symbol") or "Ativo"
+            name = asset.get("name")
+            context_lines.append(f"\n{symbol} — {name or 'nome indisponível'}")
+
+            price = asset.get("price")
+            if isinstance(price, (int, float)):
+                context_lines.append(f"Preço: R$ {float(price):.2f}")
+
+            change = asset.get("change")
+            if isinstance(change, (int, float)):
+                context_lines.append(f"Variação no dia: {float(change):+.2f}%")
+
+            metrics = asset.get("metrics")
+            if isinstance(metrics, dict):
+                metric_parts = []
+                labels = {
+                    "dy": "Dividend Yield",
+                    "pl": "P/L",
+                    "pvp": "P/VP",
+                    "roe": "ROE",
+                    "evEbitda": "EV/EBITDA",
+                    "volume": "Volume",
+                }
+                for key, label in labels.items():
+                    value = metrics.get(key)
+                    if isinstance(value, (int, float)):
+                        metric_parts.append(f"{label}: {float(value):.2f}")
+                if metric_parts:
+                    context_lines.append("Métricas: " + "; ".join(metric_parts))
+
     def build_streaming_conversation_prompt(
         self,
         subject: str,
@@ -91,6 +146,8 @@ class MarketAnalysisAgent(BaseAgent):
                 context_lines.append(f"Simulador Ativo: Comparador de Ativos B3")
                 context_lines.append(f"Ativo A (Primário): {sim_data.get('tickerA')}")
                 context_lines.append(f"Ativo B (Secundário): {sim_data.get('tickerB')}")
+            elif sim_type == "terminal":
+                self._append_terminal_context(context_lines, sim_data)
             elif sim_type == "savings":
                 context_lines.append(f"Simulador Ativo: Renda Variável e Juros Compostos")
                 context_lines.append(f"Capital Inicial Investido: R$ {sim_data.get('initialCapital')}")
@@ -214,6 +271,8 @@ class MarketAnalysisAgent(BaseAgent):
                 context_lines.append(f"Simulador Ativo: Comparador de Ativos B3")
                 context_lines.append(f"Ativo A (Primário): {sim_data.get('tickerA')}")
                 context_lines.append(f"Ativo B (Secundário): {sim_data.get('tickerB')}")
+            elif sim_type == "terminal":
+                self._append_terminal_context(context_lines, sim_data)
             elif sim_type == "savings":
                 context_lines.append(f"Simulador Ativo: Renda Variável e Juros Compostos")
                 context_lines.append(f"Capital Inicial Investido: R$ {sim_data.get('initialCapital')}")

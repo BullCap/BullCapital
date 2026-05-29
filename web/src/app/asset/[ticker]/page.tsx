@@ -54,7 +54,7 @@ export default async function AssetPage({ params }: AssetPageProps) {
 
   if (quote === null && initialHistory.length === 0) {
     return (
-      <AppShell active="market" contentClassName="gap-6">
+      <AppShell active="market" contentClassName="gap-6" sessionUser={session.user}>
         <ScrollFocus>
           <div className="bull-panel p-8 text-center">
             <GlassHighlight widthPercent={60} />
@@ -74,7 +74,11 @@ export default async function AssetPage({ params }: AssetPageProps) {
   }
 
   return (
-    <AppShell active="market" contentClassName="md:max-w-none xl:max-w-[1560px] 2xl:max-w-[1720px]">
+    <AppShell
+      active="market"
+      contentClassName="md:max-w-none xl:max-w-[1560px] 2xl:max-w-[1720px]"
+      sessionUser={session.user}
+    >
       <ScrollFocus>
         <AssetHeader
           ticker={ticker}

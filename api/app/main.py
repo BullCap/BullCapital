@@ -1,8 +1,11 @@
-"""BullCapital AI Service - FastAPI Application."""
-
+import asyncio
 from collections.abc import AsyncIterator, Awaitable, Callable
+from collections import defaultdict
 from contextlib import asynccontextmanager
 from hmac import compare_digest
+import logging
+import threading
+import time
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -13,8 +16,76 @@ from app.api import api_router
 from app.core.config import settings
 from app.core.database import Base, engine
 
+logger = logging.getLogger(__name__)
+
+# IP-based sliding window rate limiter for costly LLM/AI endpoints
+class RateLimiter:
+    def __init__(self, requests_limit: int, window_seconds: int):
+        self.requests_limit = requests_limit
+        self.window_seconds = window_seconds
+        self.requests = defaultdict(list)
+        self.lock = threading.Lock()
+
+    def is_allowed(self, key: str) -> bool:
+        now = time.time()
+        with self.lock:
+            self.requests[key] = [t for t in self.requests[key] if now - t < self.window_seconds]
+            if len(self.requests[key]) >= self.requests_limit:
+                return False
+            self.requests[key].append(now)
+            return True
+
+ai_rate_limiter = RateLimiter(requests_limit=10, window_seconds=60)
+
 INTERNAL_TOKEN_HEADER = "X-Bull-Internal-Token"
 PUBLIC_PATHS = {"/", "/docs", "/redoc", "/openapi.json"}
+
+
+async def quotes_scheduler_loop():
+    """Background task to sync quotes periodically during market hours (every 5 minutes)."""
+    # Wait 30 seconds after startup to let app boot
+    await asyncio.sleep(30)
+    while True:
+        try:
+            from app.services.market_db import _is_b3_session
+            if _is_b3_session():
+                # Acquire advisory lock via connection
+                async with engine.connect() as conn:
+                    result = await conn.execute(text("SELECT pg_try_advisory_lock(1001)"))
+                    if result.scalar():
+                        logger.info("Scheduler: Triggering scheduled quotes ingestion...")
+                        from app.services.market_ingest import ingest_all_quotes
+                        await ingest_all_quotes()
+                        await conn.execute(text("SELECT pg_advisory_unlock(1001)"))
+                    else:
+                        logger.debug("Scheduler: Quotes ingestion already running on another worker.")
+        except Exception as e:
+            logger.error(f"Scheduler error in quotes_scheduler_loop: {e}", exc_info=True)
+        await asyncio.sleep(300)
+
+
+async def macro_news_scheduler_loop():
+    """Background task to sync macro indicators and news periodically (every 12 hours)."""
+    # Wait 60 seconds after startup
+    await asyncio.sleep(60)
+    while True:
+        try:
+            async with engine.connect() as conn:
+                result = await conn.execute(text("SELECT pg_try_advisory_lock(1002)"))
+                if result.scalar():
+                    logger.info("Scheduler: Triggering scheduled macro indicators and news ingestion...")
+                    from app.services.bcb_sgs import ingest_macro_indicators, ingest_ptax_dollar
+                    from app.services.news_ingest import ingest_brazilian_news
+                    
+                    await ingest_macro_indicators()
+                    await ingest_ptax_dollar()
+                    await ingest_brazilian_news()
+                    await conn.execute(text("SELECT pg_advisory_unlock(1002)"))
+                else:
+                    logger.debug("Scheduler: Macro/news ingestion already running on another worker.")
+        except Exception as e:
+            logger.error(f"Scheduler error in macro_news_scheduler_loop: {e}", exc_info=True)
+        await asyncio.sleep(12 * 3600)
 
 
 @asynccontextmanager
@@ -37,6 +108,19 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
         await conn.execute(
             text("ALTER TABLE IF EXISTS ai.asset_historical_prices ADD COLUMN IF NOT EXISTS low DOUBLE PRECISION")
         )
+        await conn.execute(
+            text("ALTER TABLE IF EXISTS ai.macro_indicators ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP")
+        )
+        # Create composite indexes to speed up reads in production
+        await conn.execute(
+            text("CREATE INDEX IF NOT EXISTS idx_news_ticker_published ON ai.news_articles (ticker, published_at DESC)")
+        )
+        await conn.execute(
+            text("CREATE INDEX IF NOT EXISTS idx_history_ticker_date ON ai.asset_historical_prices (ticker, date DESC)")
+        )
+        await conn.execute(
+            text("CREATE INDEX IF NOT EXISTS idx_macro_name_date ON ai.macro_indicators (name, date DESC)")
+        )
         # Ensure news cache has the (ticker, link) idempotency constraint used by RSS ingestion.
         await conn.execute(
             text(
@@ -53,8 +137,18 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
                 """
             )
         )
+        
+    # Start background scheduler loops
+    scheduler_tasks = [
+        asyncio.create_task(quotes_scheduler_loop()),
+        asyncio.create_task(macro_news_scheduler_loop())
+    ]
     yield
-    # Shutdown: Close engine connection
+    # Shutdown: Cancel background scheduler tasks
+    for task in scheduler_tasks:
+        task.cancel()
+    await asyncio.gather(*scheduler_tasks, return_exceptions=True)
+    # Close engine connection
     await engine.dispose()
 
 
@@ -62,8 +156,9 @@ app = FastAPI(
     title=settings.app_name,
     description="Serviço de IA para análises contextuais de mercado",
     version=settings.app_version,
-    docs_url="/docs",
-    redoc_url="/redoc",
+    docs_url="/docs" if settings.debug else None,
+    redoc_url="/redoc" if settings.debug else None,
+    openapi_url="/openapi.json" if settings.debug else None,
     lifespan=lifespan,
 )
 
@@ -84,6 +179,23 @@ async def require_internal_token(
         if not compare_digest(provided, settings.api_shared_secret):
             return JSONResponse({"detail": "Não autorizado"}, status_code=401)
 
+    return await call_next(request)
+
+
+@app.middleware("http")
+async def rate_limit_middleware(
+    request: Request,
+    call_next: Callable[[Request], Awaitable[Response]],
+) -> Response:
+    """Rate limit LLM and costly AI endpoints by IP address (max 10 req/minute)."""
+    path = request.url.path
+    if any(prefix in path for prefix in ("/api/v1/analysis", "/api/v1/conversation", "/api/v1/comparator")):
+        ip = request.client.host if request.client else "unknown"
+        if not ai_rate_limiter.is_allowed(ip):
+            return JSONResponse(
+                {"detail": "Limite de requisições excedido. Tente novamente em um minuto."},
+                status_code=429,
+            )
     return await call_next(request)
 
 # CORS middleware

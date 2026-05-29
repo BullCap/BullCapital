@@ -11,6 +11,11 @@ interface AppShellProps {
   active: AppDockSection
   children: ReactNode
   contentClassName?: string
+  sessionUser?: {
+    name?: string | null
+    email?: string | null
+  } | null
+  skipUserLookup?: boolean
 }
 
 function getInitials(name: string | null, email: string | null): string {
@@ -23,12 +28,27 @@ function getInitials(name: string | null, email: string | null): string {
   return email?.[0]?.toUpperCase() ?? '?'
 }
 
-export default async function AppShell({ active, children, contentClassName }: AppShellProps) {
-  const session = await auth()
-  const cookieStore = await cookies()
-  const initialSidebarCollapsed = cookieStore.get(SIDEBAR_COLLAPSED_COOKIE)?.value === 'true'
-  const initials = session?.user
-    ? getInitials(session.user.name ?? null, session.user.email ?? null)
+export default async function AppShell({
+  active,
+  children,
+  contentClassName,
+  sessionUser,
+  skipUserLookup = false,
+}: AppShellProps) {
+  let shellUser = sessionUser ?? null
+  let initialSidebarCollapsed = false
+
+  if (!skipUserLookup) {
+    const cookieStore = await cookies()
+    initialSidebarCollapsed = cookieStore.get(SIDEBAR_COLLAPSED_COOKIE)?.value === 'true'
+    if (!shellUser) {
+      const session = await auth()
+      shellUser = session?.user ?? null
+    }
+  }
+
+  const initials = shellUser
+    ? getInitials(shellUser.name ?? null, shellUser.email ?? null)
     : undefined
 
   return (
@@ -37,8 +57,8 @@ export default async function AppShell({ active, children, contentClassName }: A
       <B2BSidebar
         initialCollapsed={initialSidebarCollapsed}
         initials={initials}
-        userName={session?.user?.name ?? undefined}
-        userEmail={session?.user?.email ?? undefined}
+        userName={shellUser?.name ?? undefined}
+        userEmail={shellUser?.email ?? undefined}
       />
 
       {/* Content — flex-1 takes remaining space after sidebar */}
