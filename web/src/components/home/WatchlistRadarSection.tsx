@@ -7,13 +7,15 @@ import { getWatchlist } from '@/lib/actions/watchlist'
 import { getMultipleQuotes } from '@/lib/services/market'
 import { buildAssetHref } from '@/lib/market-routing'
 import type { RadarPulseItem } from './RadarPulseSection'
+import type { AssetQuote } from '@/types/market'
 
 interface WatchlistRadarSectionProps {
   fallbackItems: RadarPulseItem[]
   watchlist?: string[]
+  initialQuotes?: AssetQuote[]
 }
 
-export default async function WatchlistRadarSection({ fallbackItems, watchlist: providedWatchlist }: WatchlistRadarSectionProps) {
+export default async function WatchlistRadarSection({ fallbackItems, watchlist: providedWatchlist, initialQuotes }: WatchlistRadarSectionProps) {
   const watchlist = providedWatchlist ?? await getWatchlist()
   const hasWatchlist = watchlist.length > 0
 
@@ -21,7 +23,10 @@ export default async function WatchlistRadarSection({ fallbackItems, watchlist: 
     return <FallbackRadar items={fallbackItems} />
   }
 
-  const { results: quotes } = await getMultipleQuotes(watchlist.slice(0, 8))
+  // Use pre-fetched quotes when available (eliminates a sequential waterfall on the news page)
+  const { results: quotes } = initialQuotes
+    ? { results: initialQuotes }
+    : await getMultipleQuotes(watchlist.slice(0, 8))
 
   return (
     <section className="bull-panel h-full p-5 md:p-6">

@@ -131,7 +131,7 @@ export async function requestAnalysis(
         template: template?.trim() || null,
       }),
       cache: 'no-store',
-      signal: AbortSignal.timeout(60000),
+      signal: AbortSignal.timeout(32000),
     })
 
     if (!res.ok) return null

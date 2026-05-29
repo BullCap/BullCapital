@@ -8,16 +8,18 @@ import NewsRadarFeed from '@/components/news/NewsRadarFeed'
 import ScrollFocus from '@/components/ui/ScrollFocus'
 import WatchlistRadarSection from '@/components/home/WatchlistRadarSection'
 import { GlassHighlight } from '@/components/atoms/GlassHighlight'
-import { getMarketListings } from '@/lib/services/market'
+import { getMarketListings, getMultipleQuotes } from '@/lib/services/market'
 import { buildAssetHref } from '@/lib/market-routing'
 import type { RadarPulseItem } from '@/components/home/RadarPulseSection'
 import type { NewsRadarItem } from '@/lib/news-radar'
+import type { AssetQuote } from '@/types/market'
 
 interface NewsPageData {
   watchlist: string[]
   items: NewsRadarItem[]
   followedStories: number
   radarItems: RadarPulseItem[]
+  watchlistQuotes: AssetQuote[]
 }
 
 function formatPercent(value: number | null) {
@@ -65,10 +67,12 @@ function buildRadarItems(
 const getNewsPageData = cache(async (): Promise<NewsPageData> => {
   const watchlist = await getWatchlist()
 
-  const [itemsResult, gainersResult, losersResult] = await Promise.allSettled([
+  const [itemsResult, gainersResult, losersResult, quotesResult] = await Promise.allSettled([
     getNewsRadarItems(watchlist),
     getMarketListings({ sortBy: 'change', sortOrder: 'desc', limit: 3, type: 'stock' }),
     getMarketListings({ sortBy: 'change', sortOrder: 'asc', limit: 3, type: 'stock' }),
+    // Fetch watchlist quotes in parallel — sidebar used to do this sequentially after all above resolved
+    watchlist.length > 0 ? getMultipleQuotes(watchlist.slice(0, 8)) : Promise.resolve({ results: [] as AssetQuote[] }),
   ])
 
   const items = itemsResult.status === 'fulfilled' ? itemsResult.value : []
@@ -88,6 +92,7 @@ const getNewsPageData = cache(async (): Promise<NewsPageData> => {
     items,
     followedStories: items.filter((item) => item.scopes.includes('watchlist')).length,
     radarItems: buildRadarItems(gainers, losers),
+    watchlistQuotes: quotesResult.status === 'fulfilled' ? quotesResult.value.results : [],
   }
 })
 
@@ -107,8 +112,8 @@ async function NewsFeedPanel() {
 }
 
 async function NewsSidebarPanel() {
-  const { radarItems, watchlist } = await getNewsPageData()
-  return <WatchlistRadarSection fallbackItems={radarItems} watchlist={watchlist} />
+  const { radarItems, watchlist, watchlistQuotes } = await getNewsPageData()
+  return <WatchlistRadarSection fallbackItems={radarItems} watchlist={watchlist} initialQuotes={watchlistQuotes} />
 }
 
 function NewsSidebarFallback() {
