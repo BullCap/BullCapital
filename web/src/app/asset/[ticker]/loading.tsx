@@ -3,7 +3,7 @@ import { PageLoadingContent } from '@/components/navigation/PageLoadingContent'
 
 export default function AssetLoading() {
   return (
-    <AppShell active="search">
+    <AppShell active="search" skipUserLookup>
       <PageLoadingContent />
     </AppShell>
   )

@@ -27,7 +27,7 @@ export default async function SearchPage() {
     .slice(0, 8)
 
   return (
-    <AppShell active="search">
+    <AppShell active="search" sessionUser={session.user}>
       <header className="px-1">
         <p className="bull-eyebrow">Busca</p>
         <h1 className="mt-2 font-serif text-3xl text-[#F4F0FF]">Buscar ativo</h1>

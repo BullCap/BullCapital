@@ -12,6 +12,7 @@ class Settings(BaseSettings):
         env_file=".env",
         env_file_encoding="utf-8",
         case_sensitive=False,
+        extra="ignore",
     )
 
     # App
@@ -28,6 +29,7 @@ class Settings(BaseSettings):
         "postgresql+asyncpg://bullcapital_ai:bullcapital_ai_dev@localhost:5433/bullcapital_ai"
     )
     database_ssl: bool = False
+    database_ca_cert: str | None = None
 
     # Brapi
     brapi_key: str = ""

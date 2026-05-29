@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 from typing import Any
 
 import httpx
+from sqlalchemy import func
 from sqlalchemy.dialects.postgresql import insert
 
 from app.core.config import settings
@@ -153,7 +154,7 @@ async def upsert_macro_records(records: list[tuple[int, str, datetime, float]]) 
             )
             stmt = stmt.on_conflict_do_update(
                 constraint="uq_series_date",
-                set_={"value": value},
+                set_={"value": value, "updated_at": func.now()},
             )
             await session.execute(stmt)
         await session.commit()
@@ -231,7 +232,7 @@ async def ingest_macro_indicators(lookback_days: int = 45) -> bool:
                     # Update value on conflict
                     stmt = stmt.on_conflict_do_update(
                         constraint="uq_series_date",
-                        set_={"value": value},
+                        set_={"value": value, "updated_at": func.now()},
                     )
                     await session.execute(stmt)
                     records_inserted += 1

@@ -62,7 +62,7 @@ export default function AppDock({ active }: AppDockProps) {
             )}
           >
             <Terminal size={16} />
-            Comparar
+            Carteira
           </Link>
           <Link
             href="/analysis"

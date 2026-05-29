@@ -223,7 +223,7 @@ async def conversation_stream(request: ConversationRequest) -> StreamingResponse
     )
 
     async def generate():
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         queue: asyncio.Queue[str | None] = asyncio.Queue()
 
         def run_stream() -> None:
@@ -232,8 +232,10 @@ async def conversation_stream(request: ConversationRequest) -> StreamingResponse
                 for chunk in agent.run(prompt, stream=True, stream_events=True):
                     if getattr(chunk, 'event', None) == 'RunContent' and chunk.content:
                         loop.call_soon_threadsafe(queue.put_nowait, chunk.content)
-            except Exception:
-                pass
+            except Exception as e:
+                import logging
+                logging.getLogger(__name__).error(f"Error in SSE streaming conversation thread: {e}", exc_info=True)
+                loop.call_soon_threadsafe(queue.put_nowait, f"[ERROR]: {str(e)}")
             finally:
                 loop.call_soon_threadsafe(queue.put_nowait, None)
 
@@ -245,6 +247,9 @@ async def conversation_stream(request: ConversationRequest) -> StreamingResponse
             delta = await queue.get()
             if delta is None:
                 break
+            if isinstance(delta, str) and delta.startswith("[ERROR]: "):
+                yield f"data: {json.dumps({'type': 'error', 'text': 'Ocorreu um erro ao processar a resposta.'})}\n\n"
+                return
             full_text += delta
             if footer_started:
                 # Footer in progress — accumulate silently, no more text events

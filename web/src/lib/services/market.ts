@@ -10,6 +10,7 @@ import type {
   MarketStatusData,
 } from '@/types/market'
 import { ANALYSIS_API_URL, internalApiHeaders } from '@/lib/internal-api'
+import { unstable_cache } from 'next/cache'
 
 export interface MarketListingsParams {
   page?: number
@@ -84,12 +85,40 @@ async function marketPost<T>(path: string, body: unknown, timeoutMs = MARKET_FET
   return (await response.json()) as T
 }
 
+function normalizeQuoteBatch(tickers: string[]): string[] {
+  return Array.from(
+    new Set(
+      tickers
+        .map((ticker) => ticker.trim().toUpperCase().replace(/\.SA$/i, ''))
+        .filter(Boolean)
+    )
+  )
+}
+
+const getCachedMultipleQuotes = unstable_cache(
+  async (symbolsKey: string): Promise<{ results: AssetQuote[] }> => {
+    const symbols = symbolsKey.split(',').filter(Boolean)
+    const timeoutMs = symbols.length > 8 ? MARKET_BATCH_TIMEOUT_MS : MARKET_FETCH_TIMEOUT_MS
+    const data = await marketPost<{ results: AssetQuote[] }>('/market/quotes', { symbols }, timeoutMs)
+    if (symbols.length > 0 && (!Array.isArray(data.results) || data.results.length === 0)) {
+      throw new Error(`Market API returned an empty quote batch for ${symbolsKey}`)
+    }
+    return data
+  },
+  ['market-quotes-batch-v2'],
+  { revalidate: QUOTE_REVALIDATE_SECONDS }
+)
+
 export async function getMarketRadarData(
   ticker: string = 'PETR4'
 ): Promise<MarketRadarData | null> {
   try {
-    const data = await marketGet<MarketRadarData>(`/market/radar/${encodeURIComponent(ticker)}`, undefined, QUOTE_REVALIDATE_SECONDS)
-    return data?.data?.length ? data : null
+    const data = await marketGet<MarketRadarData>(
+      `/market/radar/${encodeURIComponent(ticker)}`,
+      { profileFallback: 1 },
+      QUOTE_REVALIDATE_SECONDS
+    )
+    return data?.data?.length || data?.profile || data?.quote ? data : null
   } catch (error) {
     console.warn('Exception while fetching market radar data:', error)
     return null
@@ -138,12 +167,11 @@ export async function getTreasuryBonds(): Promise<{ data: TreasuryBond[] } | nul
 export async function getMultipleQuotes(
   tickers: string[]
 ): Promise<{ results: AssetQuote[]; error?: string }> {
-  if (tickers.length === 0) return { results: [], error: 'No tickers provided.' }
+  const symbols = normalizeQuoteBatch(tickers)
+  if (symbols.length === 0) return { results: [], error: 'No tickers provided.' }
 
-  // Batch fetches can chain 20+ Brapi PRO calls on a cold cache; give them headroom.
-  const timeoutMs = tickers.length > 8 ? MARKET_BATCH_TIMEOUT_MS : MARKET_FETCH_TIMEOUT_MS
   try {
-    return await marketPost<{ results: AssetQuote[] }>('/market/quotes', { symbols: tickers }, timeoutMs)
+    return await getCachedMultipleQuotes(symbols.join(','))
   } catch (error) {
     console.warn('Exception while fetching market quotes:', error)
     return { results: [], error: 'Falha ao buscar cotações reais.' }

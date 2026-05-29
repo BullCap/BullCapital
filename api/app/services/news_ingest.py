@@ -100,7 +100,16 @@ async def backfill_news_images() -> dict[str, int]:
     scanned = 0
 
     async with async_session_maker() as session:
-        rows = (await session.execute(select(NewsArticle))).scalars().all()
+        # Avoid OOM and event loop locking by adding a LIMIT 200 on the scanning query
+        result = await session.execute(
+            select(NewsArticle)
+            .order_by(NewsArticle.published_at.desc())
+            .limit(200)
+        )
+        rows = list(result.scalars().all())
+
+    # Keep track of original image_url to perform updates only when changed
+    original_urls = {row.id: row.image_url for row in rows}
 
     # First pass: cheap URL cleanup, no network.
     by_link: dict[str, list[NewsArticle]] = {}
@@ -134,15 +143,24 @@ async def backfill_news_images() -> dict[str, int]:
                 row.image_url = image
             scraped += len(by_link[link])
 
-    async with async_session_maker() as session:
-        for row in rows:
-            await session.execute(
-                update(NewsArticle).where(NewsArticle.id == row.id).values(image_url=row.image_url)
-            )
-        await session.commit()
+    # Update only the modified rows in batches of 50 to prevent OOM
+    modified_rows = [row for row in rows if row.image_url != original_urls[row.id]]
+
+    if modified_rows:
+        async with async_session_maker() as session:
+            chunk_size = 50
+            for i in range(0, len(modified_rows), chunk_size):
+                chunk = modified_rows[i : i + chunk_size]
+                for row in chunk:
+                    await session.execute(
+                        update(NewsArticle)
+                        .where(NewsArticle.id == row.id)
+                        .values(image_url=row.image_url)
+                    )
+                await session.commit()
 
     logger.info(
-        "Image backfill: scanned=%d cleaned=%d scraped=%d skipped=%d",
-        scanned, cleaned, scraped, skipped,
+        "Image backfill: scanned=%d cleaned=%d scraped=%d skipped=%d modified=%d",
+        scanned, cleaned, scraped, skipped, len(modified_rows),
     )
     return {"scanned": scanned, "cleaned": cleaned, "scraped": scraped, "skipped": skipped}

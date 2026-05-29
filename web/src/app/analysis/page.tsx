@@ -21,7 +21,7 @@ export default async function AnalysisPage({ searchParams }: AnalysisPageProps) 
   const source = rawSource === 'news' ? 'news' as const : undefined
 
   return (
-    <AppShell active="analysis">
+    <AppShell active="analysis" sessionUser={session.user}>
       <header className="px-1">
         <p className="bull-eyebrow">Advisor</p>
         <h1 className="mt-2 font-serif text-3xl text-[#F4F0FF]">Análises contextuais</h1>

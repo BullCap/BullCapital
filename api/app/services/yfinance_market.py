@@ -236,44 +236,11 @@ def get_static_crypto_quote(symbol: str) -> dict | None:
         "profitMargins": 0.0,
         "dividendYield": 0.0,
         "averageVolume": info["volume"],
+        "is_stale": True,
     }
 
 def get_static_crypto_history_points(symbol: str, range_name: str = "1mo") -> list[dict]:
-    base = symbol.split("-", 1)[0] if "-" in symbol else symbol
-    if base not in STATIC_CRYPTO_QUOTES:
-        return []
-    info = STATIC_CRYPTO_QUOTES[base]
-    price = info["price"]
-    
-    limit = 32
-    if range_name == "1y":
-        limit = 260
-    elif range_name == "3mo":
-        limit = 90
-        
-    points = []
-    import random
-    from datetime import datetime, timedelta
-    
-    current_price = price
-    now = datetime.now(UTC)
-    
-    for i in range(limit):
-        dt = now - timedelta(days=i)
-        timestamp = int(dt.timestamp())
-        fluctuation = random.uniform(-0.03, 0.03)
-        point_price = current_price * (1.0 + fluctuation)
-        
-        points.append({
-            "timestamp": timestamp,
-            "open": point_price * 0.98,
-            "high": point_price * 1.02,
-            "low": point_price * 0.97,
-            "close": point_price,
-            "volume": info["volume"],
-        })
-        
-    return sorted(points, key=lambda x: x["timestamp"])
+    return []  # histórico de cripto indisponível sem yfinance
 
 # In-memory thread-safe cache for treasury bonds list
 _treasury_cache = None
@@ -402,48 +369,7 @@ def get_live_treasury_quote(symbol: str) -> dict | None:
     }
 
 def get_treasury_history_points(symbol: str, range_name: str = "1mo") -> list[dict]:
-    bond = TESOURO_BONDS.get(symbol)
-    if not bond:
-        return []
-        
-    price = bond["price"]
-    live = get_live_treasury_quote(symbol)
-    if live:
-        price = live["regularMarketPrice"]
-        
-    limit = 32
-    if range_name == "1y":
-        limit = 260
-    elif range_name == "3mo":
-        limit = 90
-        
-    points = []
-    import random
-    from datetime import datetime, timedelta
-    
-    current_price = price
-    now = datetime.now(UTC)
-    daily_yield = (bond["buyRate"] / 100.0) / 252.0 if bond["buyRate"] > 0 else 0.0004
-    
-    for i in range(limit):
-        dt = now - timedelta(days=i)
-        if dt.weekday() >= 5:
-            continue
-            
-        timestamp = int(dt.timestamp())
-        noise = random.uniform(-0.0005, 0.0005)
-        point_price = current_price * (1.0 - (daily_yield + noise) * i)
-        
-        points.append({
-            "timestamp": timestamp,
-            "open": point_price * 0.999,
-            "high": point_price * 1.001,
-            "low": point_price * 0.998,
-            "close": point_price,
-            "volume": 10000.0,
-        })
-    
-    return sorted(points, key=lambda x: x["timestamp"])
+    return []  # histórico de tesouro indisponível sem yfinance
 
 
 @dataclass(frozen=True)

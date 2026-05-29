@@ -21,6 +21,9 @@ from app.services.market_ingest import (
 
 logger = logging.getLogger(__name__)
 
+# Keep strong references to prevent garbage collection of running background tasks
+_bg_tasks: set[asyncio.Task] = set()
+
 QUOTE_TTL_MARKET_SECONDS = 300
 QUOTE_TTL_CLOSED_SECONDS = 3600
 NEWS_TTL_SECONDS = 900  # 15 min — RSS sources publish in bursts, no need to fetch on every read
@@ -83,6 +86,26 @@ def _quote_is_stale(updated_at: datetime | None) -> bool:
     return (now - quote_time.astimezone(UTC)).total_seconds() > ttl
 
 
+def _quote_needs_fundamentals_refresh(quote: AssetQuote | None) -> bool:
+    """Refresh rows that have price data but missed Brapi fundamental modules."""
+    if quote is None:
+        return True
+    return not any(
+        value is not None
+        for value in (
+            quote.pe_ratio,
+            quote.dividend_yield,
+            quote.ev_ebitda,
+            quote.roe,
+            quote.roic,
+            quote.p_vp,
+            quote.sector,
+            quote.industry,
+            quote.business_summary,
+        )
+    )
+
+
 async def get_db_quote(symbol: str) -> dict | None:
     """Retrieve quote from the Postgres cache, triggering live ingest on-the-fly if missing."""
     clean_ticker = _clean_symbol(symbol)
@@ -99,10 +122,9 @@ async def get_db_quote(symbol: str) -> dict | None:
         )
         quote = result.scalar_one_or_none()
 
-    # Self-populating cache fallback: fetch live if not found or outside the 5-minute PRO TTL.
-    if not quote or _quote_is_stale(quote.updated_at):
-        reason = "not found" if not quote else "stale"
-        logger.info(f"Quote for {clean_ticker} {reason} in database cache. Performing on-the-fly ingestion...")
+    # Cache miss: fetch synchronously (no data to serve yet).
+    if not quote:
+        logger.info(f"Quote for {clean_ticker} not found in cache. Fetching live...")
         success = await ingest_ticker_quote(clean_ticker)
         if success:
             async with async_session_maker() as session:
@@ -110,6 +132,12 @@ async def get_db_quote(symbol: str) -> dict | None:
                     select(AssetQuote).where(AssetQuote.ticker == clean_ticker)
                 )
                 quote = result.scalar_one_or_none()
+    elif _quote_is_stale(quote.updated_at) or _quote_needs_fundamentals_refresh(quote):
+        # Stale-while-revalidate: serve cached data immediately, refresh in background.
+        reason = "missing fundamentals" if _quote_needs_fundamentals_refresh(quote) else "stale"
+        t = asyncio.create_task(ingest_ticker_quote(clean_ticker))
+        _bg_tasks.add(t)
+        t.add_done_callback(_bg_tasks.discard)
 
     if not quote:
         return None
@@ -132,13 +160,15 @@ async def get_db_quote(symbol: str) -> dict | None:
         "longBusinessSummary": quote.business_summary,
         "fullTimeEmployees": 0,
         "trailingPE": quote.pe_ratio or 0.0,
-        "profitMargins": quote.roe or 0.0,  # fallback mapping
+        "profitMargins": 0.0,  # field not stored; don't confuse with ROE
         "dividendYield": (quote.dividend_yield / 100.0) if quote.dividend_yield else 0.0,  # convert back to fraction for BFF
         "averageVolume": quote.volume,
         "evEbitda": quote.ev_ebitda,
         "roe": quote.roe,
         "roic": quote.roic,
         "pBook": quote.p_vp,
+        "updatedAt": quote.updated_at.replace(tzinfo=UTC).isoformat() if quote.updated_at else None,
+        "isStale": _quote_is_stale(quote.updated_at),
     }
 
 
@@ -168,6 +198,31 @@ async def get_db_quotes(symbols: list[str]) -> dict:
     return {"results": results}
 
 
+async def _batch_fetch_and_upsert(tickers: list[str]) -> None:
+    """Fetch a list of tickers from Brapi PRO (batched) and upsert to cache. Falls back to per-ticker."""
+    chunk_size = 20
+    for chunk_start in range(0, len(tickers), chunk_size):
+        chunk = tickers[chunk_start : chunk_start + chunk_size]
+        brapi_results = await fetch_brapi_quotes_batch(chunk)
+        seen = set()
+        for quote_data in brapi_results:
+            symbol = str(quote_data.get("symbol", "")).strip().upper()
+            if not symbol:
+                continue
+            await upsert_quote_record(quote_data, symbol)
+            seen.add(symbol)
+        for t in (t for t in chunk if t not in seen):
+            await ingest_ticker_quote(t)
+
+
+async def _background_refresh_quotes(tickers: list[str]) -> None:
+    """Background Brapi PRO refresh; errors are swallowed so they don't crash the event loop."""
+    try:
+        await _batch_fetch_and_upsert(tickers)
+    except Exception as exc:
+        logger.warning("Background quote refresh failed: %s", exc)
+
+
 async def _get_db_quotes_standard(symbols: list[str]) -> dict:
     if not symbols:
         return {"results": []}
@@ -181,38 +236,34 @@ async def _get_db_quotes_standard(symbols: list[str]) -> dict:
         )
         cached = {row.ticker: row for row in result.scalars().all()}
 
-    # 2. Pick the ones that need an ingest call (missing or stale).
+    # 2. Separate truly missing (must block) from stale (serve now, refresh in background).
+    missing_tickers = [t for t in clean_symbols if t not in cached]
     stale_tickers = [
-        ticker for ticker in clean_symbols
-        if ticker not in cached or _quote_is_stale(cached[ticker].updated_at)
+        t for t in clean_symbols
+        if t in cached and (
+            _quote_is_stale(cached[t].updated_at) or _quote_needs_fundamentals_refresh(cached[t])
+        )
     ]
 
-    # 3. Refresh stale tickers via Brapi PRO batch (up to 20 per call). Falls back to per-ticker.
-    if stale_tickers:
-        logger.info(f"Batch refreshing {len(stale_tickers)} stale/missing quotes via Brapi PRO...")
-        chunk_size = 20
-        for chunk_start in range(0, len(stale_tickers), chunk_size):
-            chunk = stale_tickers[chunk_start : chunk_start + chunk_size]
-            brapi_results = await fetch_brapi_quotes_batch(chunk)
-            seen = set()
-            for quote_data in brapi_results:
-                symbol = str(quote_data.get("symbol", "")).strip().upper()
-                if not symbol:
-                    continue
-                await upsert_quote_record(quote_data, symbol)
-                seen.add(symbol)
-            # Per-ticker fallback for anything the batch missed (e.g. delisted, yfinance).
-            for missing in (t for t in chunk if t not in seen):
-                await ingest_ticker_quote(missing)
-
-        # Reload after upserts.
+    # 3. Missing tickers: fetch synchronously — there is no cached data to serve.
+    if missing_tickers:
+        logger.info(f"Fetching {len(missing_tickers)} missing quotes via Brapi PRO (blocking)...")
+        await _batch_fetch_and_upsert(missing_tickers)
         async with async_session_maker() as session:
             result = await session.execute(
-                select(AssetQuote).where(AssetQuote.ticker.in_(clean_symbols))
+                select(AssetQuote).where(AssetQuote.ticker.in_(missing_tickers))
             )
-            cached = {row.ticker: row for row in result.scalars().all()}
+            for row in result.scalars():
+                cached[row.ticker] = row
 
-    # 4. Map rows back into the BFF dict shape, preserving input order.
+    # 4. Stale tickers: return cached data immediately, refresh in background.
+    if stale_tickers:
+        logger.info(f"Background refresh for {len(stale_tickers)} stale quotes...")
+        t = asyncio.create_task(_background_refresh_quotes(stale_tickers))
+        _bg_tasks.add(t)
+        t.add_done_callback(_bg_tasks.discard)
+
+    # 5. Map rows back into the BFF dict shape, preserving input order.
     results = []
     for original, ticker in zip(symbols, clean_symbols):
         quote = cached.get(ticker)
@@ -236,13 +287,15 @@ async def _get_db_quotes_standard(symbols: list[str]) -> dict:
             "longBusinessSummary": quote.business_summary,
             "fullTimeEmployees": 0,
             "trailingPE": quote.pe_ratio or 0.0,
-            "profitMargins": quote.roe or 0.0,
+            "profitMargins": 0.0,  # field not stored; don't confuse with ROE
             "dividendYield": (quote.dividend_yield / 100.0) if quote.dividend_yield else 0.0,
             "averageVolume": quote.volume,
             "evEbitda": quote.ev_ebitda,
             "roe": quote.roe,
             "roic": quote.roic,
             "pBook": quote.p_vp,
+            "updatedAt": quote.updated_at.replace(tzinfo=UTC).isoformat() if quote.updated_at else None,
+            "isStale": _quote_is_stale(quote.updated_at),
         })
 
     return {"results": results}
@@ -273,16 +326,23 @@ async def get_db_history(symbols: list[str], range_name: str = "1mo") -> dict:
     return {"results": results}
 
 
-async def _get_db_history_standard(symbols: list[str], range_name: str = "1mo") -> dict:
-    if not symbols:
-        return {"results": [], "error": "No tickers provided."}
+async def _fetch_symbol_history(symbol: str, range_name: str) -> list[dict]:
+    """Fetch history for a single symbol: DB → Brapi → yfinance. Returns list of result entries."""
+    clean_ticker = _clean_symbol(symbol)
+    app_ticker = _app_symbol(symbol)
 
-    results = []
-    for symbol in symbols:
-        clean_ticker = _clean_symbol(symbol)
-        app_ticker = _app_symbol(symbol)
-        rows = []
+    async with async_session_maker() as session:
+        result = await session.execute(
+            select(AssetHistoricalPrice)
+            .where(AssetHistoricalPrice.ticker == clean_ticker)
+            .order_by(AssetHistoricalPrice.date.desc())
+            .limit(HISTORY_LIMITS.get(range_name, 32))
+        )
+        rows = list(reversed(result.scalars().all()))
 
+    if not rows:
+        logger.info(f"History for {clean_ticker} not in cache. Ingesting from Brapi PRO...")
+        await ingest_asset_history(clean_ticker, range_name)
         async with async_session_maker() as session:
             result = await session.execute(
                 select(AssetHistoricalPrice)
@@ -292,49 +352,44 @@ async def _get_db_history_standard(symbols: list[str], range_name: str = "1mo") 
             )
             rows = list(reversed(result.scalars().all()))
 
-        if not rows:
-            logger.info(f"History for {clean_ticker} not found in database cache. Ingesting from Brapi PRO...")
-            await ingest_asset_history(clean_ticker, range_name)
-            async with async_session_maker() as session:
-                result = await session.execute(
-                    select(AssetHistoricalPrice)
-                    .where(AssetHistoricalPrice.ticker == clean_ticker)
-                    .order_by(AssetHistoricalPrice.date.desc())
-                    .limit(HISTORY_LIMITS.get(range_name, 32))
-                )
-                rows = list(reversed(result.scalars().all()))
+    if rows:
+        return [{
+            "symbol": app_ticker,
+            "history": [
+                {
+                    "timestamp": int(datetime.combine(row.date, datetime.min.time(), tzinfo=UTC).timestamp()),
+                    "open": row.open,
+                    "high": row.high,
+                    "low": row.low,
+                    "close": row.close,
+                    "volume": row.volume,
+                }
+                for row in rows
+            ],
+        }]
 
-        if rows:
-            results.append({
-                "symbol": app_ticker,
-                "history": [
-                    {
-                        "timestamp": int(datetime.combine(row.date, datetime.min.time(), tzinfo=UTC).timestamp()),
-                        "open": row.open,
-                        "high": row.high,
-                        "low": row.low,
-                        "close": row.close,
-                        "volume": row.volume,
-                    }
-                    for row in rows
-                ],
-            })
-            continue
+    logger.info(f"History for {clean_ticker} still unavailable. Using yfinance fallback.")
+    live = await asyncio.to_thread(yfinance_market.get_history, [clean_ticker], range_name)
+    return live.get("results", [])
 
-        logger.info(f"History for {clean_ticker} still unavailable. Using yfinance fallback response.")
-        live = await asyncio.to_thread(yfinance_market.get_history, [clean_ticker], range_name)
-        results.extend(live.get("results", []))
 
+async def _get_db_history_standard(symbols: list[str], range_name: str = "1mo") -> dict:
+    if not symbols:
+        return {"results": [], "error": "No tickers provided."}
+
+    # Fetch all symbols in parallel — critical for the comparator (2-4 assets at once).
+    parts = await asyncio.gather(*[_fetch_symbol_history(s, range_name) for s in symbols])
+    results = [entry for part in parts for entry in part]
     return {"results": results}
 
 
 async def get_db_status() -> dict:
     """Retrieve status of major indices from database cache."""
     symbols = ["^BVSP", "^GSPC", "^VIX"]
+    quotes = await asyncio.gather(*[get_db_quote(s) for s in symbols], return_exceptions=True)
     indices = []
-    for symbol in symbols:
-        quote = await get_db_quote(symbol)
-        if not quote:
+    for symbol, quote in zip(symbols, quotes):
+        if not quote or isinstance(quote, Exception):
             continue
         app_symbol = quote["symbol"]
         indices.append(
@@ -350,40 +405,45 @@ async def get_db_status() -> dict:
 
 async def get_db_currencies(pairs: list[str]) -> dict:
     """Retrieve currency quotes from cache, with PTAX fallback."""
-    currencies = []
+    if not pairs:
+        return {"currencies": []}
+
+    clean_pairs = [_clean_symbol(pair) for pair in pairs]
+
     async with async_session_maker() as session:
-        for pair in pairs:
-            clean_pair = _clean_symbol(pair)
+        result = await session.execute(
+            select(CurrencyQuote).where(CurrencyQuote.pair.in_(clean_pairs))
+        )
+        quotes = {q.pair: q for q in result.scalars().all()}
+
+        # If missing (e.g. USD-BRL PTAX not loaded yet)
+        if "USD-BRL" in clean_pairs and "USD-BRL" not in quotes:
+            logger.info("PTAX Dollar not in database. Triggering BCB SGS Dollar ingestion...")
+            await ingest_ptax_dollar()
             result = await session.execute(
-                select(CurrencyQuote).where(CurrencyQuote.pair == clean_pair)
+                select(CurrencyQuote).where(CurrencyQuote.pair.in_(clean_pairs))
             )
-            quote = result.scalar_one_or_none()
+            quotes = {q.pair: q for q in result.scalars().all()}
 
-            # If missing (e.g. USD-BRL PTAX not loaded yet)
-            if not quote and clean_pair == "USD-BRL":
-                logger.info("PTAX Dollar not in database. Triggering BCB SGS Dollar ingestion...")
-                await ingest_ptax_dollar()
-                result = await session.execute(
-                    select(CurrencyQuote).where(CurrencyQuote.pair == clean_pair)
-                )
-                quote = result.scalar_one_or_none()
+    currencies = []
+    for pair in clean_pairs:
+        quote = quotes.get(pair)
+        if not quote:
+            continue
 
-            if not quote:
-                continue
-
-            from_currency, to_currency = clean_pair.split("-") if "-" in clean_pair else (clean_pair, "BRL")
-            currencies.append(
-                {
-                    "fromCurrency": from_currency,
-                    "toCurrency": to_currency,
-                    "name": f"{from_currency}/{to_currency}",
-                    "bidPrice": quote.bid,
-                    "askPrice": quote.ask,
-                    "highPrice": quote.high,
-                    "lowPrice": quote.low,
-                    "updatedAtTimestamp": int(quote.updated_at.replace(tzinfo=UTC).timestamp()),
-                }
-            )
+        from_currency, to_currency = pair.split("-") if "-" in pair else (pair, "BRL")
+        currencies.append(
+            {
+                "fromCurrency": from_currency,
+                "toCurrency": to_currency,
+                "name": f"{from_currency}/{to_currency}",
+                "bidPrice": quote.bid,
+                "askPrice": quote.ask,
+                "highPrice": quote.high,
+                "lowPrice": quote.low,
+                "updatedAtTimestamp": int(quote.updated_at.replace(tzinfo=UTC).timestamp()),
+            }
+        )
     return {"currencies": currencies}
 
 
@@ -392,14 +452,26 @@ async def get_db_indicators() -> dict:
     indicators = {"selic": [], "inflation": []}
 
     async with async_session_maker() as session:
-        # Check if macro indicators exist, if empty trigger SGS sync
+        # Check if macro indicators exist, ordering by date desc to get the most recent record
         selic_check = await session.execute(
-            select(MacroIndicator).where(MacroIndicator.name == "SELIC").limit(1)
+            select(MacroIndicator).where(MacroIndicator.name == "SELIC").order_by(MacroIndicator.date.desc()).limit(1)
         )
         latest_selic = selic_check.scalar()
-        if not latest_selic or latest_selic.created_at.replace(tzinfo=UTC).date() < datetime.now(UTC).date():
-            logger.info("Macro indicators missing or stale. Performing Brapi PRO daily indicators sync...")
+
+        # Stale-while-revalidate: block only if database is completely empty
+        if not latest_selic:
+            logger.info("Macro indicators missing. Performing Brapi PRO daily indicators sync (blocking)...")
             await ingest_macro_indicators()
+            # Fetch again after sync
+            selic_check = await session.execute(
+                select(MacroIndicator).where(MacroIndicator.name == "SELIC").order_by(MacroIndicator.date.desc()).limit(1)
+            )
+            latest_selic = selic_check.scalar()
+        elif latest_selic.updated_at.replace(tzinfo=UTC).date() < datetime.now(UTC).date():
+            logger.info("Macro indicators stale. Performing Brapi PRO daily indicators sync (background)...")
+            t = asyncio.create_task(ingest_macro_indicators())
+            _bg_tasks.add(t)
+            t.add_done_callback(_bg_tasks.discard)
 
         # Query SELIC history
         selic_results = await session.execute(
@@ -427,7 +499,19 @@ async def get_db_indicators() -> dict:
                 "value": row.value,
             })
 
-    return indicators
+    # Prepare metadata
+    updated_at_iso = None
+    is_stale = True
+    if latest_selic:
+        updated_at_iso = latest_selic.updated_at.replace(tzinfo=UTC).isoformat() if latest_selic.updated_at else None
+        is_stale = latest_selic.updated_at.replace(tzinfo=UTC).date() < datetime.now(UTC).date()
+
+    return {
+        "selic": indicators["selic"],
+        "inflation": indicators["inflation"],
+        "updatedAt": updated_at_iso,
+        "isStale": is_stale,
+    }
 
 
 async def get_db_listings(
@@ -486,7 +570,7 @@ async def get_db_listings(
                         "type": "fixed_income",
                     })
         
-        # Paginate results
+        # Paginate results in Python for non-DB items (small fixed sets)
         page_size = max(1, min(limit, 100))
         total_count = len(stocks)
         total_pages = max(1, math.ceil(total_count / page_size))
@@ -508,24 +592,70 @@ async def get_db_listings(
         latest_update = latest_result.scalar_one_or_none()
 
     if _quote_is_stale(latest_update):
-        logger.info("Listings cache is stale. Refreshing B3 universe with Brapi PRO batch ingestion...")
-        await ingest_all_quotes()
+        if latest_update is None:
+            logger.info("Listings cache empty. Running initial Brapi PRO ingestion (blocking)...")
+            await ingest_all_quotes()
+        else:
+            logger.info("Listings cache stale. Triggering background refresh...")
+            t = asyncio.create_task(ingest_all_quotes())
+            _bg_tasks.add(t)
+            t.add_done_callback(_bg_tasks.discard)
 
+    # Fast SQL-level search, sort, and pagination
     async with async_session_maker() as session:
-        query = select(AssetQuote)
+        # Build query filtering out indexes
+        query = select(AssetQuote).where(
+            ~AssetQuote.ticker.like("^%"),
+            ~AssetQuote.ticker.like("%=X")
+        )
         if search:
             needle = f"%{search.upper().strip()}%"
-            query = query.where(AssetQuote.ticker.like(needle) | AssetQuote.name.like(needle))
+            query = query.where(AssetQuote.ticker.ilike(needle) | AssetQuote.name.ilike(needle))
 
+        # Apply sorting
+        sort_col = None
+        if sort_by == "name":
+            sort_col = AssetQuote.name
+        elif sort_by == "close":
+            sort_col = AssetQuote.price
+        elif sort_by == "change":
+            sort_col = AssetQuote.change_percent
+        elif sort_by == "change_abs":
+            sort_col = func.abs(AssetQuote.change_percent)
+        elif sort_by == "volume":
+            sort_col = AssetQuote.volume
+        elif sort_by == "market_cap_basic":
+            sort_col = AssetQuote.market_cap
+        elif sort_by == "sector":
+            sort_col = AssetQuote.sector
+        elif sort_by == "rank":
+            sort_col = AssetQuote.ticker
+
+        if sort_col is not None:
+            if sort_order == "desc":
+                query = query.order_by(desc(sort_col))
+            else:
+                query = query.order_by(sort_col)
+        else:
+            query = query.order_by(AssetQuote.name)
+
+        # Count total matches
+        count_query = select(func.count()).select_from(query.subquery())
+        total_count = await session.scalar(count_query) or 0
+
+        # Calculate pagination bounds
+        page_size = max(1, min(limit, 100))
+        total_pages = max(1, math.ceil(total_count / page_size))
+        current_page = max(1, min(page, total_pages))
+        start = (current_page - 1) * page_size
+
+        # Fetch page records
+        query = query.offset(start).limit(page_size)
         result = await session.execute(query)
         quotes = result.scalars().all()
 
     stocks = []
     for q in quotes:
-        # Filter out indexes from main stock listings
-        if q.ticker.startswith("^") or q.ticker.endswith("=X"):
-            continue
-
         stocks.append(
             {
                 "stock": _app_symbol(q.ticker),
@@ -540,29 +670,8 @@ async def get_db_listings(
             }
         )
 
-    # Sort results
-    reverse = sort_order == "desc"
-    key_map = {
-        "name": lambda item: item["name"],
-        "close": lambda item: item["close"],
-        "change": lambda item: item["change"],
-        "change_abs": lambda item: abs(item["change"]),
-        "volume": lambda item: item["volume"],
-        "market_cap_basic": lambda item: item["marketCap"] or 0,
-        "sector": lambda item: item["sector"] or "",
-        "rank": lambda item: item["stock"],
-    }
-    stocks.sort(key=key_map.get(sort_by, key_map["name"]), reverse=reverse)
-
-    # Paginate results
-    page_size = max(1, min(limit, 100))
-    total_count = len(stocks)
-    total_pages = max(1, math.ceil(total_count / page_size))
-    current_page = max(1, min(page, total_pages))
-    start = (current_page - 1) * page_size
-
     return {
-        "stocks": stocks[start : start + page_size],
+        "stocks": stocks,
         "indexes": [{"stock": symbol, "name": name} for symbol, name in INDEX_NAMES.items()],
         "currentPage": current_page,
         "totalPages": total_pages,

@@ -81,7 +81,7 @@ export default async function NewsPage() {
   const radarItems = buildRadarItems(gainers, losers)
 
   return (
-    <AppShell active="news">
+    <AppShell active="news" sessionUser={session.user}>
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1fr_22rem] 2xl:grid-cols-[1fr_24rem] items-start w-full">
         {/* Coluna Esquerda: Feed Principal de Notícias */}
         <div className="flex flex-col gap-5 min-w-0">

@@ -3,7 +3,7 @@ import { PageLoadingContent } from '@/components/navigation/PageLoadingContent'
 
 export default function HomeLoading() {
   return (
-    <AppShell active="market">
+    <AppShell active="market" skipUserLookup>
       <PageLoadingContent />
     </AppShell>
   )
