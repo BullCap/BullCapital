@@ -242,6 +242,112 @@ def get_static_crypto_quote(symbol: str) -> dict | None:
 def get_static_crypto_history_points(symbol: str, range_name: str = "1mo") -> list[dict]:
     return []  # histórico de cripto indisponível sem yfinance
 
+
+# ── CoinGecko integration (free public API, no key required) ──────────────────
+
+COINGECKO_IDS: dict[str, str] = {
+    "BTC": "bitcoin",
+    "ETH": "ethereum",
+    "SOL": "solana",
+    "XRP": "ripple",
+    "ADA": "cardano",
+}
+
+_COINGECKO_RANGE_DAYS: dict[str, int] = {
+    "1d": 1, "5d": 5, "1mo": 30, "3mo": 90, "6mo": 180, "1y": 365,
+}
+
+_coingecko_quote_cache: dict[str, tuple[float, dict]] = {}
+_coingecko_cache_lock = threading.Lock()
+_COINGECKO_TTL = 120.0  # 2 minutes
+
+
+def _coingecko_quote(symbol: str) -> dict | None:
+    """Fetch a single crypto quote from CoinGecko in BRL. Cached for 2 minutes."""
+    base = symbol.split("-", 1)[0].upper()
+    coin_id = COINGECKO_IDS.get(base)
+    if not coin_id:
+        return None
+
+    now = time.time()
+    with _coingecko_cache_lock:
+        cached = _coingecko_quote_cache.get(base)
+        if cached and now - cached[0] < _COINGECKO_TTL:
+            return cached[1]
+
+    try:
+        url = (
+            "https://api.coingecko.com/api/v3/simple/price"
+            f"?ids={coin_id}&vs_currencies=brl"
+            "&include_24hr_change=true&include_market_cap=true&include_24hr_vol=true"
+        )
+        with httpx.Client(timeout=8) as client:
+            resp = client.get(url)
+        resp.raise_for_status()
+        data = resp.json().get(coin_id, {})
+        if not data.get("brl"):
+            return None
+
+        static = STATIC_CRYPTO_QUOTES.get(base, {})
+        result: dict = {
+            "symbol": base,
+            "shortName": static.get("name", f"{base} BRL"),
+            "longName": static.get("name", f"{base} BRL"),
+            "regularMarketPrice": data["brl"],
+            "regularMarketChangePercent": data.get("brl_24h_change", 0.0),
+            "regularMarketVolume": data.get("brl_24h_vol", 0.0),
+            "marketCap": int(data.get("brl_market_cap") or 0),
+            "logourl": "",
+            "fiftyTwoWeekHigh": data["brl"] * 1.25,
+            "fiftyTwoWeekLow": data["brl"] * 0.75,
+            "sector": "Cripto",
+            "industry": "Criptomoeda",
+            "website": "",
+            "longBusinessSummary": f"Criptoativo {static.get('name', base)} — dados via CoinGecko.",
+            "fullTimeEmployees": 0,
+            "trailingPE": 0.0,
+            "profitMargins": 0.0,
+            "dividendYield": 0.0,
+            "averageVolume": data.get("brl_24h_vol", 0.0),
+            "is_stale": False,
+        }
+        with _coingecko_cache_lock:
+            _coingecko_quote_cache[base] = (time.time(), result)
+        return result
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).warning("CoinGecko quote failed for %s: %s", base, e)
+        return None
+
+
+def _coingecko_history(symbol: str, range_name: str = "1mo") -> list[dict]:
+    """Fetch OHLCV history from CoinGecko in BRL."""
+    base = symbol.split("-", 1)[0].upper()
+    coin_id = COINGECKO_IDS.get(base)
+    if not coin_id:
+        return []
+
+    days = _COINGECKO_RANGE_DAYS.get(range_name, 30)
+    try:
+        url = (
+            f"https://api.coingecko.com/api/v3/coins/{coin_id}/market_chart"
+            f"?vs_currency=brl&days={days}"
+        )
+        with httpx.Client(timeout=10) as client:
+            resp = client.get(url)
+        resp.raise_for_status()
+        prices = resp.json().get("prices", [])
+        points = []
+        for ts_ms, price in prices:
+            from datetime import datetime, timezone
+            dt = datetime.fromtimestamp(ts_ms / 1000, tz=timezone.utc)
+            points.append({"date": dt.isoformat(), "close": price, "open": price, "high": price, "low": price, "volume": 0})
+        return points
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).warning("CoinGecko history failed for %s: %s", base, e)
+        return []
+
 # In-memory thread-safe cache for treasury bonds list
 _treasury_cache = None
 _treasury_cache_time = 0.0
@@ -628,11 +734,12 @@ def get_history(tickers: list[str], range_name: str = "1mo") -> dict:
         if symbol_upper.startswith("TESOURO_"):
             points = get_treasury_history_points(symbol_upper, range_name)
             results.append({"symbol": symbol_upper, "history": points})
+        elif _is_crypto(symbol_upper):
+            points = _coingecko_history(symbol_upper, range_name)
+            results.append({"symbol": symbol_upper, "history": points})
         else:
             frame = _history_frame(symbol, range_name)
             points = _history_points(frame)
-            if not points and _is_crypto(symbol_upper):
-                points = get_static_crypto_history_points(symbol_upper, range_name)
             results.append({"symbol": _app_symbol(symbol), "history": points})
     return {"results": results}
 
@@ -645,9 +752,14 @@ def get_quote(symbol: str) -> dict | None:
     yahoo_symbol = _yahoo_symbol(symbol)
     app_symbol = _app_symbol(yahoo_symbol)
     is_crypto = _is_crypto(app_symbol)
-    
-    if is_crypto and not is_yfinance_healthy():
-        return get_static_crypto_quote(app_symbol)
+
+    # Crypto: use CoinGecko (Yahoo Finance no longer supports *-BRL pairs)
+    if is_crypto:
+        result = _coingecko_quote(app_symbol)
+        return result if result is not None else get_static_crypto_quote(app_symbol)
+
+    if not is_yfinance_healthy():
+        return None
         
     try:
         ticker = yf.Ticker(yahoo_symbol)
