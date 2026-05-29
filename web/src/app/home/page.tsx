@@ -1,95 +1,166 @@
 import { redirect } from 'next/navigation'
+import { Suspense, cache } from 'react'
 import { auth } from '@/lib/auth'
-import { getMarketListings, getAssetHistory, getCurrencyRates, getMultipleQuotes } from '@/lib/services/market'
-import {
-  fetchSELIC,
-  fetchIPCA,
-  fetchMarketQuote,
-  isMarketOpen,
-} from '@/lib/market-utils'
+import { getHomeHighlightsSnapshot, getMarketPulseSnapshot } from '@/lib/services/market'
+import { isMarketOpen } from '@/lib/market-utils'
 import IndexCard from '@/components/home/IndexCard'
 import SELICCard from '@/components/home/SELICCard'
 import VixCard from '@/components/home/VixCard'
-import { DailyBriefContent, DailyBriefSkeleton } from '@/components/home/DailyBriefContent'
+import { DailyBriefContent } from '@/components/home/DailyBriefContent'
+import DailyBriefHero, { type BriefPulseData } from '@/components/home/DailyBriefHero'
 import MarketMapSection from '@/components/home/MarketMapSection'
 import MarketHighlightsSection from '@/components/home/MarketHighlightsSection'
-import { SECTOR_TREEMAP_TICKERS } from '@/components/home/SectorTreeMap'
 import { StoryDigestLoader, StoryDigestSkeleton } from '@/components/home/StoryDigestLoader'
-import type { NewsRadarItem } from '@/lib/news-radar'
 import AppShell from '@/components/navigation/AppShell'
 import ScrollFocus from '@/components/ui/ScrollFocus'
-import { Suspense } from 'react'
+import type {
+  AssetQuote,
+  CurrencyRate,
+  HomeHighlightsSnapshot,
+  MarketListingItem,
+  PrimeRateEntry,
+} from '@/types/market'
 
 function normalizeQuoteSymbol(symbol: string) {
   return symbol.toUpperCase().replace(/\.SA$/, '').replace(/[^A-Z0-9]/g, '')
 }
 
-export default async function HomePage() {
-  const session = await auth()
-  if (!session?.user) redirect('/auth/sign-in')
+interface MarketQuoteSummary {
+  price: number
+  changePercent: number
+  name: string | null
+}
 
-  const [
-    ibovResult,
-    sp500Result,
-    vixResult,
-    selicResult,
-    ipcaResult,
-    gainersResult,
-    losersResult,
-    historyResult,
-    fxResult,
-    mostTradedResult,
-    treemapResult,
-    cryptoResult,
-    fixedIncomeResult,
-  ] =
-    await Promise.allSettled([
-      fetchMarketQuote('^BVSP'),
-      fetchMarketQuote('^GSPC'),
-      fetchMarketQuote('^VIX'),
-      fetchSELIC(),
-      fetchIPCA(),
-      getMarketListings({ sortBy: 'change', sortOrder: 'desc', limit: 6, type: 'stock' }),
-      getMarketListings({ sortBy: 'change', sortOrder: 'asc', limit: 6, type: 'stock' }),
-      getAssetHistory(['^BVSP', '^GSPC'], '1mo'),
-      getCurrencyRates(['USD-BRL']),
-      getMarketListings({ sortBy: 'volume', sortOrder: 'desc', limit: 6, type: 'stock' }),
-      getMultipleQuotes(SECTOR_TREEMAP_TICKERS),
-      getMarketListings({ limit: 6, type: 'crypto' }),
-      getMarketListings({ limit: 6, type: 'fixed_income' }),
-    ])
+interface CoreMarketPulse {
+  ibov: MarketQuoteSummary | null
+  sp500: MarketQuoteSummary | null
+  vix: number | null
+  selicData: { rate: string; date: string } | null
+  ipcaData: { rate: string; date: string } | null
+  ibovCloses: number[]
+  sp500Closes: number[]
+  usdBrl: CurrencyRate | null
+  usdBrlChange: number | null
+  selicValue: string | null
+  marketOpen: boolean
+  contextLine: string
+  briefPulse: BriefPulseData
+}
 
-  const ibov = ibovResult.status === 'fulfilled' ? ibovResult.value : null
-  const sp500 = sp500Result.status === 'fulfilled' ? sp500Result.value : null
-  const vix = vixResult.status === 'fulfilled' ? (vixResult.value?.price ?? null) : null
-  const fxData = fxResult.status === 'fulfilled' ? fxResult.value : null
-  const usdBrl = fxData?.currencies?.find((c) => c.name === 'USD/BRL') ?? null
+interface MarketHighlightsData {
+  gainers: MarketListingItem[]
+  losers: MarketListingItem[]
+  mostTraded: MarketListingItem[]
+  crypto: MarketListingItem[]
+  fixedIncome: MarketListingItem[]
+}
+
+function emptyMarketHighlightsData(): MarketHighlightsData {
+  return {
+    gainers: [],
+    losers: [],
+    mostTraded: [],
+    crypto: [],
+    fixedIncome: [],
+  }
+}
+
+function quoteSummary(quotes: AssetQuote[], symbol: string): MarketQuoteSummary | null {
+  const quote = quotes.find((item) => item.symbol === symbol)
+  if (!quote) return null
+
+  return {
+    price: Number(quote.regularMarketPrice ?? 0),
+    changePercent: Number(quote.regularMarketChangePercent ?? 0),
+    name: quote.longName ?? quote.shortName ?? null,
+  }
+}
+
+function formatMacroEntry(entry: PrimeRateEntry | undefined): { rate: string; date: string } | null {
+  if (!entry) return null
+  const numValue = typeof entry.value === 'number' ? entry.value : parseFloat(String(entry.value))
+  if (Number.isNaN(numValue)) return null
+
+  return {
+    rate: `${numValue.toLocaleString('pt-BR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}% a.a.`,
+    date: entry.date,
+  }
+}
+
+const getCoreMarketPulse = cache(async (): Promise<CoreMarketPulse> => {
+  const marketOpen = isMarketOpen()
+  const snapshot = await getMarketPulseSnapshot()
+  const quotes = snapshot.quotes.results ?? []
+  const ibov = quoteSummary(quotes, '^BVSP')
+  const sp500 = quoteSummary(quotes, '^GSPC')
+  const vixQuote = quoteSummary(quotes, '^VIX')
+  const vix = vixQuote?.price ?? null
+  const selicData = formatMacroEntry(snapshot.indicators.selic?.[0])
+  const ipcaData = formatMacroEntry(snapshot.indicators.inflation?.[0])
+  const usdBrl = snapshot.currency.currencies?.find((c) => c.name === 'USD/BRL') ?? null
   const usdBrlChange = usdBrl
     ? usdBrl.lowPrice > 0
       ? +((usdBrl.bidPrice - usdBrl.lowPrice) / usdBrl.lowPrice * 100).toFixed(2)
       : null
     : null
 
-  const historyData = historyResult.status === 'fulfilled' ? historyResult.value : null
-  const ibovHistory = historyData?.results?.find((r) => r.symbol === '^BVSP')?.history ?? []
-  const sp500History = historyData?.results?.find((r) => r.symbol === '^GSPC')?.history ?? []
+  const ibovHistory = snapshot.history.results?.find((r) => r.symbol === '^BVSP')?.history ?? []
+  const sp500History = snapshot.history.results?.find((r) => r.symbol === '^GSPC')?.history ?? []
   const ibovCloses = ibovHistory.map((h) => h.close).filter(Number.isFinite)
   const sp500Closes = sp500History.map((h) => h.close).filter(Number.isFinite)
+  const selicValue = selicData?.rate ?? null
+  const contextLine = marketOpen ? 'pregão em andamento' : 'mercado fora do horário regular'
 
-  const selicData = selicResult.status === 'fulfilled' ? selicResult.value : null
-  const ipcaData = ipcaResult.status === 'fulfilled' ? ipcaResult.value : null
+  return {
+    ibov,
+    sp500,
+    vix,
+    selicData,
+    ipcaData,
+    ibovCloses,
+    sp500Closes,
+    usdBrl,
+    usdBrlChange,
+    selicValue,
+    marketOpen,
+    contextLine,
+    briefPulse: {
+      ibovPrice: ibov?.price ?? null,
+      ibovChange: ibov?.changePercent ?? null,
+      ibovHistory: ibovCloses,
+      sp500Change: sp500?.changePercent ?? null,
+      vix,
+      selicValue,
+      usdBrlPrice: usdBrl?.bidPrice ?? null,
+      usdBrlChange,
+      marketOpen,
+    },
+  }
+})
 
-  const gainersRaw = gainersResult.status === 'fulfilled' ? (gainersResult.value?.stocks ?? []) : []
-  const losersRaw = losersResult.status === 'fulfilled' ? (losersResult.value?.stocks ?? []) : []
-  const mostTradedRaw = mostTradedResult.status === 'fulfilled' ? (mostTradedResult.value?.stocks ?? []) : []
-  const cryptoRaw = cryptoResult.status === 'fulfilled' ? (cryptoResult.value?.stocks ?? []) : []
-  const fixedIncomeRaw = fixedIncomeResult.status === 'fulfilled' ? (fixedIncomeResult.value?.stocks ?? []) : []
+const getHomeMarketSnapshot = cache(async (): Promise<HomeHighlightsSnapshot> => getHomeHighlightsSnapshot())
 
+const getMarketHighlightsData = cache(async (): Promise<MarketHighlightsData> => {
+  const snapshot = await getHomeMarketSnapshot()
+
+  return {
+    gainers: snapshot.gainers?.stocks ?? [],
+    losers: snapshot.losers?.stocks ?? [],
+    mostTraded: snapshot.mostTraded?.stocks ?? [],
+    crypto: snapshot.crypto?.stocks ?? [],
+    fixedIncome: snapshot.fixedIncome?.stocks ?? [],
+  }
+})
+
+const getMarketMapAssets = cache(async (): Promise<MarketListingItem[]> => {
+  const [highlights, snapshot] = await Promise.all([getMarketHighlightsData(), getHomeMarketSnapshot()])
   const bubbleAssets = Array.from(
-    new Map([...gainersRaw, ...losersRaw].map((asset) => [asset.stock, asset])).values()
+    new Map([...highlights.gainers, ...highlights.losers].map((asset) => [asset.stock, asset])).values()
   )
-
-  const treemapQuotes = treemapResult.status === 'fulfilled' ? (treemapResult.value?.results ?? []) : []
+  const treemapQuotes = snapshot.treemapQuotes?.results ?? []
   const treemapAssets = treemapQuotes.map((q) => ({
     stock: normalizeQuoteSymbol(q.symbol),
     name: q.shortName ?? q.longName ?? q.symbol,
@@ -101,14 +172,154 @@ export default async function HomePage() {
     sector: q.sector ?? null,
     type: 'stock' as const,
   }))
-  const mapAssets = Array.from(
+
+  return Array.from(
     new Map([...bubbleAssets, ...treemapAssets].map((asset) => [asset.stock, asset])).values()
   )
+})
 
-  const topStories: NewsRadarItem[] = []
+async function MarketNowSection() {
+  const { ibov, sp500, vix, selicData, ipcaData, ibovCloses, sp500Closes, marketOpen } =
+    await getCoreMarketPulse()
+
+  return (
+    <section className="space-y-4">
+      <div className="px-1">
+        <p className="bull-eyebrow">Mercado</p>
+        <h2 className="mt-1 font-serif text-2xl tracking-tight text-[#F4F0FF]/80">Agora</h2>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-4">
+        <ScrollFocus>
+          <IndexCard
+            name="IBOVESPA"
+            price={ibov?.price ?? null}
+            changePercent={ibov?.changePercent ?? null}
+            isOpen={marketOpen}
+            historyData={ibovCloses}
+          />
+        </ScrollFocus>
+        <ScrollFocus>
+          <IndexCard
+            name="S&P 500"
+            price={sp500?.price ?? null}
+            changePercent={sp500?.changePercent ?? null}
+            isOpen={marketOpen}
+            historyData={sp500Closes}
+          />
+        </ScrollFocus>
+        <ScrollFocus>
+          <SELICCard selic={selicData} ipca={ipcaData} />
+        </ScrollFocus>
+        <ScrollFocus>
+          <VixCard value={vix} />
+        </ScrollFocus>
+      </div>
+    </section>
+  )
+}
+
+function MarketNowFallback() {
+  const marketOpen = isMarketOpen()
+
+  return (
+    <section className="space-y-4">
+      <div className="px-1">
+        <p className="bull-eyebrow">Mercado</p>
+        <h2 className="mt-1 font-serif text-2xl tracking-tight text-[#F4F0FF]/80">Agora</h2>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-4">
+        <IndexCard name="IBOVESPA" price={null} changePercent={null} isOpen={marketOpen} />
+        <IndexCard name="S&P 500" price={null} changePercent={null} isOpen={marketOpen} />
+        <SELICCard selic={null} ipca={null} />
+        <VixCard value={null} />
+      </div>
+    </section>
+  )
+}
+
+async function DailyBriefPanel({ dateLabel }: { dateLabel: string }) {
+  const { ibov, sp500, vix, selicValue, marketOpen, contextLine, briefPulse } = await getCoreMarketPulse()
+
+  return (
+    <DailyBriefContent
+      ibovChange={ibov?.changePercent ?? null}
+      sp500Change={sp500?.changePercent ?? null}
+      vix={vix}
+      selicValue={selicValue}
+      marketOpen={marketOpen}
+      storyHeadlines={[]}
+      contextLine={contextLine}
+      dateLabel={dateLabel}
+      storiesCount={0}
+      pulse={briefPulse}
+    />
+  )
+}
+
+function DailyBriefFallback({ dateLabel, contextLine }: { dateLabel: string; contextLine: string }) {
+  return (
+    <DailyBriefHero
+      contextLine={contextLine}
+      dateLabel={dateLabel}
+      focusPoints={['Ibovespa em leitura.', 'Volatilidade em atualização.', 'Juros no radar.']}
+      headline="Preparando briefing do dia."
+      storiesCount={0}
+      summary="A leitura de mercado está sendo montada com os dados mais recentes disponíveis."
+      pulse={{
+        ibovPrice: null,
+        ibovChange: null,
+        ibovHistory: [],
+        sp500Change: null,
+        vix: null,
+        selicValue: null,
+        usdBrlPrice: null,
+        usdBrlChange: null,
+        marketOpen: isMarketOpen(),
+      }}
+    />
+  )
+}
+
+async function MarketHighlightsPanel() {
+  const highlights = await getMarketHighlightsData()
+
+  return (
+    <MarketHighlightsSection
+      stockGainers={highlights.gainers}
+      stockLosers={highlights.losers}
+      stockMostTraded={highlights.mostTraded}
+      cryptoHighlights={highlights.crypto}
+      fixedIncomeHighlights={highlights.fixedIncome}
+    />
+  )
+}
+
+function MarketHighlightsFallback() {
+  const highlights = emptyMarketHighlightsData()
+
+  return (
+    <MarketHighlightsSection
+      stockGainers={highlights.gainers}
+      stockLosers={highlights.losers}
+      stockMostTraded={highlights.mostTraded}
+      cryptoHighlights={highlights.crypto}
+      fixedIncomeHighlights={highlights.fixedIncome}
+    />
+  )
+}
+
+async function MarketMapPanel() {
+  const assets = await getMarketMapAssets()
+  return <MarketMapSection assets={assets} />
+}
+
+export default async function HomePage() {
+  const session = await auth()
+  if (!session?.user) redirect('/auth/sign-in')
 
   const marketOpen = isMarketOpen()
-  const selicValue = selicData?.rate ?? null
   const dateLabel = new Intl.DateTimeFormat('pt-BR', {
     day: '2-digit',
     month: 'long',
@@ -119,21 +330,6 @@ export default async function HomePage() {
   const hour = brt.getHours()
   const firstName = session.user.name?.trim().split(/\s+/)[0] ?? session.user.email?.split('@')[0] ?? 'você'
   const greetingStart = hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite'
-  const storyLine = topStories.length > 0
-    ? `${topStories.length} históri${topStories.length === 1 ? 'a' : 'as'} no radar.`
-    : contextLine
-
-  const briefPulse = {
-    ibovPrice: ibov?.price ?? null,
-    ibovChange: ibov?.changePercent ?? null,
-    ibovHistory: ibovCloses,
-    sp500Change: sp500?.changePercent ?? null,
-    vix,
-    selicValue,
-    usdBrlPrice: usdBrl?.bidPrice ?? null,
-    usdBrlChange,
-    marketOpen,
-  }
 
   return (
     <AppShell
@@ -147,68 +343,23 @@ export default async function HomePage() {
           <h1 className="mt-2 font-serif text-3xl tracking-tight text-[#F4F0FF] md:text-4xl">
             {greetingStart}, <span className="text-gradient-amethyst font-semibold">{firstName}</span>.
           </h1>
-          <p className="mt-1 text-sm text-[#DBEAFE]/50">{storyLine}</p>
+          <p className="mt-1 text-sm text-[#DBEAFE]/50">{contextLine}</p>
         </div>
       </header>
 
       <div className="space-y-6">
-        <section className="space-y-4">
-          <div className="px-1">
-            <p className="bull-eyebrow">Mercado</p>
-            <h2 className="mt-1 font-serif text-2xl tracking-tight text-[#F4F0FF]/80">Agora</h2>
-          </div>
+        <Suspense fallback={<MarketNowFallback />}>
+          <MarketNowSection />
+        </Suspense>
 
-          <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-4">
-            <ScrollFocus>
-              <IndexCard
-                name="IBOVESPA"
-                price={ibov?.price ?? null}
-                changePercent={ibov?.changePercent ?? null}
-                isOpen={marketOpen}
-                historyData={ibovCloses}
-              />
-            </ScrollFocus>
-            <ScrollFocus>
-              <IndexCard
-                name="S&P 500"
-                price={sp500?.price ?? null}
-                changePercent={sp500?.changePercent ?? null}
-                isOpen={marketOpen}
-                historyData={sp500Closes}
-              />
-            </ScrollFocus>
-            <ScrollFocus>
-              <SELICCard selic={selicData} ipca={ipcaData} />
-            </ScrollFocus>
-            <ScrollFocus>
-              <VixCard value={vix} />
-            </ScrollFocus>
-          </div>
-        </section>
-
-        <Suspense fallback={<DailyBriefSkeleton dateLabel={dateLabel} storiesCount={topStories.length} />}>
-          <DailyBriefContent
-            ibovChange={ibov?.changePercent ?? null}
-            sp500Change={sp500?.changePercent ?? null}
-            vix={vix}
-            selicValue={selicValue}
-            marketOpen={marketOpen}
-            storyHeadlines={topStories.map((s) => s.headline)}
-            contextLine={contextLine}
-            dateLabel={dateLabel}
-            storiesCount={topStories.length}
-            pulse={briefPulse}
-          />
+        <Suspense fallback={<DailyBriefFallback dateLabel={dateLabel} contextLine={contextLine} />}>
+          <DailyBriefPanel dateLabel={dateLabel} />
         </Suspense>
 
         <ScrollFocus>
-          <MarketHighlightsSection
-            stockGainers={gainersRaw}
-            stockLosers={losersRaw}
-            stockMostTraded={mostTradedRaw}
-            cryptoHighlights={cryptoRaw}
-            fixedIncomeHighlights={fixedIncomeRaw}
-          />
+          <Suspense fallback={<MarketHighlightsFallback />}>
+            <MarketHighlightsPanel />
+          </Suspense>
         </ScrollFocus>
 
         <div className="grid gap-6 2xl:grid-cols-[0.9fr_1.1fr] 2xl:items-stretch">
@@ -219,7 +370,9 @@ export default async function HomePage() {
           </ScrollFocus>
 
           <ScrollFocus>
-            <MarketMapSection assets={mapAssets} />
+            <Suspense fallback={<MarketMapSection assets={[]} />}>
+              <MarketMapPanel />
+            </Suspense>
           </ScrollFocus>
         </div>
       </div>

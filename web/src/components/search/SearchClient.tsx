@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, type ReactNode } from 'react'
 import Link from 'next/link'
 import { Search, ArrowUpRight } from 'lucide-react'
 import { GlassHighlight } from '@/components/atoms/GlassHighlight'
@@ -32,40 +32,13 @@ function timeAgo(timestamp: number): string {
 }
 
 interface SearchClientProps {
-  news: AssetNewsItem[]
+  news?: AssetNewsItem[]
+  mobileNews?: ReactNode
+  desktopNews?: ReactNode
 }
 
-export default function SearchClient({ news }: SearchClientProps) {
-  const [query, setQuery] = useState('')
-  const [results, setResults] = useState<AssetSearchResult[]>([])
-  const [loading, setLoading] = useState(false)
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  const hasQuery = query.trim().length >= 2
-  const isEmpty = !loading && hasQuery && results.length === 0
-  const showList = results.length > 0 || isEmpty
-
-  useEffect(() => {
-    if (debounceRef.current) clearTimeout(debounceRef.current)
-
-    if (query.trim().length < 2) {
-      setResults([])
-      return
-    }
-
-    debounceRef.current = setTimeout(async () => {
-      setLoading(true)
-      const data = await fetchSearch(query.trim())
-      setResults(data)
-      setLoading(false)
-    }, 300)
-
-    return () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current)
-    }
-  }, [query])
-
-  const RecentNewsWidget = (
+export function RecentNewsWidget({ news = [] }: { news?: AssetNewsItem[] }) {
+  return (
     <div className="bull-panel p-5 w-full">
       <GlassHighlight widthPercent={55} />
       <div className="mb-4 flex items-center justify-between gap-3">
@@ -111,6 +84,40 @@ export default function SearchClient({ news }: SearchClientProps) {
       )}
     </div>
   )
+}
+
+export default function SearchClient({ news = [], mobileNews, desktopNews }: SearchClientProps) {
+  const [query, setQuery] = useState('')
+  const [results, setResults] = useState<AssetSearchResult[]>([])
+  const [loading, setLoading] = useState(false)
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const hasQuery = query.trim().length >= 2
+  const isEmpty = !loading && hasQuery && results.length === 0
+  const showList = results.length > 0 || isEmpty
+
+  const mobileNewsContent = mobileNews ?? <RecentNewsWidget news={news} />
+  const desktopNewsContent = desktopNews ?? <RecentNewsWidget news={news} />
+
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+
+    if (query.trim().length < 2) {
+      setResults([])
+      return
+    }
+
+    debounceRef.current = setTimeout(async () => {
+      setLoading(true)
+      const data = await fetchSearch(query.trim())
+      setResults(data)
+      setLoading(false)
+    }, 300)
+
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current)
+    }
+  }, [query])
 
   return (
     <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1fr_22rem] 2xl:grid-cols-[1fr_24rem] items-start w-full">
@@ -201,14 +208,14 @@ export default function SearchClient({ news }: SearchClientProps) {
         {/* Notícias no mobile (visíveis apenas se não houver query e em telas < xl) */}
         {!hasQuery && (
           <div className="xl:hidden">
-            {RecentNewsWidget}
+            {mobileNewsContent}
           </div>
         )}
       </div>
 
       {/* Coluna Direita (Sticky, apenas xl+): Notícias Recentes da B3 */}
       <div className="hidden xl:grid xl:content-start xl:gap-5 xl:sticky xl:top-24 w-full">
-        {RecentNewsWidget}
+        {desktopNewsContent}
       </div>
     </div>
   )

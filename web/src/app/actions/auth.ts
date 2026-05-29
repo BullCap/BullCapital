@@ -4,6 +4,7 @@ import { AuthError } from 'next-auth'
 import { signIn } from '@/lib/auth'
 import { hash } from 'bcryptjs'
 import { prisma } from '@/lib/db'
+import { Prisma } from '@/generated/prisma/client'
 import { z } from 'zod'
 
 export type AuthActionState =
@@ -50,13 +51,20 @@ export async function register(
 
   const passwordHash = await hash(password, 12)
 
-  await prisma.user.create({
-    data: {
-      email,
-      passwordHash,
-      name: name || null,
-    },
-  })
+  try {
+    await prisma.user.create({
+      data: {
+        email,
+        passwordHash,
+        name: name || null,
+      },
+    })
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+      return { success: false, error: 'Já existe uma conta com este e-mail.' }
+    }
+    throw error
+  }
 
   try {
     await signIn('credentials', { email, password, redirect: false })

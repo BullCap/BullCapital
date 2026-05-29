@@ -2,13 +2,69 @@
 
 import asyncio
 import math
+from collections.abc import Awaitable
 from datetime import UTC, datetime
+from typing import TypeVar
 
-from fastapi import APIRouter, BackgroundTasks, status
+from fastapi import APIRouter, BackgroundTasks, Query, status
+from pydantic import BaseModel, Field, field_validator
 
 from app.services import bcb_sgs, market_db, market_ingest, news_ingest, yfinance_market
 
 router = APIRouter(prefix="/market", tags=["market"])
+T = TypeVar("T")
+
+MAX_QUOTE_SYMBOLS = 50
+MAX_HISTORY_SYMBOLS = 8
+MAX_NEWS_COUNT = 24
+
+HOME_TREEMAP_TICKERS = [
+    "VALE3",
+    "PETR4",
+    "ITUB4",
+    "PETR3",
+    "AXIA3",
+    "BBDC4",
+    "SBSP3",
+    "B3SA3",
+    "ITSA4",
+    "ABEV3",
+    "BPAC11",
+    "WEGE3",
+    "BBAS3",
+    "PRIO3",
+    "GGBR4",
+    "EMBJ3",
+    "EQTL3",
+    "ENEVE3",
+    "CPLE3",
+    "RENT3",
+    "VBBR3",
+    "RDOR3",
+    "UGPA3",
+]
+
+TERMINAL_DEFAULT_TICKERS = ["PETR4", "VALE3", "ITUB4", "BBAS3", "TAEE11", "MXRF11"]
+
+
+class QuotesPayload(BaseModel):
+    symbols: list[str] = Field(default_factory=list, max_length=MAX_QUOTE_SYMBOLS)
+
+    @field_validator("symbols")
+    @classmethod
+    def normalize_symbols(cls, value: list[str]) -> list[str]:
+        seen: set[str] = set()
+        normalized: list[str] = []
+        for raw_symbol in value:
+            symbol = str(raw_symbol).strip()
+            if not symbol:
+                continue
+            key = symbol.upper()
+            if key in seen:
+                continue
+            seen.add(key)
+            normalized.append(symbol)
+        return normalized
 
 
 @router.get("/quote/{symbol}")
@@ -19,12 +75,9 @@ async def quote(symbol: str) -> dict:
 
 
 @router.post("/quotes")
-async def quotes(payload: dict) -> dict:
+async def quotes(payload: QuotesPayload) -> dict:
     """Get quotes for multiple symbols through the backend market boundary."""
-    symbols = payload.get("symbols") if isinstance(payload, dict) else []
-    if not isinstance(symbols, list):
-        symbols = []
-    return await market_db.get_db_quotes([str(symbol) for symbol in symbols])
+    return await market_db.get_db_quotes(payload.symbols)
 
 
 @router.get("/status")
@@ -36,8 +89,13 @@ async def status_endpoint() -> dict:
 @router.get("/radar/{symbol}")
 async def radar(symbol: str) -> dict:
     """Get radar scores from yfinance, enriched with Brapi PRO fundamentals from the DB cache."""
-    result = await asyncio.to_thread(yfinance_market.get_radar, symbol)
-    db_quote = await market_db.get_db_quote(symbol)
+    radar_result, db_quote_result = await asyncio.gather(
+        asyncio.to_thread(yfinance_market.get_radar, symbol),
+        market_db.get_db_quote(symbol),
+        return_exceptions=True,
+    )
+    result = None if isinstance(radar_result, Exception) else radar_result
+    db_quote = None if isinstance(db_quote_result, Exception) else db_quote_result
 
     if not result:
         if not db_quote:
@@ -84,8 +142,8 @@ async def radar(symbol: str) -> dict:
 
 @router.get("/listings")
 async def listings(
-    page: int = 1,
-    limit: int = 20,
+    page: int = Query(default=1, ge=1),
+    limit: int = Query(default=20, ge=1, le=100),
     sortBy: str = "name",
     sortOrder: str = "asc",
     type: str | None = None,
@@ -102,14 +160,139 @@ async def listings(
     )
 
 
+async def _safe(coro: Awaitable[T], fallback: T) -> T:
+    try:
+        return await coro
+    except Exception:
+        return fallback
+
+
+@router.get("/snapshot/pulse")
+async def pulse_snapshot() -> dict[str, object]:
+    """Aggregated market pulse for top-of-page cards and daily brief context."""
+    quotes_task = _safe(market_db.get_db_quotes(["^BVSP", "^GSPC", "^VIX"]), {"results": []})
+    history_task = _safe(market_db.get_db_history(["^BVSP", "^GSPC"], "1mo"), {"results": []})
+    indicators_task = _safe(market_db.get_db_indicators(), {"selic": [], "inflation": []})
+    currency_task = _safe(market_db.get_db_currencies(["USD-BRL"]), {"currencies": []})
+    quotes, history, indicators, currency = await asyncio.gather(
+        quotes_task,
+        history_task,
+        indicators_task,
+        currency_task,
+    )
+    return {
+        "quotes": quotes,
+        "history": history,
+        "indicators": indicators,
+        "currency": currency,
+        "updatedAt": datetime.now(UTC).isoformat(),
+    }
+
+
+@router.get("/snapshot/home-highlights")
+async def home_highlights_snapshot() -> dict[str, object]:
+    """Aggregated home highlights, alternative assets, and treemap quote data."""
+    gainers_task = _safe(
+        market_db.get_db_listings(limit=6, sort_by="change", sort_order="desc", item_type="stock"),
+        {"stocks": []},
+    )
+    losers_task = _safe(
+        market_db.get_db_listings(limit=6, sort_by="change", sort_order="asc", item_type="stock"),
+        {"stocks": []},
+    )
+    volume_task = _safe(
+        market_db.get_db_listings(limit=6, sort_by="volume", sort_order="desc", item_type="stock"),
+        {"stocks": []},
+    )
+    crypto_task = _safe(market_db.get_db_listings(limit=6, item_type="crypto"), {"stocks": []})
+    fixed_income_task = _safe(market_db.get_db_listings(limit=6, item_type="fixed_income"), {"stocks": []})
+    treemap_task = _safe(market_db.get_db_quotes(HOME_TREEMAP_TICKERS), {"results": []})
+    gainers, losers, most_traded, crypto, fixed_income, treemap_quotes = await asyncio.gather(
+        gainers_task,
+        losers_task,
+        volume_task,
+        crypto_task,
+        fixed_income_task,
+        treemap_task,
+    )
+    return {
+        "gainers": gainers,
+        "losers": losers,
+        "mostTraded": most_traded,
+        "crypto": crypto,
+        "fixedIncome": fixed_income,
+        "treemapQuotes": treemap_quotes,
+        "updatedAt": datetime.now(UTC).isoformat(),
+    }
+
+
+@router.get("/snapshot/landing")
+async def landing_snapshot() -> dict[str, object]:
+    """Aggregated public landing data so the hero can stream separately from market data."""
+    top_assets_task = _safe(
+        market_db.get_db_listings(limit=25, sort_by="market_cap_basic", sort_order="desc", item_type="stock"),
+        {"stocks": []},
+    )
+    gainers_task = _safe(
+        market_db.get_db_listings(limit=5, sort_by="change", sort_order="desc", item_type="stock"),
+        {"stocks": []},
+    )
+    losers_task = _safe(
+        market_db.get_db_listings(limit=5, sort_by="change", sort_order="asc", item_type="stock"),
+        {"stocks": []},
+    )
+    volume_task = _safe(
+        market_db.get_db_listings(limit=5, sort_by="volume", sort_order="desc", item_type="stock"),
+        {"stocks": []},
+    )
+    pulse_task = _safe(market_db.get_db_quotes(["^BVSP", "^VIX"]), {"results": []})
+    currency_task = _safe(market_db.get_db_currencies(["USD-BRL"]), {"currencies": []})
+    top_assets, gainers, losers, most_traded, pulse_quotes, currency = await asyncio.gather(
+        top_assets_task,
+        gainers_task,
+        losers_task,
+        volume_task,
+        pulse_task,
+        currency_task,
+    )
+    return {
+        "topAssets": top_assets,
+        "gainers": gainers,
+        "losers": losers,
+        "mostTraded": most_traded,
+        "quotes": pulse_quotes,
+        "currency": currency,
+        "updatedAt": datetime.now(UTC).isoformat(),
+    }
+
+
+@router.get("/snapshot/terminal")
+async def terminal_snapshot() -> dict[str, object]:
+    """Aggregated bootstrap payload for the Terminal workspace."""
+    quotes_task = _safe(market_db.get_db_quotes(TERMINAL_DEFAULT_TICKERS), {"results": []})
+    status_task = _safe(market_db.get_db_status(), {"indices": []})
+    currency_task = _safe(market_db.get_db_currencies(["USD-BRL"]), {"currencies": []})
+    quotes, market_status, currency = await asyncio.gather(quotes_task, status_task, currency_task)
+    return {
+        "quotes": quotes,
+        "marketStatus": market_status,
+        "currency": currency,
+        "updatedAt": datetime.now(UTC).isoformat(),
+    }
+
+
 @router.get("/treasury")
 async def treasury_endpoint() -> dict:
     """Get dynamic list of all Treasury Bonds from Brapi with fallback to local static bonds."""
-    from app.services.yfinance_market import fetch_live_treasury_bonds, TESOURO_BONDS, normalize_treasury_name_to_ticker
-    
-    live_bonds = fetch_live_treasury_bonds()
+    from app.services.yfinance_market import (
+        TESOURO_BONDS,
+        fetch_live_treasury_bonds,
+        normalize_treasury_name_to_ticker,
+    )
+
+    live_bonds = await asyncio.to_thread(fetch_live_treasury_bonds)
     results = []
-    
+
     if live_bonds:
         for b in live_bonds:
             name = b.get("name", "")
@@ -126,7 +309,7 @@ async def treasury_endpoint() -> dict:
                     "durationDays": b.get("durationDays"),
                     "indexer": TESOURO_BONDS[ticker]["indexer"],
                 })
-                
+
     if not results:
         for ticker, b in TESOURO_BONDS.items():
             results.append({
@@ -140,12 +323,16 @@ async def treasury_endpoint() -> dict:
                 "durationDays": 1000,
                 "indexer": b["indexer"],
             })
-            
+
     return {"data": results}
 
 
 @router.get("/search")
-async def search(q: str, limit: int = 10, page: int = 1) -> dict:
+async def search(
+    q: str = Query(min_length=1, max_length=64),
+    limit: int = Query(default=10, ge=1, le=25),
+    page: int = Query(default=1, ge=1),
+) -> dict:
     """Search assets: DB-first (full B3 universe by ticker and name), supplemented by yfinance."""
     seen: set[str] = set()
     results: list[dict] = []
@@ -209,7 +396,7 @@ def _normalize_title(value: str) -> str:
 
 
 @router.get("/news/{symbol}")
-async def news(symbol: str, count: int = 3) -> list[dict]:
+async def news(symbol: str, count: int = Query(default=3, ge=1, le=MAX_NEWS_COUNT)) -> list[dict]:
     """Get news feed for a ticker, served from the Postgres cache (RSS-backed) plus yfinance.
 
     The DB is the primary source; yfinance fills the long tail for international tickers
@@ -241,7 +428,7 @@ async def news(symbol: str, count: int = 3) -> list[dict]:
 
 
 @router.get("/news")
-async def latest_news(count: int = 12) -> list[dict]:
+async def latest_news(count: int = Query(default=12, ge=1, le=MAX_NEWS_COUNT)) -> list[dict]:
     """Get the latest pt-BR financial news from the Postgres cache (RSS-backed)."""
     return await market_db.get_db_latest_news(count=count)
 
@@ -254,7 +441,7 @@ async def sync_news(background_tasks: BackgroundTasks) -> dict[str, str]:
 
 
 @router.get("/currency")
-async def currency(pairs: str = "USD-BRL,EUR-BRL,GBP-BRL") -> dict:
+async def currency(pairs: str = Query(default="USD-BRL,EUR-BRL,GBP-BRL", max_length=128)) -> dict:
     """Get currency exchange rates from database cache."""
     pair_list = [pair.strip() for pair in pairs.split(",") if pair.strip()]
     return await market_db.get_db_currencies(pair_list)
@@ -267,9 +454,13 @@ async def indicators() -> dict:
 
 
 @router.get("/history")
-async def history(tickers: str, range: str = "1mo") -> dict:
+async def history(
+    tickers: str = Query(min_length=1, max_length=256),
+    range: str = Query(default="1mo", max_length=8),
+) -> dict:
     """Get historical OHLCV from cache, self-populating through Brapi PRO when missing."""
     symbol_list = [ticker.strip() for ticker in tickers.split(",") if ticker.strip()]
+    symbol_list = symbol_list[:MAX_HISTORY_SYMBOLS]
     return await market_db.get_db_history(symbol_list, range)
 
 

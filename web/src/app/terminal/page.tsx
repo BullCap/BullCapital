@@ -1,33 +1,49 @@
 import { redirect } from 'next/navigation'
+import { Suspense, cache } from 'react'
 import { auth } from '@/lib/auth'
-import { getCurrencyRates, getMarketStatus, getMultipleQuotes } from '@/lib/services/market'
+import { getTerminalMarketSnapshot } from '@/lib/services/market'
 import TerminalClient from '@/components/terminal/TerminalClient'
 import AppShell from '@/components/navigation/AppShell'
+import { GlassHighlight } from '@/components/atoms/GlassHighlight'
 
-import type { AssetQuote, CurrencyRate, MarketStatusData } from '@/types/market'
+const getTerminalBootstrap = cache(async () => {
+  const snapshot = await getTerminalMarketSnapshot()
+  return {
+    initialQuotes: snapshot.quotes.results ?? [],
+    marketStatus: { indices: snapshot.marketStatus.indices ?? [] },
+    usdBrl: snapshot.currency.currencies.find((currency) => currency.name === 'USD/BRL') ?? null,
+  }
+})
+
+async function TerminalWorkspace() {
+  const { initialQuotes, marketStatus, usdBrl } = await getTerminalBootstrap()
+  return <TerminalClient initialQuotes={initialQuotes} marketStatus={marketStatus} usdBrl={usdBrl} />
+}
+
+function TerminalWorkspaceFallback() {
+  return (
+    <section className="bull-panel mt-4 min-h-[460px] p-6">
+      <GlassHighlight widthPercent={64} />
+      <div className="flex h-full min-h-[408px] flex-col justify-between gap-6">
+        <div>
+          <p className="bull-eyebrow">Mesa</p>
+          <h2 className="mt-2 font-serif text-2xl text-[#F4F0FF]">Preparando terminal</h2>
+          <p className="mt-2 max-w-xl text-sm leading-6 text-[#F4F0FF]/50">
+            Cotações, status de mercado e câmbio estão sendo atualizados.
+          </p>
+        </div>
+        <div className="grid gap-3 lg:grid-cols-[18rem_minmax(0,1fr)] xl:grid-cols-[20rem_minmax(0,1fr)]">
+          <div className="min-h-[18rem] rounded-[1.75rem] border border-white/[0.08] bg-black/20" />
+          <div className="min-h-[18rem] rounded-[1.75rem] border border-white/[0.08] bg-black/20" />
+        </div>
+      </div>
+    </section>
+  )
+}
 
 export default async function TerminalPage() {
   const session = await auth()
   if (!session?.user) redirect('/auth/sign-in')
-
-  // Pré-carrega dados reais dos ativos padrão da mesa.
-  const defaultTickers = ['PETR4', 'VALE3', 'ITUB4', 'BBAS3', 'TAEE11', 'MXRF11']
-  let initialQuotes: AssetQuote[] = []
-  let marketStatus: MarketStatusData = { indices: [] }
-  let usdBrl: CurrencyRate | null = null
-
-  try {
-    const [response, status, fxData] = await Promise.all([
-      getMultipleQuotes(defaultTickers),
-      getMarketStatus(),
-      getCurrencyRates(['USD-BRL']),
-    ])
-    initialQuotes = response?.results || []
-    marketStatus = { indices: status.indices ?? [] }
-    usdBrl = fxData.currencies.find((currency) => currency.name === 'USD/BRL') ?? null
-  } catch (error) {
-    console.error('Failed to pre-load terminal market data:', error)
-  }
 
   return (
     <AppShell active="terminal" contentClassName="md:max-w-none" sessionUser={session.user}>
@@ -40,7 +56,9 @@ export default async function TerminalPage() {
         </h1>
       </header>
 
-      <TerminalClient initialQuotes={initialQuotes} marketStatus={marketStatus} usdBrl={usdBrl} />
+      <Suspense fallback={<TerminalWorkspaceFallback />}>
+        <TerminalWorkspace />
+      </Suspense>
     </AppShell>
   )
 }

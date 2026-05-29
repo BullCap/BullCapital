@@ -64,7 +64,14 @@ class AssetQuote(Base):
     """Real-time quotes, fundamentals, and general info for B3 assets and indices."""
 
     __tablename__ = "asset_quotes"
-    __table_args__ = {"schema": "ai"}
+    __table_args__ = (
+        Index("idx_asset_quotes_updated_at", "updated_at"),
+        Index("idx_asset_quotes_change", "change_percent"),
+        Index("idx_asset_quotes_volume", "volume"),
+        Index("idx_asset_quotes_market_cap", "market_cap"),
+        Index("idx_asset_quotes_name", "name"),
+        {"schema": "ai"},
+    )
 
     ticker: Mapped[str] = mapped_column(String(20), primary_key=True)  # e.g., "PETR4", "^BVSP"
     name: Mapped[str] = mapped_column(Text)

@@ -5,9 +5,13 @@ import type {
   AssetSearchData,
   CurrencyData,
   MarketIndicatorsData,
+  HomeHighlightsSnapshot,
+  LandingMarketSnapshot,
   MarketListingsData,
+  MarketPulseSnapshot,
   MarketRadarData,
   MarketStatusData,
+  TerminalMarketSnapshot,
 } from '@/types/market'
 import { ANALYSIS_API_URL, internalApiHeaders } from '@/lib/internal-api'
 import { unstable_cache } from 'next/cache'
@@ -45,6 +49,38 @@ function emptySearch(limit: number): AssetSearchData & { error?: string } {
     itemsPerPage: limit,
     totalCount: 0,
     hasNextPage: false,
+  }
+}
+
+function emptyListings(): MarketListingsData {
+  return {
+    stocks: [],
+    indexes: [],
+    currentPage: 1,
+    totalPages: 1,
+    totalCount: 0,
+    hasNextPage: false,
+  }
+}
+
+function emptyPulseSnapshot(): MarketPulseSnapshot {
+  return {
+    quotes: { results: [] },
+    history: { results: [] },
+    indicators: { selic: [], inflation: [] },
+    currency: { currencies: [] },
+  }
+}
+
+function emptyHighlightsSnapshot(): HomeHighlightsSnapshot {
+  const listings = emptyListings()
+  return {
+    gainers: listings,
+    losers: listings,
+    mostTraded: listings,
+    crypto: listings,
+    fixedIncome: listings,
+    treemapQuotes: { results: [] },
   }
 }
 
@@ -140,6 +176,57 @@ export async function getMarketListings(
   } catch (error) {
     console.warn('Exception while fetching market listings:', error)
     return null
+  }
+}
+
+export async function getMarketPulseSnapshot(): Promise<MarketPulseSnapshot> {
+  try {
+    return await marketGet<MarketPulseSnapshot>('/market/snapshot/pulse', undefined, QUOTE_REVALIDATE_SECONDS)
+  } catch (error) {
+    console.warn('Exception while fetching market pulse snapshot:', error)
+    return emptyPulseSnapshot()
+  }
+}
+
+export async function getHomeHighlightsSnapshot(): Promise<HomeHighlightsSnapshot> {
+  try {
+    return await marketGet<HomeHighlightsSnapshot>(
+      '/market/snapshot/home-highlights',
+      undefined,
+      QUOTE_REVALIDATE_SECONDS
+    )
+  } catch (error) {
+    console.warn('Exception while fetching home highlights snapshot:', error)
+    return emptyHighlightsSnapshot()
+  }
+}
+
+export async function getLandingMarketSnapshot(): Promise<LandingMarketSnapshot> {
+  try {
+    return await marketGet<LandingMarketSnapshot>('/market/snapshot/landing', undefined, QUOTE_REVALIDATE_SECONDS)
+  } catch (error) {
+    console.warn('Exception while fetching landing market snapshot:', error)
+    return {
+      topAssets: emptyListings(),
+      gainers: emptyListings(),
+      losers: emptyListings(),
+      mostTraded: emptyListings(),
+      quotes: { results: [] },
+      currency: { currencies: [] },
+    }
+  }
+}
+
+export async function getTerminalMarketSnapshot(): Promise<TerminalMarketSnapshot> {
+  try {
+    return await marketGet<TerminalMarketSnapshot>('/market/snapshot/terminal', undefined, QUOTE_REVALIDATE_SECONDS)
+  } catch (error) {
+    console.warn('Exception while fetching terminal market snapshot:', error)
+    return {
+      quotes: { results: [] },
+      marketStatus: { indices: [] },
+      currency: { currencies: [] },
+    }
   }
 }
 

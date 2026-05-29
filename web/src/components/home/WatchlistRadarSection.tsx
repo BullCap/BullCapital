@@ -8,18 +8,13 @@ import { getMultipleQuotes } from '@/lib/services/market'
 import { buildAssetHref } from '@/lib/market-routing'
 import type { RadarPulseItem } from './RadarPulseSection'
 
-const TONE_STYLES: Record<RadarPulseItem['tone'], string> = {
-  up: 'border-[#4ADE80]/20 bg-[#4ADE80]/10 text-[#D7FCE5]',
-  down: 'border-[#FB7185]/20 bg-[#FB7185]/10 text-[#FFE0E6]',
-  neutral: 'border-[#60A5FA]/20 bg-[#60A5FA]/10 text-[#DBEAFE]',
-}
-
 interface WatchlistRadarSectionProps {
   fallbackItems: RadarPulseItem[]
+  watchlist?: string[]
 }
 
-export default async function WatchlistRadarSection({ fallbackItems }: WatchlistRadarSectionProps) {
-  const watchlist = await getWatchlist()
+export default async function WatchlistRadarSection({ fallbackItems, watchlist: providedWatchlist }: WatchlistRadarSectionProps) {
+  const watchlist = providedWatchlist ?? await getWatchlist()
   const hasWatchlist = watchlist.length > 0
 
   if (!hasWatchlist) {

@@ -1,5 +1,6 @@
 """Comparator router for Terminal — Mesa do Analista narratives."""
 
+import asyncio
 import json
 import re
 
@@ -130,7 +131,11 @@ def _fallback_response(request: ComparatorRequest) -> ComparatorResponse:
 @router.post("", response_model=ComparatorResponse)
 async def comparator(request: ComparatorRequest) -> ComparatorResponse:
     """Generate a contextual comparison narrative for 2-4 assets."""
-    content = await market_analysis_agent.run(_build_prompt(request))
+    try:
+        content = await asyncio.wait_for(market_analysis_agent.run(_build_prompt(request)), timeout=25)
+    except Exception:
+        return _fallback_response(request)
+
     payload = _parse_payload(content)
     narrative = payload.get("narrative")
 

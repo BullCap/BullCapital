@@ -1,11 +1,11 @@
 import asyncio
-from collections.abc import AsyncIterator, Awaitable, Callable
-from collections import defaultdict
-from contextlib import asynccontextmanager
-from hmac import compare_digest
 import logging
 import threading
 import time
+from collections import defaultdict
+from collections.abc import AsyncIterator, Awaitable, Callable
+from contextlib import asynccontextmanager
+from hmac import compare_digest
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -18,7 +18,10 @@ from app.core.database import Base, engine
 
 logger = logging.getLogger(__name__)
 
-# IP-based sliding window rate limiter for costly LLM/AI endpoints
+# IP-based sliding window rate limiter for costly LLM/AI endpoints.
+# NOTE: state is per-process — effective limit is N_workers × requests_limit when
+# running multiple uvicorn workers. Correct only for single-process deployments
+# (current Railway setup). A Redis/DB-backed limiter is needed before scaling.
 class RateLimiter:
     def __init__(self, requests_limit: int, window_seconds: int):
         self.requests_limit = requests_limit
@@ -52,11 +55,15 @@ async def quotes_scheduler_loop():
                 # Acquire advisory lock via connection
                 async with engine.connect() as conn:
                     result = await conn.execute(text("SELECT pg_try_advisory_lock(1001)"))
-                    if result.scalar():
+                    locked = bool(result.scalar())
+                    if locked:
                         logger.info("Scheduler: Triggering scheduled quotes ingestion...")
-                        from app.services.market_ingest import ingest_all_quotes
-                        await ingest_all_quotes()
-                        await conn.execute(text("SELECT pg_advisory_unlock(1001)"))
+                        try:
+                            from app.services.market_ingest import ingest_all_quotes
+
+                            await ingest_all_quotes()
+                        finally:
+                            await conn.execute(text("SELECT pg_advisory_unlock(1001)"))
                     else:
                         logger.debug("Scheduler: Quotes ingestion already running on another worker.")
         except Exception as e:
@@ -72,15 +79,24 @@ async def macro_news_scheduler_loop():
         try:
             async with engine.connect() as conn:
                 result = await conn.execute(text("SELECT pg_try_advisory_lock(1002)"))
-                if result.scalar():
+                locked = bool(result.scalar())
+                if locked:
                     logger.info("Scheduler: Triggering scheduled macro indicators and news ingestion...")
-                    from app.services.bcb_sgs import ingest_macro_indicators, ingest_ptax_dollar
-                    from app.services.news_ingest import ingest_brazilian_news
-                    
-                    await ingest_macro_indicators()
-                    await ingest_ptax_dollar()
-                    await ingest_brazilian_news()
-                    await conn.execute(text("SELECT pg_advisory_unlock(1002)"))
+                    try:
+                        from app.services.bcb_sgs import ingest_macro_indicators, ingest_ptax_dollar
+                        from app.services.news_ingest import ingest_brazilian_news
+
+                        results = await asyncio.gather(
+                            ingest_macro_indicators(),
+                            ingest_ptax_dollar(),
+                            ingest_brazilian_news(),
+                            return_exceptions=True,
+                        )
+                        for result in results:
+                            if isinstance(result, Exception):
+                                logger.warning("Scheduler child ingestion failed: %s", result)
+                    finally:
+                        await conn.execute(text("SELECT pg_advisory_unlock(1002)"))
                 else:
                     logger.debug("Scheduler: Macro/news ingestion already running on another worker.")
         except Exception as e:
@@ -121,6 +137,21 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
         await conn.execute(
             text("CREATE INDEX IF NOT EXISTS idx_macro_name_date ON ai.macro_indicators (name, date DESC)")
         )
+        await conn.execute(
+            text("CREATE INDEX IF NOT EXISTS idx_asset_quotes_updated_at ON ai.asset_quotes (updated_at DESC)")
+        )
+        await conn.execute(
+            text("CREATE INDEX IF NOT EXISTS idx_asset_quotes_change ON ai.asset_quotes (change_percent)")
+        )
+        await conn.execute(
+            text("CREATE INDEX IF NOT EXISTS idx_asset_quotes_volume ON ai.asset_quotes (volume)")
+        )
+        await conn.execute(
+            text("CREATE INDEX IF NOT EXISTS idx_asset_quotes_market_cap ON ai.asset_quotes (market_cap)")
+        )
+        await conn.execute(
+            text("CREATE INDEX IF NOT EXISTS idx_asset_quotes_name ON ai.asset_quotes (name)")
+        )
         # Ensure news cache has the (ticker, link) idempotency constraint used by RSS ingestion.
         await conn.execute(
             text(
@@ -137,7 +168,7 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
                 """
             )
         )
-        
+
     # Cold-start: populate DB if quotes table is empty (happens on first deploy or after wipe)
     async def cold_start_ingest() -> None:
         await asyncio.sleep(5)
@@ -147,9 +178,10 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
                 count = row.scalar() or 0
             if count == 0:
                 logger.info("Cold-start: asset_quotes is empty — triggering initial ingestion")
-                from app.services.market_ingest import ingest_all_quotes
                 from app.services.bcb_sgs import ingest_macro_indicators, ingest_ptax_dollar
+                from app.services.market_ingest import ingest_all_quotes
                 from app.services.news_ingest import ingest_brazilian_news
+
                 await asyncio.gather(
                     ingest_all_quotes(),
                     ingest_macro_indicators(),

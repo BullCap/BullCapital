@@ -71,14 +71,14 @@ export interface AssetQuote {
 
 export interface PrimeRateEntry {
   date: string
-  value: string
-  epochDate: number
+  value: string | number
+  epochDate?: number
 }
 
 export interface InflationEntry {
   date: string
-  value: string
-  epochDate: number
+  value: string | number
+  epochDate?: number
 }
 
 export interface MarketIndicatorsData {
@@ -158,4 +158,39 @@ export interface CurrencyRate {
   highPrice: number
   lowPrice: number
   updatedAtTimestamp: number
+}
+
+export interface MarketPulseSnapshot {
+  quotes: { results: AssetQuote[] }
+  history: AssetHistoryData
+  indicators: MarketIndicatorsData
+  currency: CurrencyData
+  updatedAt?: string
+}
+
+export interface HomeHighlightsSnapshot {
+  gainers: MarketListingsData
+  losers: MarketListingsData
+  mostTraded: MarketListingsData
+  crypto: MarketListingsData
+  fixedIncome: MarketListingsData
+  treemapQuotes: { results: AssetQuote[] }
+  updatedAt?: string
+}
+
+export interface LandingMarketSnapshot {
+  topAssets: MarketListingsData
+  gainers: MarketListingsData
+  losers: MarketListingsData
+  mostTraded: MarketListingsData
+  quotes: { results: AssetQuote[] }
+  currency: CurrencyData
+  updatedAt?: string
+}
+
+export interface TerminalMarketSnapshot {
+  quotes: { results: AssetQuote[] }
+  marketStatus: MarketStatusData
+  currency: CurrencyData
+  updatedAt?: string
 }

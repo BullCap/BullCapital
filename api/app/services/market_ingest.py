@@ -4,6 +4,7 @@ import asyncio
 import logging
 import math
 from datetime import UTC, datetime
+from uuid import uuid4
 
 import httpx
 import yfinance as yf
@@ -463,37 +464,41 @@ async def ingest_asset_history(ticker: str, period: str = "3y") -> int:
         logger.warning(f"No history found for {ticker}")
         return 0
 
-    inserted = 0
-    async with async_session_maker() as session:
-        for record in records:
-            try:
-                stmt = insert(AssetHistoricalPrice).values(
-                    ticker=ticker.strip().upper(),
-                    date=record["date"],
-                    open=record.get("open"),
-                    high=record.get("high"),
-                    low=record.get("low"),
-                    close=record["close"],
-                    volume=record["volume"],
-                )
-                stmt = stmt.on_conflict_do_update(
-                    constraint="uq_ticker_date",
-                    set_={
-                        "open": func.coalesce(record.get("open"), AssetHistoricalPrice.__table__.c.open),
-                        "high": func.coalesce(record.get("high"), AssetHistoricalPrice.__table__.c.high),
-                        "low": func.coalesce(record.get("low"), AssetHistoricalPrice.__table__.c.low),
-                        "close": record["close"],
-                        "volume": func.coalesce(record.get("volume"), AssetHistoricalPrice.__table__.c.volume),
-                    },
-                )
-                await session.execute(stmt)
-                inserted += 1
-            except Exception as e:
-                logger.error(f"Failed to upsert history row for {ticker} on date {record['date']}: {e}")
+    clean_ticker = ticker.strip().upper()
+    values = [
+        {
+            "id": str(uuid4()),
+            "ticker": clean_ticker,
+            "date": record["date"],
+            "open": record.get("open"),
+            "high": record.get("high"),
+            "low": record.get("low"),
+            "close": record["close"],
+            "volume": record["volume"],
+        }
+        for record in records
+    ]
 
-        await session.commit()
-    logger.info(f"Upserted {inserted} historical daily price rows for {ticker}")
-    return inserted
+    try:
+        async with async_session_maker() as session:
+            stmt = insert(AssetHistoricalPrice).values(values)
+            stmt = stmt.on_conflict_do_update(
+                constraint="uq_ticker_date",
+                set_={
+                    "open": func.coalesce(stmt.excluded.open, AssetHistoricalPrice.__table__.c.open),
+                    "high": func.coalesce(stmt.excluded.high, AssetHistoricalPrice.__table__.c.high),
+                    "low": func.coalesce(stmt.excluded.low, AssetHistoricalPrice.__table__.c.low),
+                    "close": stmt.excluded.close,
+                    "volume": func.coalesce(stmt.excluded.volume, AssetHistoricalPrice.__table__.c.volume),
+                },
+            )
+            await session.execute(stmt)
+            await session.commit()
+        logger.info(f"Upserted {len(records)} historical daily price rows for {clean_ticker}")
+        return len(records)
+    except Exception as e:
+        logger.error(f"Failed to batch upsert history for {ticker}: {e}")
+        return 0
 
 
 async def ingest_all_histories(period: str = "3y") -> int:

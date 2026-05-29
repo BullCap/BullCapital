@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import Link from 'next/link'
+import { Suspense, cache } from 'react'
 import { auth } from '@/lib/auth'
 import { getMarketRadarData, getAssetHistory, getAssetNews } from '@/lib/services/market'
 import { fetchMarketQuote, isMarketOpen } from '@/lib/market-utils'
@@ -13,12 +13,75 @@ import AssetNewsSection from '@/components/asset/AssetNewsSection'
 import AssetProfileCard from '@/components/asset/AssetProfileCard'
 import AssetQuotesTable from '@/components/asset/AssetQuotesTable'
 import { isFollowing } from '@/lib/actions/watchlist'
-import { GlassHighlight } from '@/components/atoms/GlassHighlight'
 import AppShell from '@/components/navigation/AppShell'
 import ScrollFocus from '@/components/ui/ScrollFocus'
 
 interface AssetPageProps {
   params: Promise<{ ticker: string }>
+}
+
+const getAssetQuote = cache(async (ticker: string) => fetchMarketQuote(ticker))
+
+const getAssetHistoryData = cache(async (ticker: string) => {
+  const historyData = await getAssetHistory([ticker], '1mo')
+  return historyData?.results?.[0]?.history ?? []
+})
+
+const getAssetRadar = cache(async (ticker: string) => getMarketRadarData(ticker))
+
+const getAssetNewsData = cache(async (ticker: string) => getAssetNews(ticker))
+
+const getFollowingState = cache(async (ticker: string) => isFollowing(ticker))
+
+async function AssetHeaderPanel({ ticker }: { ticker: string }) {
+  const [quoteResult, followingResult] = await Promise.allSettled([
+    getAssetQuote(ticker),
+    getFollowingState(ticker),
+  ])
+  const quote = quoteResult.status === 'fulfilled' ? quoteResult.value : null
+  const following = followingResult.status === 'fulfilled' ? followingResult.value : false
+
+  return (
+    <AssetHeader
+      ticker={ticker}
+      name={quote?.name ?? null}
+      price={quote?.price ?? null}
+      changePercent={quote?.changePercent ?? null}
+      followButton={<FollowButton ticker={ticker} initialFollowing={following} />}
+    />
+  )
+}
+
+async function PriceChartPanel({ ticker }: { ticker: string }) {
+  const initialHistory = await getAssetHistoryData(ticker)
+
+  return (
+    <PriceChartClient
+      ticker={ticker}
+      initialHistory={initialHistory}
+      isMarketOpen={isMarketOpen()}
+    />
+  )
+}
+
+async function QuotesTablePanel({ ticker }: { ticker: string }) {
+  const initialHistory = await getAssetHistoryData(ticker)
+  return <AssetQuotesTable ticker={ticker} history={initialHistory} />
+}
+
+async function RadarPanel({ ticker }: { ticker: string }) {
+  const radarData = await getAssetRadar(ticker)
+  return <RadarSection data={radarData?.data ?? null} />
+}
+
+async function AssetNewsPanel({ ticker }: { ticker: string }) {
+  const news = await getAssetNewsData(ticker)
+  return <AssetNewsSection news={news} />
+}
+
+async function AssetProfilePanel({ ticker }: { ticker: string }) {
+  const radarData = await getAssetRadar(ticker)
+  return <AssetProfileCard ticker={ticker} profile={radarData?.profile ?? null} />
 }
 
 export default async function AssetPage({ params }: AssetPageProps) {
@@ -28,51 +91,6 @@ export default async function AssetPage({ params }: AssetPageProps) {
   const { ticker: rawTicker } = await params
   const ticker = normalizeTicker(rawTicker) || rawTicker
 
-  const [quoteResult, historyResult, radarResult, newsResult, followingResult] = await Promise.allSettled([
-    fetchMarketQuote(ticker),
-    getAssetHistory([ticker], '1mo'),
-    getMarketRadarData(ticker),
-    getAssetNews(ticker),
-    isFollowing(ticker),
-  ])
-
-  // Header — sourced through the backend market boundary, never from client-side Brapi calls.
-  const quote = quoteResult.status === 'fulfilled' ? quoteResult.value : null
-  const price = quote?.price ?? null
-  const changePercent = quote?.changePercent ?? null
-  const name = quote?.name ?? null
-
-  // Radar scores and company profile
-  const radarData = radarResult.status === 'fulfilled' ? radarResult.value : null
-  const radarPoints = radarData?.data ?? null
-  const profile = radarData?.profile ?? null
-
-  const historyData = historyResult.status === 'fulfilled' ? historyResult.value : null
-  const initialHistory = historyData?.results?.[0]?.history ?? []
-  const news = newsResult.status === 'fulfilled' ? newsResult.value : []
-  const following = followingResult.status === 'fulfilled' ? followingResult.value : false
-
-  if (quote === null && initialHistory.length === 0) {
-    return (
-      <AppShell active="market" contentClassName="gap-6" sessionUser={session.user}>
-        <ScrollFocus>
-          <div className="bull-panel p-8 text-center">
-            <GlassHighlight widthPercent={60} />
-            <p className="bull-eyebrow">Ativo</p>
-            <h1 className="mt-3 font-serif text-3xl text-[#F4F0FF]">{ticker.toUpperCase()}</h1>
-            <p className="mt-3 text-sm text-[#F4F0FF]/50">Ativo não encontrado</p>
-            <Link
-              href="/home"
-              className="mt-6 inline-flex min-h-11 items-center justify-center rounded-2xl border border-white/10 bg-white/5 px-6 py-3 text-sm text-[#F4F0FF]/70 transition hover:bg-white/10"
-            >
-              Voltar ao início
-            </Link>
-          </div>
-        </ScrollFocus>
-      </AppShell>
-    )
-  }
-
   return (
     <AppShell
       active="market"
@@ -80,38 +98,50 @@ export default async function AssetPage({ params }: AssetPageProps) {
       sessionUser={session.user}
     >
       <ScrollFocus>
-        <AssetHeader
-          ticker={ticker}
-          name={name}
-          price={price}
-          changePercent={changePercent}
-          followButton={<FollowButton ticker={ticker} initialFollowing={following} />}
-        />
+        <Suspense
+          fallback={
+            <AssetHeader
+              ticker={ticker}
+              name={ticker}
+              price={null}
+              changePercent={null}
+              followButton={<FollowButton ticker={ticker} initialFollowing={false} />}
+            />
+          }
+        >
+          <AssetHeaderPanel ticker={ticker} />
+        </Suspense>
       </ScrollFocus>
 
       <div className="grid w-full grid-cols-1 items-start gap-5 xl:grid-cols-[minmax(0,1fr)_22rem] 2xl:grid-cols-[minmax(0,1fr)_24rem]">
         <div className="flex min-w-0 flex-col gap-5">
           <ScrollFocus>
-            <PriceChartClient
-              ticker={ticker}
-              initialHistory={initialHistory}
-              isMarketOpen={isMarketOpen()}
-            />
+            <Suspense fallback={<PriceChartClient ticker={ticker} initialHistory={[]} isMarketOpen={isMarketOpen()} />}>
+              <PriceChartPanel ticker={ticker} />
+            </Suspense>
           </ScrollFocus>
           <ScrollFocus>
-            <RadarSection data={radarPoints} />
+            <Suspense fallback={<RadarSection data={null} />}>
+              <RadarPanel ticker={ticker} />
+            </Suspense>
           </ScrollFocus>
           <ScrollFocus>
-            <AssetQuotesTable ticker={ticker} history={initialHistory} />
+            <Suspense fallback={<AssetQuotesTable ticker={ticker} history={[]} />}>
+              <QuotesTablePanel ticker={ticker} />
+            </Suspense>
           </ScrollFocus>
           <ScrollFocus>
-            <AssetNewsSection news={news} />
+            <Suspense fallback={<AssetNewsSection news={[]} />}>
+              <AssetNewsPanel ticker={ticker} />
+            </Suspense>
           </ScrollFocus>
         </div>
 
         <aside className="flex w-full flex-col gap-5 xl:sticky xl:top-24">
           <ScrollFocus>
-            <AssetProfileCard ticker={ticker} profile={profile} />
+            <Suspense fallback={<AssetProfileCard ticker={ticker} profile={null} />}>
+              <AssetProfilePanel ticker={ticker} />
+            </Suspense>
           </ScrollFocus>
           <ScrollFocus>
             <AssetAnalysisCTA ticker={ticker} />

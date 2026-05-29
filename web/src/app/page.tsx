@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation'
+import { Suspense, cache } from 'react'
 import { auth } from '@/lib/auth'
 
 import Header from '@/components/landing/Header'
@@ -8,9 +9,15 @@ import Grainient from '@/components/landing/Grainient'
 import TopAssetsSection from '@/components/landing/TopAssetsSection'
 import MarketOverview from '@/components/landing/MarketOverview'
 import MarketHighlights from '@/components/landing/MarketHighlights'
-import { getMarketListings, getCurrencyRates } from '@/lib/services/market'
-import { computeTemperature, fetchMarketQuote } from '@/lib/market-utils'
-import type { MarketListingItem } from '@/types/market'
+import { getLandingMarketSnapshot } from '@/lib/services/market'
+import { computeTemperature } from '@/lib/market-utils'
+import type { AssetQuote, LandingMarketSnapshot, MarketListingItem } from '@/types/market'
+
+interface LandingMovers {
+  gainers: MarketListingItem[]
+  losers: MarketListingItem[]
+  mostTraded: MarketListingItem[]
+}
 
 function buildLandingRadar(
   gainers: MarketListingItem[],
@@ -56,6 +63,77 @@ function buildLandingInsight(
   return `O Ibovespa aparece ${direction} na leitura atual. ${moversText}. Esta é uma leitura contextual de dados, sem recomendação de investimento.`
 }
 
+const getLandingSnapshot = cache(async (): Promise<LandingMarketSnapshot> => getLandingMarketSnapshot())
+
+const getLandingMovers = cache(async (): Promise<LandingMovers> => {
+  const snapshot = await getLandingSnapshot()
+
+  return {
+    gainers: snapshot.gainers?.stocks ?? [],
+    losers: snapshot.losers?.stocks ?? [],
+    mostTraded: snapshot.mostTraded?.stocks ?? [],
+  }
+})
+
+function quoteFor(quotes: AssetQuote[], symbol: string) {
+  return quotes.find((quote) => quote.symbol === symbol) ?? null
+}
+
+function getLandingPulse(snapshot: LandingMarketSnapshot) {
+  const ibov = quoteFor(snapshot.quotes.results ?? [], '^BVSP')
+  const vix = quoteFor(snapshot.quotes.results ?? [], '^VIX')
+  const usdBrl = snapshot.currency.currencies?.find((currency) => currency.name === 'USD/BRL') ?? null
+  const usdBrlChange = usdBrl && usdBrl.lowPrice > 0
+    ? +(((usdBrl.bidPrice - usdBrl.lowPrice) / usdBrl.lowPrice) * 100).toFixed(2)
+    : null
+
+  return {
+    ibovChange: ibov?.regularMarketChangePercent ?? null,
+    vix: vix?.regularMarketPrice ?? null,
+    usdBrlChange,
+  }
+}
+
+async function LandingTopAssetsPanel() {
+  const snapshot = await getLandingSnapshot()
+  return <TopAssetsSection assets={snapshot.topAssets?.stocks ?? []} />
+}
+
+async function LandingOverviewPanel() {
+  const snapshot = await getLandingSnapshot()
+  const topAssets = snapshot.topAssets?.stocks ?? []
+  const movers = await getLandingMovers()
+  const pulse = getLandingPulse(snapshot)
+  const allVisible = [...movers.gainers, ...movers.losers]
+  const marketBreadth = allVisible.length > 0
+    ? (allVisible.filter((asset) => asset.change > 0).length / allVisible.length) * 100
+    : null
+  const temperature = pulse.ibovChange !== null
+    ? computeTemperature({
+        ibovChange: pulse.ibovChange,
+        vix: pulse.vix,
+        usdBrlChange: pulse.usdBrlChange,
+        marketBreadth,
+      })
+    : null
+  const radarData = buildLandingRadar(movers.gainers, movers.losers, movers.mostTraded)
+  const insightText = buildLandingInsight(pulse.ibovChange, movers.gainers, movers.losers)
+
+  return (
+    <MarketOverview
+      temperature={temperature ? { value: temperature.value, label: temperature.label } : null}
+      radarData={radarData}
+      insightText={insightText}
+      assets={topAssets}
+    />
+  )
+}
+
+async function LandingHighlightsPanel() {
+  const movers = await getLandingMovers()
+  return <MarketHighlights gainers={movers.gainers} losers={movers.losers} mostTraded={movers.mostTraded} />
+}
+
 export default async function HomePage() {
   const session = await auth()
 
@@ -70,51 +148,6 @@ export default async function HomePage() {
         image: session.user.image,
       }
     : undefined
-
-  const [
-    ibovResult,
-    vixResult,
-    fxResult,
-    topAssetsResult,
-    gainersResult,
-    losersResult,
-    mostTradedResult,
-  ] = await Promise.allSettled([
-    fetchMarketQuote('^BVSP'),
-    fetchMarketQuote('^VIX'),
-    getCurrencyRates(['USD-BRL']),
-    getMarketListings({ sortBy: 'market_cap_basic', sortOrder: 'desc', limit: 25, type: 'stock' }),
-    getMarketListings({ sortBy: 'change', sortOrder: 'desc', limit: 5, type: 'stock' }),
-    getMarketListings({ sortBy: 'change', sortOrder: 'asc', limit: 5, type: 'stock' }),
-    getMarketListings({ sortBy: 'volume', sortOrder: 'desc', limit: 5, type: 'stock' }),
-  ])
-
-  const ibov = ibovResult.status === 'fulfilled' ? ibovResult.value : null
-  const vix = vixResult.status === 'fulfilled' ? (vixResult.value?.price ?? null) : null
-  const fxData = fxResult.status === 'fulfilled' ? fxResult.value : null
-  const usdBrl = fxData?.currencies?.find((currency) => currency.name === 'USD/BRL') ?? null
-  const usdBrlChange = usdBrl && usdBrl.lowPrice > 0
-    ? +(((usdBrl.bidPrice - usdBrl.lowPrice) / usdBrl.lowPrice) * 100).toFixed(2)
-    : null
-
-  const topAssets = topAssetsResult.status === 'fulfilled' ? (topAssetsResult.value?.stocks ?? []) : []
-  const gainers = gainersResult.status === 'fulfilled' ? (gainersResult.value?.stocks ?? []) : []
-  const losers = losersResult.status === 'fulfilled' ? (losersResult.value?.stocks ?? []) : []
-  const mostTraded = mostTradedResult.status === 'fulfilled' ? (mostTradedResult.value?.stocks ?? []) : []
-  const allVisible = [...gainers, ...losers]
-  const marketBreadth = allVisible.length > 0
-    ? (allVisible.filter((asset) => asset.change > 0).length / allVisible.length) * 100
-    : null
-  const temperature = ibov
-    ? computeTemperature({
-        ibovChange: ibov.changePercent,
-        vix,
-        usdBrlChange,
-        marketBreadth,
-      })
-    : null
-  const radarData = buildLandingRadar(gainers, losers, mostTraded)
-  const insightText = buildLandingInsight(ibov?.changePercent ?? null, gainers, losers)
 
   return (
     <main className="relative min-h-screen w-full overflow-x-hidden text-[#F4F0FF]">
@@ -165,23 +198,31 @@ export default async function HomePage() {
         </div>
       </section>
 
-
-
       {/* Content Sections */}
       <div className="z-10 mx-auto flex w-full max-w-7xl flex-col items-start gap-32 px-6 py-12">
         {/* Top Asset Cards */}
-        <TopAssetsSection assets={topAssets} />
+        <Suspense fallback={<TopAssetsSection assets={[]} />}>
+          <LandingTopAssetsPanel />
+        </Suspense>
 
         {/* Visão Geral */}
-        <MarketOverview
-          temperature={temperature ? { value: temperature.value, label: temperature.label } : null}
-          radarData={radarData}
-          insightText={insightText}
-          assets={topAssets}
-        />
+        <Suspense
+          fallback={
+            <MarketOverview
+              temperature={null}
+              radarData={[]}
+              insightText="Dados reais de mercado indisponíveis no momento."
+              assets={[]}
+            />
+          }
+        >
+          <LandingOverviewPanel />
+        </Suspense>
 
         {/* Destaques */}
-        <MarketHighlights gainers={gainers} losers={losers} mostTraded={mostTraded} />
+        <Suspense fallback={<MarketHighlights gainers={[]} losers={[]} mostTraded={[]} />}>
+          <LandingHighlightsPanel />
+        </Suspense>
       </div>
 
       {/* Institutional Glass Footer */}

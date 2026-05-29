@@ -1,5 +1,6 @@
 """Conversation router for contextual follow-up questions anchored to a subject."""
 
+import asyncio
 import json
 import re
 import threading
@@ -284,13 +285,19 @@ async def conversation_stream(request: ConversationRequest) -> StreamingResponse
 @router.post("", response_model=ConversationResponse)
 async def conversation(request: ConversationRequest) -> ConversationResponse:
     """Generate a contextual conversation response for a specific subject."""
-    content = await market_analysis_agent.conversation_turn(
-        subject=request.subject,
-        context=request.context,
-        analysis=request.analysis,
-        history=request.history,
-        question=request.question,
-    )
+    try:
+        content = await asyncio.wait_for(
+            market_analysis_agent.conversation_turn(
+                subject=request.subject,
+                context=request.context,
+                analysis=request.analysis,
+                history=request.history,
+                question=request.question,
+            ),
+            timeout=45,
+        )
+    except (asyncio.TimeoutError, Exception):
+        content = ""
     payload = _parse_conversation_payload(content)
 
     answer = payload.get("answer", "")

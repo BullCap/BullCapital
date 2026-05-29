@@ -115,7 +115,8 @@ async def get_db_quote(symbol: str) -> dict | None:
     from app.services.yfinance_market import _is_crypto
     if _is_crypto(clean_ticker) or clean_ticker.startswith("TESOURO_"):
         from app.services import yfinance_market
-        return yfinance_market.get_quote(clean_ticker)
+
+        return await asyncio.to_thread(yfinance_market.get_quote, clean_ticker)
 
     async with async_session_maker() as session:
         result = await session.execute(
@@ -135,7 +136,6 @@ async def get_db_quote(symbol: str) -> dict | None:
                 quote = result.scalar_one_or_none()
     elif _quote_is_stale(quote.updated_at) or _quote_needs_fundamentals_refresh(quote):
         # Stale-while-revalidate: serve cached data immediately, refresh in background.
-        reason = "missing fundamentals" if _quote_needs_fundamentals_refresh(quote) else "stale"
         t = asyncio.create_task(ingest_ticker_quote(clean_ticker))
         _bg_tasks.add(t)
         t.add_done_callback(_bg_tasks.discard)
@@ -180,18 +180,27 @@ async def get_db_quotes(symbols: list[str]) -> dict:
 
     results = []
     other_symbols = []
-    
+    special_symbols: list[str] = []
+
     from app.services.yfinance_market import _is_crypto
     for s in symbols:
         clean = _clean_symbol(s)
         if _is_crypto(clean) or clean.startswith("TESOURO_"):
-            from app.services import yfinance_market
-            quote = yfinance_market.get_quote(clean)
-            if quote:
-                results.append(quote)
+            special_symbols.append(clean)
         else:
             other_symbols.append(s)
-            
+
+    if special_symbols:
+        from app.services import yfinance_market
+
+        special_quotes = await asyncio.gather(
+            *(asyncio.to_thread(yfinance_market.get_quote, clean) for clean in special_symbols),
+            return_exceptions=True,
+        )
+        for quote in special_quotes:
+            if quote and not isinstance(quote, Exception):
+                results.append(quote)
+
     if other_symbols:
         db_res = await _get_db_quotes_standard(other_symbols)
         results.extend(db_res.get("results", []))
@@ -309,17 +318,26 @@ async def get_db_history(symbols: list[str], range_name: str = "1mo") -> dict:
 
     results = []
     other_symbols = []
-    
+    special_symbols: list[str] = []
+
     from app.services.yfinance_market import _is_crypto
     for s in symbols:
         clean = _clean_symbol(s)
         if _is_crypto(clean) or clean.startswith("TESOURO_"):
-            from app.services import yfinance_market
-            hist = yfinance_market.get_history([clean], range_name)
-            results.extend(hist.get("results", []))
+            special_symbols.append(clean)
         else:
             other_symbols.append(s)
-            
+
+    if special_symbols:
+        special_histories = await asyncio.gather(
+            *(asyncio.to_thread(yfinance_market.get_history, [clean], range_name) for clean in special_symbols),
+            return_exceptions=True,
+        )
+        for hist in special_histories:
+            if isinstance(hist, Exception):
+                continue
+            results.extend(hist.get("results", []))
+
     if other_symbols:
         db_res = await _get_db_history_standard(other_symbols, range_name)
         results.extend(db_res.get("results", []))
@@ -385,22 +403,18 @@ async def _get_db_history_standard(symbols: list[str], range_name: str = "1mo") 
 
 
 async def get_db_status() -> dict:
-    """Retrieve status of major indices from database cache."""
-    symbols = ["^BVSP", "^GSPC", "^VIX"]
-    quotes = await asyncio.gather(*[get_db_quote(s) for s in symbols], return_exceptions=True)
-    indices = []
-    for symbol, quote in zip(symbols, quotes):
-        if not quote or isinstance(quote, Exception):
-            continue
-        app_symbol = quote["symbol"]
-        indices.append(
-            {
-                "name": INDEX_NAMES.get(app_symbol, quote["shortName"]),
-                "symbol": app_symbol,
-                "regularMarketPrice": quote["regularMarketPrice"],
-                "regularMarketChangePercent": quote["regularMarketChangePercent"],
-            }
-        )
+    """Retrieve status of major indices from database cache (single batched query)."""
+    result = await get_db_quotes(["^BVSP", "^GSPC", "^VIX"])
+    indices = [
+        {
+            "name": INDEX_NAMES.get(q["symbol"], q["shortName"]),
+            "symbol": q["symbol"],
+            "regularMarketPrice": q["regularMarketPrice"],
+            "regularMarketChangePercent": q["regularMarketChangePercent"],
+        }
+        for q in result.get("results", [])
+        if q
+    ]
     return {"indices": indices}
 
 
@@ -412,18 +426,16 @@ async def get_db_currencies(pairs: list[str]) -> dict:
     clean_pairs = [_clean_symbol(pair) for pair in pairs]
 
     async with async_session_maker() as session:
-        result = await session.execute(
-            select(CurrencyQuote).where(CurrencyQuote.pair.in_(clean_pairs))
-        )
+        result = await session.execute(select(CurrencyQuote).where(CurrencyQuote.pair.in_(clean_pairs)))
         quotes = {q.pair: q for q in result.scalars().all()}
 
-        # If missing (e.g. USD-BRL PTAX not loaded yet)
-        if "USD-BRL" in clean_pairs and "USD-BRL" not in quotes:
-            logger.info("PTAX Dollar not in database. Triggering BCB SGS Dollar ingestion...")
-            await ingest_ptax_dollar()
-            result = await session.execute(
-                select(CurrencyQuote).where(CurrencyQuote.pair.in_(clean_pairs))
-            )
+    # If missing (e.g. USD-BRL PTAX not loaded yet), release the read connection
+    # before running network I/O and DB writes in the ingestion service.
+    if "USD-BRL" in clean_pairs and "USD-BRL" not in quotes:
+        logger.info("PTAX Dollar not in database. Triggering BCB SGS Dollar ingestion...")
+        await ingest_ptax_dollar()
+        async with async_session_maker() as session:
+            result = await session.execute(select(CurrencyQuote).where(CurrencyQuote.pair.in_(clean_pairs)))
             quotes = {q.pair: q for q in result.scalars().all()}
 
     currencies = []
@@ -459,21 +471,23 @@ async def get_db_indicators() -> dict:
         )
         latest_selic = selic_check.scalar()
 
-        # Stale-while-revalidate: block only if database is completely empty
-        if not latest_selic:
-            logger.info("Macro indicators missing. Performing Brapi PRO daily indicators sync (blocking)...")
-            await ingest_macro_indicators()
-            # Fetch again after sync
+    # Stale-while-revalidate: block only if database is completely empty, but do
+    # not hold a read session while the ingestion service performs external I/O.
+    if not latest_selic:
+        logger.info("Macro indicators missing. Performing Brapi PRO daily indicators sync (blocking)...")
+        await ingest_macro_indicators()
+        async with async_session_maker() as session:
             selic_check = await session.execute(
                 select(MacroIndicator).where(MacroIndicator.name == "SELIC").order_by(MacroIndicator.date.desc()).limit(1)
             )
             latest_selic = selic_check.scalar()
-        elif latest_selic.updated_at.replace(tzinfo=UTC).date() < datetime.now(UTC).date():
-            logger.info("Macro indicators stale. Performing Brapi PRO daily indicators sync (background)...")
-            t = asyncio.create_task(ingest_macro_indicators())
-            _bg_tasks.add(t)
-            t.add_done_callback(_bg_tasks.discard)
+    elif latest_selic.updated_at.replace(tzinfo=UTC).date() < datetime.now(UTC).date():
+        logger.info("Macro indicators stale. Performing Brapi PRO daily indicators sync (background)...")
+        t = asyncio.create_task(ingest_macro_indicators())
+        _bg_tasks.add(t)
+        t.add_done_callback(_bg_tasks.discard)
 
+    async with async_session_maker() as session:
         # Query SELIC history
         selic_results = await session.execute(
             select(MacroIndicator)
@@ -524,8 +538,6 @@ async def get_db_listings(
     search: str | None = None,
 ) -> dict:
     """Retrieve listings of B3 assets from cache with fast sorting, searching, and pagination."""
-    import math
-
     if item_type and item_type not in {"stock", "crypto", "fixed_income"}:
         return {
             "stocks": [],
@@ -540,8 +552,14 @@ async def get_db_listings(
         stocks = []
         if item_type == "crypto":
             from app.services.yfinance_market import CRYPTO_COINS, get_quote
-            for coin in CRYPTO_COINS:
-                q = get_quote(coin)
+
+            quotes = await asyncio.gather(
+                *(asyncio.to_thread(get_quote, coin) for coin in CRYPTO_COINS),
+                return_exceptions=True,
+            )
+            for q in quotes:
+                if isinstance(q, Exception):
+                    continue
                 if q:
                     stocks.append({
                         "stock": q["symbol"],
@@ -556,8 +574,14 @@ async def get_db_listings(
                     })
         elif item_type == "fixed_income":
             from app.services.yfinance_market import TESOURO_BONDS, get_live_treasury_quote
-            for bond_ticker in TESOURO_BONDS.keys():
-                q = get_live_treasury_quote(bond_ticker)
+
+            quotes = await asyncio.gather(
+                *(asyncio.to_thread(get_live_treasury_quote, bond_ticker) for bond_ticker in TESOURO_BONDS),
+                return_exceptions=True,
+            )
+            for q in quotes:
+                if isinstance(q, Exception):
+                    continue
                 if q:
                     stocks.append({
                         "stock": q["symbol"],
@@ -604,8 +628,17 @@ async def get_db_listings(
 
     # Fast SQL-level search, sort, and pagination
     async with async_session_maker() as session:
-        # Build query filtering out indexes
-        query = select(AssetQuote).where(
+        # Build query filtering out indexes. Select only list/card fields; the
+        # profile summary is large text and belongs to quote/detail endpoints.
+        query = select(
+            AssetQuote.ticker,
+            AssetQuote.name,
+            AssetQuote.price,
+            AssetQuote.change_percent,
+            AssetQuote.volume,
+            AssetQuote.market_cap,
+            AssetQuote.sector,
+        ).where(
             ~AssetQuote.ticker.like("^%"),
             ~AssetQuote.ticker.like("%=X")
         )
@@ -641,7 +674,7 @@ async def get_db_listings(
             query = query.order_by(AssetQuote.name)
 
         # Count total matches
-        count_query = select(func.count()).select_from(query.subquery())
+        count_query = select(func.count()).select_from(query.order_by(None).subquery())
         total_count = await session.scalar(count_query) or 0
 
         # Calculate pagination bounds
@@ -653,7 +686,7 @@ async def get_db_listings(
         # Fetch page records
         query = query.offset(start).limit(page_size)
         result = await session.execute(query)
-        quotes = result.scalars().all()
+        quotes = result.all()
 
     stocks = []
     for q in quotes:

@@ -1,8 +1,10 @@
 """Macroeconomic and currency ingestion with Brapi PRO as primary source."""
 
+import asyncio
 import logging
 from datetime import datetime, timedelta
 from typing import Any
+from uuid import uuid4
 
 import httpx
 from sqlalchemy import func
@@ -144,22 +146,29 @@ async def upsert_macro_records(records: list[tuple[int, str, datetime, float]]) 
     if not records:
         return False
 
-    async with async_session_maker() as session:
-        for series_id, series_name, record_date, value in records:
-            stmt = insert(MacroIndicator).values(
-                series_id=series_id,
-                name=series_name,
-                date=record_date.date(),
-                value=value,
-            )
+    try:
+        async with async_session_maker() as session:
+            stmt = insert(MacroIndicator).values([
+                {
+                    "id": str(uuid4()),
+                    "series_id": series_id,
+                    "name": series_name,
+                    "date": record_date.date(),
+                    "value": value,
+                }
+                for series_id, series_name, record_date, value in records
+            ])
             stmt = stmt.on_conflict_do_update(
                 constraint="uq_series_date",
-                set_={"value": value, "updated_at": func.now()},
+                set_={"value": stmt.excluded.value, "updated_at": func.now()},
             )
             await session.execute(stmt)
-        await session.commit()
-    logger.info(f"Successfully processed {len(records)} Brapi macro indicator entries")
-    return True
+            await session.commit()
+        logger.info(f"Successfully processed {len(records)} macro indicator entries")
+        return True
+    except Exception as e:
+        logger.error(f"Failed to batch upsert macro records: {e}")
+        return False
 
 
 async def fetch_sgs_series(series_id: int, lookback_days: int = 30) -> list[dict]:
@@ -199,49 +208,39 @@ async def ingest_macro_indicators(lookback_days: int = 45) -> bool:
         return True
 
     logger.info("Starting ingestion of macroeconomic indicators from BCB SGS fallback...")
-    success = True
 
     # Ingest Macro indicators (SELIC: 432, CDI: 12, IPCA: 13522)
     macro_series = [432, 12, 13522]
 
-    async with async_session_maker() as session:
-        for series_id in macro_series:
-            series_name = SERIES_MAP[series_id]
-            logger.info(f"Ingesting series {series_name} (ID: {series_id})...")
-            rows = await fetch_sgs_series(series_id, lookback_days)
+    series_rows = await asyncio.gather(
+        *(fetch_sgs_series(series_id, lookback_days) for series_id in macro_series),
+        return_exceptions=True,
+    )
 
-            if not rows:
+    bcb_records: list[tuple[int, str, datetime, float]] = []
+    success = True
+    for series_id, rows_result in zip(macro_series, series_rows):
+        series_name = SERIES_MAP[series_id]
+        if isinstance(rows_result, Exception):
+            logger.error(f"Failed to fetch series {series_id} from BCB SGS: {rows_result}")
+            success = False
+            continue
+        if not rows_result:
+            success = False
+            continue
+        for row in rows_result:
+            try:
+                record_date = datetime.strptime(row["data"], "%d/%m/%Y")
+                value = float(row["valor"].replace(",", "."))
+                bcb_records.append((series_id, series_name, record_date, value))
+            except Exception as e:
+                logger.error(f"Failed to parse row {row} for series {series_id}: {e}")
                 success = False
-                continue
 
-            records_inserted = 0
-            for row in rows:
-                try:
-                    # Parse date (DD/MM/YYYY)
-                    record_date = datetime.strptime(row["data"], "%d/%m/%Y").date()
-                    # Parse value (e.g. "10,75" -> 10.75)
-                    value = float(row["valor"].replace(",", "."))
-
-                    # PostgreSQL upsert (ON CONFLICT DO UPDATE)
-                    stmt = insert(MacroIndicator).values(
-                        series_id=series_id,
-                        name=series_name,
-                        date=record_date,
-                        value=value,
-                    )
-                    # Update value on conflict
-                    stmt = stmt.on_conflict_do_update(
-                        constraint="uq_series_date",
-                        set_={"value": value, "updated_at": func.now()},
-                    )
-                    await session.execute(stmt)
-                    records_inserted += 1
-                except Exception as e:
-                    logger.error(f"Failed to parse row {row} for series {series_id}: {e}")
-                    success = False
-
-            await session.commit()
-            logger.info(f"Successfully processed {records_inserted} entries for {series_name}")
+    if bcb_records:
+        result = await upsert_macro_records(bcb_records)
+        if not result:
+            success = False
 
     return success
 

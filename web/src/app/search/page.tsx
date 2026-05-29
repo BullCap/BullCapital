@@ -1,14 +1,12 @@
 import { redirect } from 'next/navigation'
+import { Suspense, cache } from 'react'
 import { auth } from '@/lib/auth'
 import { getAssetNews } from '@/lib/services/market'
-import SearchClient from '@/components/search/SearchClient'
+import SearchClient, { RecentNewsWidget } from '@/components/search/SearchClient'
 import AppShell from '@/components/navigation/AppShell'
 import ScrollFocus from '@/components/ui/ScrollFocus'
 
-export default async function SearchPage() {
-  const session = await auth()
-  if (!session?.user) redirect('/auth/sign-in')
-
+const getSearchNews = cache(async () => {
   const [newsIbov, newsPetr, newsVale, newsItub] = await Promise.all([
     getAssetNews('^BVSP', 4),
     getAssetNews('PETR4', 3),
@@ -17,7 +15,7 @@ export default async function SearchPage() {
   ])
 
   const seen = new Set<string>()
-  const news = [...newsIbov, ...newsPetr, ...newsVale, ...newsItub]
+  return [...newsIbov, ...newsPetr, ...newsVale, ...newsItub]
     .filter((item) => {
       if (!item.link || seen.has(item.link)) return false
       seen.add(item.link)
@@ -25,6 +23,16 @@ export default async function SearchPage() {
     })
     .sort((a, b) => b.publishedAt - a.publishedAt)
     .slice(0, 8)
+})
+
+async function RecentNewsPanel() {
+  const news = await getSearchNews()
+  return <RecentNewsWidget news={news} />
+}
+
+export default async function SearchPage() {
+  const session = await auth()
+  if (!session?.user) redirect('/auth/sign-in')
 
   return (
     <AppShell active="search" sessionUser={session.user}>
@@ -37,7 +45,18 @@ export default async function SearchPage() {
       </header>
 
       <ScrollFocus>
-        <SearchClient news={news} />
+        <SearchClient
+          mobileNews={
+            <Suspense fallback={<RecentNewsWidget news={[]} />}>
+              <RecentNewsPanel />
+            </Suspense>
+          }
+          desktopNews={
+            <Suspense fallback={<RecentNewsWidget news={[]} />}>
+              <RecentNewsPanel />
+            </Suspense>
+          }
+        />
       </ScrollFocus>
     </AppShell>
   )
