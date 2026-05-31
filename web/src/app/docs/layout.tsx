@@ -2,14 +2,9 @@ import { DocsLayout } from 'fumadocs-ui/layouts/docs';
 import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { BookOpen, Github } from 'lucide-react';
-import { notFound } from 'next/navigation';
 import { source } from '@/lib/source';
 
 export default function Layout({ children }: { children: ReactNode }) {
-  if (process.env.NODE_ENV === 'production') {
-    notFound();
-  }
-
   return (
     <DocsLayout
       tree={source.pageTree}

@@ -25,19 +25,6 @@ const nextConfig: NextConfig = {
       },
     ]
   },
-  async redirects() {
-    // Garante de forma estrita que /docs é redirecionado para 404 em produção
-    if (process.env.NODE_ENV === 'production') {
-      return [
-        {
-          source: '/docs/:path*',
-          destination: '/404',
-          permanent: false,
-        },
-      ]
-    }
-    return []
-  },
 }
 
 const withMDX = createMDX()
