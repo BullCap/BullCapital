@@ -1,7 +1,7 @@
 import { DocsLayout } from 'fumadocs-ui/layouts/docs';
 import type { ReactNode } from 'react';
 import Link from 'next/link';
-import { BookOpen } from 'lucide-react';
+import { BookOpen, Github } from 'lucide-react';
 import { notFound } from 'next/navigation';
 import { source } from '@/lib/source';
 
@@ -16,10 +16,9 @@ export default function Layout({ children }: { children: ReactNode }) {
       // Dark-only design system ("The Financial Reading Room") — o toggle de
       // tema e removido para nao conflitar com o `.dark` forcado no root layout.
       themeSwitch={{ enabled: false }}
-      githubUrl="https://github.com/Jshebb/BullCapital"
       // Navegacao horizontal no topo (mold Horus): leva as landings de cada sistema.
       sidebar={{
-        collapsible: true,
+        collapsible: false,
         tabs: false,
         // Card-banner no topo da sidebar, ao estilo "RUNTIME DOCS" do Horus.
         banner: (
@@ -36,6 +35,18 @@ export default function Layout({ children }: { children: ReactNode }) {
               Documentação
             </span>
           </Link>
+        ),
+        footer: (
+          <a
+            key="sidebar-github-link"
+            href="https://github.com/bullcapital"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="bull-panel-quiet group flex items-center justify-center gap-2.5 rounded-lg! p-3 text-xs font-bold text-amethyst-light no-underline transition-all hover:bg-amethyst/10 border border-white/[0.03] hover:border-amethyst/30 w-full"
+          >
+            <Github className="h-4 w-4 text-amethyst-light transition-transform group-hover:scale-110" />
+            <span>Código no GitHub</span>
+          </a>
         ),
       }}
       nav={{
