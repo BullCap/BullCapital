@@ -47,6 +47,11 @@ export default function RootLayout({
             forcedTheme: 'dark',
             enableSystem: false,
           }}
+          search={{
+            options: {
+              api: '/api/search-docs',
+            },
+          }}
         >
           {children}
         </RootProvider>

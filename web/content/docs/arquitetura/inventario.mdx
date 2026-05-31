@@ -1,0 +1,91 @@
+---
+title: Inventário de Código
+description: Mapeamento completo de rotas, componentes, serviços e módulos no repositório.
+---
+
+# Inventário de Código (Code Inventory)
+
+Para manter a integridade da plataforma e evitar redundância ou reescrita de código, este inventário mapeia as rotas, componentes, serviços e módulos backend que já existem e devem ser **estritamente reutilizados**.
+
+---
+
+## 1. Rotas do Frontend (`web/src/app/`)
+
+| Rota | Arquivo / Diretório | Propósito | Status |
+| :--- | :--- | :--- | :--- |
+| `/` | `page.tsx` | Landing page pública. Redireciona usuários logados para `/home`. | ✅ Ativo |
+| `/auth/sign-in` | `auth/` | Tela de login clássica por e-mail e senha. | ✅ Ativo |
+| `/auth/sign-up` | `auth/` | Tela de cadastro de novos usuários. | ✅ Ativo |
+| `/home` | `home/page.tsx` | Dashboard principal: Briefing Diário, movers, índices eRadar. | ✅ Ativo |
+| `/asset/[ticker]` | `asset/[ticker]/page.tsx` | Detalhes do ativo: cotação, gráficos, notícias e Radar Chart. | ✅ Ativo |
+| `/analysis` | `analysis/` | Conversa com Inteligência Artificial ancorada a ativos. | ✅ Ativo |
+| `/news` | `news/page.tsx` | Feed de notícias de mercado e insights. | ✅ Ativo |
+| `/search` | `search/` | Barra de pesquisa global de ativos da bolsa. | ✅ Ativo |
+| `/terminal` | `terminal/` | Workspace analítico do consultor (Watchlist + Comparador). | ⚠️ Sprint 1 |
+
+---
+
+## 2. Componentes Reutilizáveis (`web/src/components/`)
+
+### A. Atoms (`components/atoms/`)
+Componentes puros, sem dependências externas de estado ou dados:
+*   `MarketTemperatureDial.tsx` — Mostrador SVG do termômetro de sentimento de mercado.
+*   `VariationBadge.tsx` — Badge de variação percentual de preço (verde/rosa pastel). **Obrigatório em toda cotação.**
+*   `GlassHighlight.tsx` — Shimmer reflexivo no topo de cards. **Obrigatório em todo painel de vidro.**
+*   `CompanyIcon.tsx` — Logotipo/avatar do ativo.
+*   `MarkdownBody.tsx` — Renderizador estilizado de Markdown editorial para respostas de IA.
+
+### B. Dashboard (`components/home/`)
+Composição do painel do consultor:
+*   `DailyBriefHero.tsx` e `DailyBriefContent.tsx` — Módulos do briefing matinal.
+*   `TemperatureCard.tsx`, `SELICCard.tsx` — Cards de indicadores macro.
+*   `MoversSection.tsx` — Top gainers/losers do dia.
+*   `MarketBubbleMap.tsx` — Visualização tridimensional de bolhas de mercado.
+
+### C. Detalhes de Ativos (`components/asset/`)
+*   `PriceChartClient.tsx` — Gráfico interativo com a cotação histórica (Recharts).
+*   `RadarSection.tsx` — Gráfico Radar de 5 dimensões (Rentabilidade, Momentum, Liquidez, Valuation, Tendência).
+*   `AssetProfileCard.tsx` — Informações cadastrais e perfil da empresa.
+
+### D. Workspace Analítico (`components/terminal/`)
+*   `TerminalClient.tsx` — Shell estruturado em colunas do workspace do analista.
+*   `AssetComparator.tsx` — Comparador avançado de 2 a 4 tickers (com gráficos e Radar).
+
+---
+
+## 3. Serviços e Actions (`web/src/lib/`)
+
+### A. Integração de Mercado (`lib/services/market.ts`)
+Camada de dados conectada diretamente ao SDK da **Brapi**:
+*   `getMarketRadarData(ticker)` — Retorna scores de 0 a 100 para as 5 dimensões do Radar.
+*   `getMarketListings(params)` — Lista de ativos com suporte a BDRs.
+*   `getMultipleQuotes(tickers)` — Retorna dados em lote (batch) para tickers.
+*   `getMarketIndicators()` — Indicadores SELIC e IPCA (com cache de 24 horas).
+*   `getAssetHistory(tickers, range)` — Histórico de preços com cache em camadas.
+
+### B. Server Actions (`lib/actions/`)
+*   `daily-brief.ts` — Puxa os dados do briefing macro diário.
+*   `watchlist.ts` — Lógica de persistência e gerenciamento da watchlist do analista.
+*   `analysis.ts` e `conversation.ts` — Lógica de envio e gravação de conversas no Postgres.
+
+---
+
+## 4. API Backend Python (`api/app/`)
+
+```
+api/app/
+├── main.py                    # Bootstrap do FastAPI, configuração de CORS e lifespan
+├── core/
+│   ├── config.py              # Gerenciador de variáveis de ambiente (Pydantic v2)
+│   └── database.py            # Sessão assíncrona do SQLAlchemy 2.x
+├── api/routes/
+│   ├── analysis.py            # Endpoints de criação/leitura de análises
+│   ├── conversation.py        # Endpoint de chat/conversa contextual com pgvector
+│   └── market.py              # Endpoints de dados de mercado (yfinance como fallback)
+├── agent/
+│   ├── base.py                # Classe abstrata para estruturação de agentes
+│   └── market_analysis.py     # Agente de Análise via Agno + gpt-4o
+└── models/
+    ├── analysis.py            # ORM de Análises com pgvector
+    └── conversation.ts        # ORM de Conversas e Histórico de Mensagens com pgvector
+```
