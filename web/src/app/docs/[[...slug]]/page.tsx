@@ -8,6 +8,10 @@ interface ParamProps {
 }
 
 export default async function Page(props: ParamProps) {
+  if (process.env.NODE_ENV === 'production') {
+    notFound();
+  }
+
   const params = await props.params;
   const page = source.getPage(params.slug);
 
@@ -27,10 +31,17 @@ export default async function Page(props: ParamProps) {
 }
 
 export async function generateStaticParams() {
+  if (process.env.NODE_ENV === 'production') {
+    return [];
+  }
   return source.generateParams();
 }
 
 export async function generateMetadata(props: ParamProps) {
+  if (process.env.NODE_ENV === 'production') {
+    notFound();
+  }
+
   const params = await props.params;
   const page = source.getPage(params.slug);
 
@@ -41,3 +52,4 @@ export async function generateMetadata(props: ParamProps) {
     description: page.data.description,
   };
 }
+

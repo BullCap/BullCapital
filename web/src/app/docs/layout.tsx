@@ -2,30 +2,29 @@ import { DocsLayout } from 'fumadocs-ui/layouts/docs';
 import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { BookOpen } from 'lucide-react';
+import { notFound } from 'next/navigation';
 import { source } from '@/lib/source';
 
 export default function Layout({ children }: { children: ReactNode }) {
+  if (process.env.NODE_ENV === 'production') {
+    notFound();
+  }
+
   return (
     <DocsLayout
       tree={source.pageTree}
       // Dark-only design system ("The Financial Reading Room") — o toggle de
       // tema e removido para nao conflitar com o `.dark` forcado no root layout.
       themeSwitch={{ enabled: false }}
-      githubUrl="https://github.com/bullcapital"
+      githubUrl="https://github.com/Jshebb/BullCapital"
       // Navegacao horizontal no topo (mold Horus): leva as landings de cada sistema.
-      links={[
-        { type: 'main', text: 'Produto', url: '/docs/produto' },
-        { type: 'main', text: 'Arquitetura', url: '/docs/arquitetura' },
-        { type: 'main', text: 'Frontend', url: '/docs/frontend' },
-        { type: 'main', text: 'Backend', url: '/docs/backend' },
-        { type: 'main', text: 'Design System', url: '/docs/design-system' },
-        { type: 'main', text: 'Guias', url: '/docs/guias/setup' },
-      ]}
       sidebar={{
         collapsible: true,
+        tabs: false,
         // Card-banner no topo da sidebar, ao estilo "RUNTIME DOCS" do Horus.
         banner: (
           <Link
+            key="sidebar-banner"
             href="/docs"
             className="bull-panel-quiet group flex flex-col gap-3 rounded-xl! p-4 no-underline"
           >

@@ -153,6 +153,9 @@
     --shadow-soft: rgba(0, 0, 0, 0.35);
     --shadow-deep: rgba(0, 0, 0, 0.55);
     --sat: env(safe-area-inset-top, 0px);
+
+    /* Custom Fumadocs Sidebar Width */
+    --fd-sidebar-width: 250px;
   }
 }
 
@@ -693,3 +696,9 @@
   }
 
 }
+
+/* Override Fumadocs default sidebar width outside of CSS layers to ensure it successfully overrides library styles */
+:root {
+  --fd-sidebar-width: 245px !important;
+}
+

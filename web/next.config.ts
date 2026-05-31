@@ -26,8 +26,8 @@ const nextConfig: NextConfig = {
     ]
   },
   async redirects() {
-    // Bloqueia e redireciona o acesso a /docs em produção, a menos que ENABLE_DOCS esteja explicitamente definido como 'true'
-    if (process.env.NODE_ENV === 'production' && process.env.ENABLE_DOCS !== 'true') {
+    // Garante de forma estrita que /docs é redirecionado para 404 em produção
+    if (process.env.NODE_ENV === 'production') {
       return [
         {
           source: '/docs/:path*',

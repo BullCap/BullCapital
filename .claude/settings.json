@@ -7,7 +7,11 @@
       "Bash(curl -s http://localhost:3001/docs/produto)",
       "Bash(pkill -f \"next dev\")",
       "Bash(pkill -f \"next-server\")",
-      "Bash(pkill -9 -f \"next dev|next-server\")"
+      "Bash(pkill -9 -f \"next dev|next-server\")",
+      "Bash(kill -9 42175)",
+      "Bash(pkill -9 -f \"pnpm dev\")",
+      "Bash(pkill -9 -f \"next\")",
+      "Bash(awk '{print $2, $11, $12, $13}')"
     ]
   }
 }
