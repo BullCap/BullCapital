@@ -1,0 +1,39 @@
+---
+title: Rotas
+description: Inventário das rotas do App Router e seus status.
+---
+
+# Rotas — `web/src/app/`
+
+Antes de criar uma rota nova, confira se ela já existe aqui.
+
+| Rota | Arquivo | Função | Status |
+| :--- | :--- | :--- | :--- |
+| `/` | `page.tsx` | Landing pública; redireciona autenticados para `/home` | ✅ |
+| `/auth/sign-in` | `auth/` | Login email+senha | ✅ |
+| `/auth/sign-up` | `auth/` | Cadastro email+senha | ✅ |
+| `/home` | `home/page.tsx` | Daily brief + movers + índices + radar | ✅ |
+| `/asset/[ticker]` | `asset/[ticker]/page.tsx` | Detalhe de ativo: header, chart, radar, news, perfil | ✅ |
+| `/analysis` | `analysis/` | Conversa IA ancorada a ativo (spec 005) | ✅ |
+| `/news` | `news/page.tsx` | Feed editorial de notícias | ✅ |
+| `/search` | `search/` | Busca de ativos | ✅ |
+| `/terminal` | `terminal/` | Mesa do Analista (absorveu o comparador — ver roadmap) | ⚠️ pivô |
+| `/docs` | `docs/[[...slug]]/` | Esta documentação (Fumadocs) | ✅ |
+| `/api/...` | `api/` | Rotas API internas do Next | — |
+| `/conversation` | `conversation/` | Server actions de conversa | — |
+
+---
+
+## Observações
+
+- A rota **`/comparador` foi cancelada** — sua funcionalidade foi absorvida pelo `/terminal` (Sprint 1). Ver [Roadmap](/docs/produto/roadmap).
+- `/docs` é **bloqueada em produção** por padrão: o `next.config.ts` redireciona `/docs/:path*` para `/404` a menos que `ENABLE_DOCS=true`.
+- Telas legadas (`DividendCalculator`, `SavingsSimulator`) **serão ocultadas** do nav no pivô; o código permanece em `terminal/`.
+
+---
+
+## Regras
+
+- Antes de criar rota nova, cheque esta tabela.
+- Server Components por padrão; `"use client"` apenas quando necessário.
+- O client nunca chama Brapi/FastAPI direto — sempre via server action ou route handler.

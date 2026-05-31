@@ -1,0 +1,58 @@
+---
+title: Decisões Arquiteturais
+description: Decisões que não devem ser revisitadas sem motivo forte, e o que ficou deliberadamente de fora.
+---
+
+# Decisões Arquiteturais
+
+Estas decisões foram tomadas após discussão de produto. **Não revisitar sem motivo forte.**
+
+---
+
+## Decisões tomadas
+
+| Decisão | Motivo |
+| :--- | :--- |
+| PWA, não app nativo | Distribuição via link no WhatsApp, sem app store, Android-first |
+| Capacitor instalado mas não em produção | Preparação para wrapper Android nativo pós-MVP (spec 006) |
+| Next.js como BFF | Auth + server actions para Brapi + chamadas ao FastAPI. A UI fica burra |
+| FastAPI separado | Toda lógica de IA, embeddings e prompts pesados — não polui o Next |
+| Postgres único | MVP usa um banco; Prisma para auth, SQLAlchemy async para análises |
+| pgvector | Embeddings de análises para retrieval (spec 005, conversation) |
+| Sem Redis no MVP | Cache via `revalidate` do Next.js e cache do Brapi SDK |
+
+---
+
+## O que NÃO está na arquitetura (e por quê)
+
+- **Redis / cache layer** — prematuro. A Brapi tem rate limit aceitável e o Next cacheia bem.
+- **Sistema de filas (Celery/RQ)** — o briefing diário pode ser um cron no FastAPI; ainda não justifica fila.
+- **Microsserviços além do FastAPI** — um serviço de IA é suficiente.
+- **GraphQL** — REST + server actions cobrem o escopo.
+- **Mobile app nativo (Swift/Kotlin)** — Capacitor cobre Android quando necessário.
+
+---
+
+## Proibições explícitas
+
+Não adicione, sem necessidade comprovada e discussão:
+
+- Redis, Celery ou microsserviço novo.
+- Split do Postgres em dois bancos.
+- GraphQL.
+- Troca de Next.js ou de FastAPI por outro framework.
+
+E **não reescreva** `web/src/lib/services/market.ts` — funciona.
+
+---
+
+## Infra / DevOps
+
+| Item | Onde |
+| :--- | :--- |
+| Deploy web | Vercel (Next.js) |
+| Deploy api | Railway (`railway.toml`) |
+| Deploy DB | Railway Postgres |
+| Dev local | `docker-compose.yml` sobe Postgres + API |
+| Domínio | bullcapital.com.br |
+| Email transacional | Resend (Sprint 2) |

@@ -1,0 +1,67 @@
+---
+title: Roadmap MVP B2B
+description: Plano de sprints até o lançamento público em 10 de julho de 2026.
+---
+
+# Roadmap MVP B2B
+
+**Deadline:** 10 de julho de 2026. Janela de ~6,5 sprints semanais a partir do pivô (24/mai).
+
+---
+
+## Mapa geral
+
+| Sprint | Janela | Foco |
+| :--- | :--- | :--- |
+| 0 | 24-31/mai | Pivô narrativo + arquivamento de telas fora do escopo + specs novas |
+| 1 | 01-07/jun | Terminal — Mesa do Analista (`/terminal` absorve o comparador) |
+| 2 | 08-14/jun | Briefing diário por email (cron + Resend) |
+| 3 | 15-21/jun | Exportação PDF/imagem (Puppeteer) |
+| 4 | 22-28/jun | Polimento + perfil profissional + onboarding novo |
+| 5 | 29/jun-05/jul | Beta fechado com 5-10 CFPs/influencers |
+| 6 | 06-10/jul | Última milha: bugfix + lançamento público |
+
+---
+
+## Sprint 1 — Terminal: Mesa do Analista
+
+`/terminal` vira workspace completo: watchlist persistida + comparador 2-4 ativos + copiloto contextual. A rota `/comparador` foi **cancelada** (absorvida pelo terminal).
+
+> **Decisão (28/mai/2026):** Gorila domina consolidação de carteira; a Bull se diferencia como **mesa de trabalho do analista** — watchlist de ativos sob radar, não portfolio do usuário.
+
+Componentes-alvo: `Watchlist`, `WatchlistItem`, `AssetFocus`, `MarketStatusBar`, `AssetComparator` (refatorado para receber `tickers: string[]`), `TerminalClient` (grid de 3 colunas), `TerminalCopilot` (contexto enriquecido). Endpoint `/api/v1/comparator` + server action `comparator.ts`.
+
+---
+
+## Sprint 2 — Briefing diário por email
+
+Assinante recebe email às 7h BRT em dias úteis. Job cron no FastAPI (6h45 BRT) puxa movers + índices + 1 evento macro + 1 notícia, gera narrativa via Agno e renderiza HTML enviado pela Resend. Tabela `email_subscriptions` (Prisma) e tela mínima `/configuracoes/notificacoes`.
+
+---
+
+## Sprint 3 — Exportação PDF/imagem
+
+Botão "Exportar" funcional em análise, asset e comparador. Rota `/export/[type]/[id]` print-ready. Formatos: PDF A4 portrait (email) e PNG 1080×1080 (Instagram). Branding BCAP + nome do consultor (`profile.displayName`), com watermark sutil "via Bull".
+
+---
+
+## Sprints 4-6 — Polimento, beta e lançamento
+
+- **Sprint 4:** página `/perfil` (registro CFP/Ancord/CNPI), onboarding em 3 telas, revisão de copy, audit de performance mobile e a11y, Sentry.
+- **Sprint 5:** beta fechado com 3 CFPs + 3 influencers + 3 AAIs; tracking (PostHog/Plausible); daily de bugfix.
+- **Sprint 6:** bugfix P0/P1, página de pricing ("grátis no lançamento"), landing com depoimentos, plano de comunicação 10/jul.
+
+---
+
+## Parking lot (pós-10/jul, sem prazo no MVP)
+
+Gestão de clientes do consultor · API/webhook para CRM · model portfolios · Open Finance / B3 · billing · app nativo via Capacitor · suitability automatizado · watchlists com alertas push.
+
+---
+
+## Riscos visíveis
+
+1. **PDF rendering em produção** — Puppeteer no Vercel/Railway pode falhar por tamanho. *Mitigação:* POC no Sprint 0; fallback `@react-pdf/renderer`.
+2. **IA alucinando números** — queima credibilidade. *Mitigação:* pipeline sempre injeta números reais; IA só escreve narrativa.
+3. **Recrutar 10 betas** — aquecer a rede desde já.
+4. **Resend domain validation** — pode levar 24-48h; iniciar imediatamente.

@@ -1,0 +1,48 @@
+---
+title: Banco de Dados
+description: Postgres único com pgvector — divisão entre Prisma (auth) e SQLAlchemy (análises).
+---
+
+# Banco de Dados
+
+**PostgreSQL 16 + pgvector**, um banco único para todo o MVP. Dois ORMs compartilham o mesmo banco com responsabilidades separadas.
+
+---
+
+## Divisão de responsabilidades
+
+| ORM | Camada | Cuida de |
+| :--- | :--- | :--- |
+| **Prisma** (web) | `web/prisma/schema.prisma` | Auth — `users`, `sessions` e tabelas do NextAuth |
+| **SQLAlchemy async** (api) | `api/app/models/` | Análises, conversas e embeddings |
+
+> Não splitar o Postgres em dois bancos — ver [Decisões Arquiteturais](/docs/arquitetura/decisoes).
+
+---
+
+## Modelos da API
+
+- `models/analysis.py` — `Analysis` ORM com coluna de embedding (pgvector).
+- `models/conversation.py` — `Conversation` + `Message`, também com embeddings.
+
+A sessão async é criada em `core/database.py`.
+
+---
+
+## pgvector
+
+A extensão `pgvector` armazena embeddings das análises/conversas para **busca semântica** em histórico (base do retrieval da spec 005). Os embeddings são gerados no pipeline de IA antes da persistência.
+
+---
+
+## Migrations e ferramentas (web/Prisma)
+
+```bash
+pnpm db:migrate     # cria/atualiza schema (migrate dev)
+pnpm db:push        # push direto do schema
+pnpm db:studio      # GUI do Prisma
+pnpm db:generate    # regenera o client
+pnpm db:seed        # popula dados de seed
+```
+
+As variáveis `DATABASE_URL` (web e api) estão em [Variáveis de Ambiente](/docs/guias/variaveis-ambiente).

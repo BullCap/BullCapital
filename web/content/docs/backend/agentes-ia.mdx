@@ -1,0 +1,42 @@
+---
+title: Agentes de IA
+description: Como o agente Agno gera narrativa pt-BR ancorada em números reais.
+---
+
+# Agentes de IA
+
+A camada de IA usa o framework **Agno** com o modelo **OpenAI gpt-4o**. Os agentes vivem em `api/app/agent/`.
+
+---
+
+## Agentes
+
+- `base.py` — `AbstractBaseAgent`: contrato comum dos agentes.
+- `market_analysis.py` — `MarketAnalysisAgent` (Agno + gpt-4o, **lazy init**): escreve a narrativa de análise de mercado.
+
+---
+
+## Endpoints que orquestram IA
+
+| Endpoint | Função |
+| :--- | :--- |
+| `POST/GET /api/v1/analysis` | Gera/recupera uma análise ancorada em ativo |
+| `POST /api/v1/conversation` | Conversa IA ancorada (spec 005) |
+
+O fluxo completo entre Next, FastAPI e banco está em [Dados e Integrações](/docs/arquitetura/dados-e-integracoes).
+
+---
+
+## A regra inviolável
+
+> A IA **nunca gera** números de mercado. Os números vêm de Brapi/Yahoo; a IA escreve **narrativa em cima** deles.
+
+O pipeline injeta os números reais no prompt; o agente apenas escreve o texto pt-BR. Se um prompt pedir que a IA invente preços, multiplique fundamentos ou estime dividendos — **recusar**.
+
+Toda saída segue a [Postura Editorial](/docs/produto/postura-editorial): pt-BR, sem recomendação de compra/venda, ancorada em ativo/evento/indicador, com disclaimer permanente.
+
+---
+
+## Persistência
+
+Cada análise/conversa é persistida no Postgres com seu **embedding (pgvector)** para retrieval futuro. Ver [Banco de Dados](/docs/backend/banco-de-dados).

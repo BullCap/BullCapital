@@ -1,0 +1,41 @@
+---
+title: Postura Editorial
+description: Regras de copy invioláveis que aparecem em código, UI, prompts de IA e comunicação externa.
+---
+
+# Postura Editorial
+
+Estas regras são **invioláveis** e valem para código, UI, prompts da IA e comunicação externa.
+
+---
+
+## As seis regras
+
+1. **Nunca recomendar compra/venda/hold.** Nem direta nem indiretamente. "Este ativo está barato" ou "momento atrativo de entrada" são proibidos. A análise descreve, contextualiza e levanta riscos — nunca aconselha.
+2. **Sempre pt-BR.** Brasileiro, não português europeu. Sem code-switching para inglês, exceto termos técnicos consagrados (ETF, IPO, P/L).
+3. **Ancorada em ativo / evento / indicador.** Não existe IA conversacional aberta; toda análise parte de um contexto concreto (um ticker, uma notícia, uma variação macro).
+4. **Disclaimer permanente e não-dismissível** em qualquer tela que expõe análise de IA. Padrão atual:
+   > "Análises são contextuais e educacionais. Não constituem recomendação de investimento."
+5. **Tom calmo, sério, editorial** — como uma boa revista de economia, não como um app de fintech vibrante. Zero gamificação, zero emoji em UI, zero linguagem motivacional ("rumo aos seus objetivos!").
+6. **Números sempre formatados em pt-BR**: vírgula decimal, ponto de milhar, `R$` antes do valor.
+   ```ts
+   valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+   ```
+
+---
+
+## A regra crítica da IA
+
+A IA **nunca gera** números de mercado. Os números vêm da Brapi/Yahoo; a IA escreve **narrativa em cima** dos números.
+
+> Se um agente sugerir um prompt onde a IA inventa preços, multiplica fundamentos ou estima dividendos — **recusar**. Isso queima a credibilidade do profissional que envia o material ao cliente.
+
+---
+
+## Checklist rápido de copy
+
+- [ ] Texto está em pt-BR brasileiro?
+- [ ] Nenhuma recomendação implícita de compra/venda?
+- [ ] Disclaimer presente em telas com análise de IA?
+- [ ] Números formatados com `toLocaleString('pt-BR', ...)`?
+- [ ] Sem emoji, sem gamificação, sem tom motivacional?

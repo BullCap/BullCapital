@@ -1,0 +1,72 @@
+---
+title: Design System
+description: 'Tokens, anatomia de vidro e regras de ouro do conceito "The Financial Reading Room".'
+---
+
+# The Financial Reading Room
+
+Nosso design system adota o conceito de **"The Financial Reading Room"** (Sala de Leitura Financeira): calma, contemplação e materialidade digital. Fugimos do visual frenético de "sala de pregão" e do minimalismo sem profundidade do flat design.
+
+> Vidro espesso + esqueleto físico. Sala de leitura financeira, não sala de pregão.
+
+---
+
+## Paleta de cores (tokens)
+
+Valores reais definidos em `web/src/app/globals.css` (`@theme` + `:root`). **Use os tokens; não improvise hex.**
+
+| Token | Valor | Uso |
+| :--- | :--- | :--- |
+| **Void** | `#0C0F15` | Fundo absoluto da aplicação |
+| **Surface** | `#12161F` | Base sólida para cards e painéis |
+| **Surface Quiet** | `#090C12` | Superfícies recuadas (ex.: sidebar) |
+| **Starlight** | `#E2DEF0` | Texto primário (alta legibilidade) |
+| **Amethyst** | `#82759F` | Acento, estados ativos, positivo, glow |
+| **Amethyst Light** | `#B1A9C4` | Acento claro, links ativos |
+| **Glass Rim** | `rgba(255,255,255,0.035)` | Bordas finas superiores (reflexo do vidro) |
+| **Glass Rim Strong** | `rgba(255,255,255,0.08)` | Borda em hover/foco |
+| **Shadow Soft** | `rgba(0,0,0,0.35)` | Sombras de elevação intermediária |
+
+> **Nota de consistência:** o `AGENTS.md §7` lista uma paleta alternativa (Void `#0D0B14`, Amethyst `#8B5CF6`, Rose `#F43F5E`). A fonte de verdade é o `globals.css`, refletido na tabela acima. O verde/positivo e rosa/negativo aparecem filtrados sob o vidro, nunca puros.
+
+---
+
+## Tipografia
+
+- **Playfair Display** (serif) — títulos, nomes de ativo, manchetes.
+- **Inter** (sans) — corpo, dados numéricos, labels.
+- Letter-spacing levemente reduzido em headings; números nunca em bold agressivo.
+
+---
+
+## Anatomia do card de vidro
+
+Todo card translúcido **precisa** de relevo e desfoque de fundo. Padrão Tailwind da nossa assinatura visual:
+
+```tsx
+<section className="relative overflow-hidden rounded-xl border border-white/[0.035] bg-[#111520]/60 backdrop-blur-2xl transition-all duration-500 shadow-[inset_0_1px_0px_rgba(255,255,255,0.035),0_12px_32px_rgba(0,0,0,0.4)]">
+  {/* Conteúdo do Card */}
+</section>
+```
+
+Utilitários prontos em `globals.css` (prefira-os a reescrever o estilo):
+
+- `.glass-card`, `.bull-panel`, `.bull-panel-focus`, `.bull-panel-quiet` — superfícies de vidro com hover.
+- `<GlassHighlight />` (atom) — shimmer do topo, **obrigatório em todo card**.
+- `.bull-eyebrow`, `.bull-chip`, `.bull-wordmark` — microcomponentes de marca.
+
+---
+
+## Regras de ouro (invioláveis)
+
+1. **Flat design é proibido.** Toda superfície simula profundidade — `shadow` + `backdrop-blur` sempre.
+2. **Semáforo agressivo é proibido.** Sem verde (`#00ff00`) ou vermelho (`#ff0000`) puros — use Amethyst (positivo) e Rose/soft-red (negativo) filtrados sob o vidro.
+3. **Arredondamento generoso.** Mínimo `rounded-xl`; grandes painéis `rounded-[2.5rem]`. Cantos retos são proibidos.
+4. **Respiro editorial.** Pelo menos `p-8` (2.5rem) de padding ao redor de texto gerado por IA.
+5. **Zero emojis na UI.** Nem em microcopy.
+
+---
+
+## Esta documentação
+
+A página `/docs` (Fumadocs) reusa os mesmos tokens: os `--color-fd-*` foram sobrescritos em `globals.css` para a paleta void/amethyst, e o tema fica **travado em dark** — coerente com a Reading Room.

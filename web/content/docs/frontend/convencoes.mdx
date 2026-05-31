@@ -1,0 +1,53 @@
+---
+title: Convenções
+description: Regras de TypeScript, Next.js e Tailwind para manter consistência no frontend.
+---
+
+# Convenções — Frontend
+
+---
+
+## TypeScript / Next.js
+
+- **Server Components por padrão.** `"use client"` só quando precisar de estado/interação no browser.
+- **Server actions** para chamadas a Brapi e FastAPI — nunca chamar Brapi do client.
+- **Sem fetch direto** do client para API externa. Sempre via server action ou route handler.
+- **Imports** com o alias `@/` (configurado no `tsconfig.json`).
+- **`strict: true`** — nada de `any`, exceto adapter de lib sem types.
+- **Composição > props gigantes.** Componente acima de ~250 linhas: separar.
+
+### Nomeação
+
+| Item | Convenção |
+| :--- | :--- |
+| Componentes | `PascalCase.tsx` |
+| Hooks | `useFooBar.ts` |
+| Server actions | nome do domínio (`analysis.ts`, `market.ts`) |
+| Tipos | `PascalCase` exportado, sem prefixo `I` |
+
+---
+
+## Tailwind
+
+- Use **tokens do design system** (ver [Design System](/docs/design-system)); evite cores arbitrárias.
+- Combine classes via `cn(...)` (em `lib/utils.ts`).
+- Variantes de componente via `class-variance-authority` (já nas deps).
+- Tailwind **v4**: tokens declarados em `globals.css` com `@theme`. Não há `tailwind.config.ts`.
+
+---
+
+## Git / commits
+
+- Conventional commits: `feat:`, `fix:`, `style:`, `perf:`, `refactor:`, `docs:`, `chore:` (config em `commitlint.config.cjs`).
+- Mensagens em pt-BR ou en, **consistentes dentro do mesmo PR**.
+- Branch por feature: `008-comparador`, `009-briefing-diario`, etc.
+- **Não** commitar `.env.local`, `node_modules`, `__pycache__`.
+- **Não** commitar `OpenFinancePortfolio.tsx` (untracked, decisão de produto).
+- **Não** usar `--no-verify` nem `--amend` em commits já pushed.
+
+---
+
+## Pull requests
+
+- Título conciso (&lt;70 chars), conventional commit.
+- Description: Summary (1-3 bullets) + Test plan (checklist).

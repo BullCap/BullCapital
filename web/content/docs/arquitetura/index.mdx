@@ -1,0 +1,62 @@
+---
+title: Visão Geral
+description: Modelo híbrido Next.js + FastAPI + Postgres/pgvector e como as camadas se comunicam.
+---
+
+# Arquitetura — Visão Geral
+
+A BullCapital usa um **modelo híbrido e pragmático**: um frontend Next.js que atua como BFF, um serviço Python para IA pesada, e um Postgres único.
+
+---
+
+## Diagrama de sistemas
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  Browser / Android PWA (instalável via Chrome)           │
+│  ┌────────────────────────────────────────────────────┐ │
+│  │  Next.js 15 — App Router + Server Components        │ │
+│  │  - Auth: NextAuth v5 (Credentials + JWT)            │ │
+│  │  - PWA: manifest + service worker                   │ │
+│  │  - BFF: server actions chamam Brapi + FastAPI       │ │
+│  │  - Capacitor 8 instalado (preparação Android nativo)│ │
+│  └─────────┬──────────────────────────────────┬────────┘ │
+└────────────┼──────────────────────────────────┼──────────┘
+             │                                  │
+             ▼                                  ▼
+     ┌───────────────┐               ┌──────────────────┐
+     │  Brapi SDK    │               │  FastAPI (Python)│
+     │  Mercado BR   │               │  Análise IA      │
+     │  (REST)       │               │  - Agno + gpt-4o │
+     └───────────────┘               │  - SQLAlchemy 2  │
+                                     └────────┬─────────┘
+                                              │
+                                              ▼
+                                     ┌──────────────────┐
+                                     │  PostgreSQL 16   │
+                                     │  + pgvector      │
+                                     │  - users/sessions│
+                                     │    (Prisma)      │
+                                     │  - analyses +    │
+                                     │    embeddings    │
+                                     │    (SQLAlchemy)  │
+                                     └──────────────────┘
+```
+
+---
+
+## As três camadas
+
+- **Frontend (`web/`)** — Next.js 15 (App Router, RSC). Atua como **BFF**: autentica, chama a Brapi via server actions e orquestra chamadas ao FastAPI. A UI "fica burra". PWA instalável, com Capacitor 8 preparado para empacotamento Android nativo. Detalhes em [Frontend](/docs/frontend).
+- **Backend (`api/`)** — FastAPI em Python 3.11. Concentra **toda a lógica de IA**, embeddings e prompts pesados, para não poluir o Next. Detalhes em [Backend](/docs/backend).
+- **Banco** — PostgreSQL 16 + `pgvector`. **Banco único**: Prisma cuida de auth (users/sessions), SQLAlchemy async cuida de análises e embeddings. Detalhes em [Banco de Dados](/docs/backend/banco-de-dados).
+
+---
+
+## Princípios
+
+- **Server Components por padrão.** `"use client"` só quando há estado/interação.
+- **O client nunca chama API externa direto.** Sempre via server action ou route handler.
+- **Um serviço de IA é suficiente.** Sem microsserviços além do FastAPI.
+
+As justificativas de cada escolha estão em [Decisões Arquiteturais](/docs/arquitetura/decisoes). As fontes de dados externas em [Dados e Integrações](/docs/arquitetura/dados-e-integracoes).

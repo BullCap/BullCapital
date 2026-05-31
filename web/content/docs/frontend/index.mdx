@@ -1,0 +1,54 @@
+---
+title: Frontend (web/)
+description: Stack do app Next.js 15 — App Router, RSC, PWA e bibliotecas aprovadas.
+---
+
+# Frontend — `web/`
+
+Aplicação **Next.js 15 (App Router)** em TypeScript, com RSC, Server Actions e suporte a PWA. Atua como BFF da plataforma.
+
+---
+
+## Stack
+
+| Camada | Escolha | Versão | Observações |
+| :--- | :--- | :--- | :--- |
+| Framework | Next.js | 15.2 | App Router, RSC, Server Actions |
+| Runtime | Node | ≥20 | Engine em `package.json` |
+| Linguagem | TypeScript | 5.7 | `strict: true`, sem `any` implícito |
+| Styling | Tailwind CSS | v4 | Tokens em `globals.css` (`@theme`) |
+| Componentes | shadcn/ui + Radix | — | `web/src/components/ui/` |
+| Animação | motion (Framer) | 12.x | Com parcimônia; transições longas (~700ms) |
+| Auth | NextAuth | 5.0-beta.30 | Credentials + JWT + Prisma adapter |
+| ORM | Prisma | 7.x | `web/prisma/schema.prisma` |
+| DB driver | `@prisma/adapter-pg` + `pg` | — | Adapter Postgres |
+| Charts | Recharts | 3.x | PriceChartClient, MarketTreeMap |
+| Markdown | react-markdown + remark-gfm | — | Análises de IA renderizam markdown |
+| Validação | Zod | 4.x | Schemas em server actions |
+| Wrapper nativo | Capacitor | 8.x | Instalado, não ativo ainda |
+| Testes | Vitest + Testing Library | — | `pnpm test` |
+
+> **Nota:** o `AGENTS.md` cita Tailwind 3.x + `tailwind.config.ts`, mas o repositório já migrou para **Tailwind v4** (tokens em `globals.css` via `@theme`; o `tailwind.config.ts` foi removido). O código é a fonte de verdade.
+
+---
+
+## Bibliotecas proibidas
+
+**Não adicione:**
+
+- Redux / Zustand → use React state + server actions.
+- styled-components → Tailwind only.
+- date-fns / dayjs → use `Intl.DateTimeFormat`.
+- axios → use `fetch`.
+
+---
+
+## Mapa do diretório
+
+- `src/app/` — rotas (App Router). Ver [Rotas](/docs/frontend/rotas).
+- `src/components/` — componentes por domínio. Ver [Componentes](/docs/frontend/componentes).
+- `src/lib/` — serviços, server actions e helpers. Ver [Serviços e Libs](/docs/frontend/servicos).
+- `src/types/` — tipos de domínio (`market.ts`).
+- `content/docs/` + `src/app/docs/` — esta documentação (Fumadocs).
+
+As convenções de código estão em [Convenções](/docs/frontend/convencoes).

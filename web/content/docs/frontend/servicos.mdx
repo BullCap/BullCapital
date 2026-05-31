@@ -1,0 +1,57 @@
+---
+title: Serviços e Libs
+description: Camada de dados do frontend — services da Brapi, server actions, auth e helpers.
+---
+
+# Serviços e Libs — `web/src/lib/`
+
+A UI é "burra": toda integração externa passa por esta camada.
+
+---
+
+## `services/market.ts` — Brapi
+
+Integrações com o Brapi SDK. **Não reescrever — funciona.** Sete funções:
+
+| Função | Retorno |
+| :--- | :--- |
+| `getMarketRadarData(ticker)` | Scores do radar (Rentabilidade, Momentum, Liquidez, Valuation, Tendência) |
+| `getMarketListings(params)` | Listings paginados (com workaround de BDR) |
+| `getMultipleQuotes(tickers)` | Batch de quotes |
+| `getMarketIndicators()` | SELIC + IPCA (cache 24h) |
+| `searchAssets(query)` | Busca por ticker/nome |
+| `getMarketStatus()` | IBOV, S&P, VIX, VXBR (com fallback Yahoo) |
+| `getAssetHistory(tickers, range)` | Histórico com cache em camadas |
+
+---
+
+## `actions/` — Server Actions
+
+Chamáveis a partir do client; encapsulam Brapi e FastAPI:
+
+`analysis.ts` · `conversation.ts` · `daily-brief.ts` · `market.ts` · `story-brief.ts` · `watchlist.ts`
+
+> A server action `comparator.ts` será adicionada no Sprint 1 (terminal).
+
+---
+
+## Auth e banco
+
+- `auth.ts`, `auth.config.ts` — NextAuth v5 (Credentials + JWT + Prisma adapter).
+- `db.ts` — singleton do Prisma client.
+
+---
+
+## Helpers e fontes
+
+- `market-routing.ts`, `market-utils.ts` — roteamento e formatação.
+- `news-radar.ts` — fonte do news radar.
+- `metric-stories.ts` — histórias por métrica do radar.
+- `market-history.mock.ts` — mocks de histórico (dev only).
+- `utils.ts` — utilitários, incluindo `cn(...)` para combinar classes.
+
+---
+
+## Tipos — `web/src/types/market.ts`
+
+Todos os tipos de domínio de mercado vivem aqui. **Importar daqui**, nunca redefinir.

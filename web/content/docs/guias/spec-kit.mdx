@@ -1,0 +1,61 @@
+---
+title: Workflow Spec Kit
+description: O ciclo de specs (specify → plan → tasks → implement) usado em toda feature.
+---
+
+# Workflow Spec Kit
+
+O repositório usa **Spec Kit**. Toda feature — de qualquer porte — passa pelo ciclo antes de virar código.
+
+---
+
+## Fases
+
+| Fase | Comando | Saída |
+| :--- | :--- | :--- |
+| 1 | `/speckit-specify` | `spec.md` (user stories, FRs, edge cases) |
+| 2 | `/speckit-clarify` (opcional) | até 5 perguntas para fechar lacunas |
+| 3 | `/speckit-plan` | `plan.md` (decisões técnicas) |
+| 4 | `/speckit-tasks` | `tasks.md` dependency-ordered |
+| 5 | `/speckit-analyze` (opcional) | auditoria de consistência spec/plan/tasks |
+| 6 | `/speckit-implement` | executa as tasks |
+| 7 | `/speckit-checklist` (opcional) | checklist customizado |
+
+Artefatos ficam em `specs/<id>-<nome>/spec.md|plan.md|tasks.md`. A branch tem o mesmo nome do diretório.
+
+---
+
+## Fluxo padrão de feature nova
+
+```
+/speckit-git-feature 008-comparador
+/speckit-specify "comparador top-level de 2-4 ativos com narrativa IA pt-BR"
+/speckit-clarify
+/speckit-plan
+/speckit-tasks
+/speckit-analyze
+/speckit-implement
+```
+
+---
+
+## Specs já entregues
+
+| ID | Nome | Status |
+| :--- | :--- | :--- |
+| 001 | mvp-bootstrap | entregue |
+| 002 | auth-screens | entregue |
+| 003 | home-screen | entregue |
+| 004 | asset-detail | entregue |
+| 005 | ai-conversation | entregue |
+| 006 | unified-ui-flow | entregue (PWA + Capacitor prep) |
+| 007 | daily-market-brief | entregue (base do email do Sprint 2) |
+| 008 | terminal-dashboard | em andamento (absorveu o comparador) |
+
+Novas specs do MVP B2B: **009-briefing-diario-email** e **010-export-pdf**.
+
+---
+
+## Regra de escopo
+
+Não implemente feature fora do [Roadmap](/docs/produto/roadmap) sem confirmação. Não pule o ciclo Spec Kit.

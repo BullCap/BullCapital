@@ -3,13 +3,25 @@ title: Introdução
 description: Base de conhecimento técnico da BullCapital — arquitetura, design system e sistemas que compõem a plataforma.
 ---
 
+import { Cards, Card } from 'fumadocs-ui/components/card';
+import { Rocket, Boxes, MonitorSmartphone, Server, Palette, Compass } from 'lucide-react';
+
 # BullCapital Developer Documentation
 
-Bem-vindo à base de conhecimento técnico da **BullCapital**, a plataforma de inteligência de mercado financeiro brasileiro para **planejadores CFP, criadores de conteúdo financeiro e AAIs**.
+Base de conhecimento técnico da **BullCapital**, a plataforma de inteligência de mercado financeiro brasileiro para **planejadores CFP, criadores de conteúdo financeiro e AAIs**.
 
 Esta documentação orienta engenheiros e designers na manutenção e evolução da plataforma, garantindo a integridade da arquitetura e o respeito estrito ao **Design System**.
 
 > A fonte canônica de contexto do repositório é o `AGENTS.md`. Estas páginas são a versão navegável e organizada por sistema desse conhecimento. Quando houver conflito, **o código é a fonte de verdade**.
+
+<Cards>
+  <Card icon={<Rocket />} title="Setup Local" href="/docs/guias/setup" description="Instale dependências, configure o ambiente e rode a stack localmente." />
+  <Card icon={<Boxes />} title="Arquitetura" href="/docs/arquitetura" description="Veja como web, API, agentes de IA e o banco se encaixam." />
+  <Card icon={<MonitorSmartphone />} title="Frontend" href="/docs/frontend" description="App Next.js 15: rotas, componentes, serviços e convenções." />
+  <Card icon={<Server />} title="Backend" href="/docs/backend" description="FastAPI, agentes Agno e a camada de dados com pgvector." />
+  <Card icon={<Palette />} title="Design System" href="/docs/design-system" description="Tokens, anatomia de vidro e regras de ouro invioláveis." />
+  <Card icon={<Compass />} title="Produto" href="/docs/produto" description="Personas, postura editorial e o roadmap do MVP B2B." />
+</Cards>
 
 ---
 
@@ -23,19 +35,6 @@ A Bull **embasa narrativas de mercado** — quem recomenda é o profissional. A 
 - **É** a fundamentação que o profissional usa para opinar com mais confiança.
 - **Idioma do produto**: pt-BR exclusivo em todo texto voltado ao usuário.
 - **Deadline do MVP B2B**: 10 de julho de 2026.
-
----
-
-## Mapa da documentação
-
-| Seção | Conteúdo |
-| :--- | :--- |
-| [Produto](/docs/produto) | Personas, modelo de negócio, postura editorial e roadmap do MVP. |
-| [Arquitetura](/docs/arquitetura) | Visão de sistemas, decisões arquiteturais e fontes de dados. |
-| [Frontend](/docs/frontend) | App Next.js: rotas, componentes, serviços e convenções. |
-| [Backend](/docs/backend) | FastAPI, agentes de IA (Agno) e camada de dados. |
-| [Design System](/docs/design-system) | Tokens, anatomia de vidro e regras de ouro. |
-| [Guias](/docs/guias) | Setup local, variáveis de ambiente, comandos e workflow Spec Kit. |
 
 ---
 

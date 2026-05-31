@@ -1,0 +1,48 @@
+---
+title: Dados e Integrações
+description: Fontes de dados de mercado, IA e a regra crítica de que a IA nunca gera números.
+---
+
+# Dados e Integrações
+
+A Bull combina dados de mercado reais com narrativa gerada por IA. A separação entre os dois é uma regra de credibilidade, não só técnica.
+
+---
+
+## Fontes externas
+
+| Fonte | Uso | Onde |
+| :--- | :--- | :--- |
+| **Brapi** | Quotes, históricos, listings, indicadores BR, busca | `web/src/lib/services/market.ts` |
+| **Yahoo Finance** (yfinance) | Fallback para índices internacionais quando a Brapi falha | `api/app/services/yfinance_market.py` |
+| **OpenAI gpt-4o** | Análises e conversas via Agno | `api/app/agent/` |
+| **Resend** | Email transacional (planejado Sprint 2) | a configurar |
+| **News (RSS/feeds)** | Notícias de mercado | `web/src/lib/news-radar.ts` |
+
+A Brapi é a fonte **primária** no web; o yfinance é fallback **secundário** no Python.
+
+---
+
+## A regra crítica da IA
+
+> A IA **nunca gera** números de mercado. Os números vêm de Brapi/Yahoo; a IA escreve **narrativa em cima** dos números.
+
+Se um agente sugerir um prompt onde a IA inventa preços, multiplica fundamentos ou estima dividendos — **recusar**. O pipeline sempre injeta números reais no prompt e a IA apenas escreve o texto.
+
+---
+
+## Fluxo de dados típico
+
+1. O usuário abre `/asset/[ticker]` ou monta uma watchlist no terminal.
+2. Uma **server action** do Next chama a Brapi e retorna os números (quotes, histórico, radar).
+3. Para gerar análise, o Next chama o **FastAPI** (`/api/v1/analysis` ou `/conversation`), passando os números reais.
+4. O FastAPI orquestra o **agente Agno (gpt-4o)** que escreve a narrativa pt-BR ancorada naqueles números.
+5. A análise é persistida no Postgres com seu **embedding (pgvector)** para retrieval futuro.
+
+---
+
+## Cache
+
+- O Brapi SDK tem cache próprio (ex.: indicadores SELIC/IPCA com TTL de 24h).
+- O Next usa `revalidate` para cachear respostas de server components/actions.
+- **Sem Redis** — ver [Decisões Arquiteturais](/docs/arquitetura/decisoes).

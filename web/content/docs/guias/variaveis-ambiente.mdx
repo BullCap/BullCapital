@@ -1,0 +1,41 @@
+---
+title: Variáveis de Ambiente
+description: Configuração de ambiente para web e api — nunca commitar segredos.
+---
+
+# Variáveis de Ambiente
+
+> **Nunca** commitar `.env*` nem colar segredos em PR description. Em produção use os dashboards do Vercel (web) e Railway (api).
+
+---
+
+## `web/.env.local`
+
+```bash
+NEXTAUTH_SECRET=                 # openssl rand -base64 32
+NEXTAUTH_URL=http://localhost:3000
+DATABASE_URL=postgresql://bullcapital:bullcapital@localhost:5432/bullcapital
+ANALYSIS_API_URL=http://localhost:8001/api/v1   # URL do FastAPI
+API_SHARED_SECRET=               # mesmo valor no web e na API quando habilitado
+RESEND_API_KEY=                  # planejado Sprint 2
+ENABLE_DOCS=                     # 'true' libera /docs em produção
+```
+
+## `api/.env`
+
+```bash
+DATABASE_URL=postgresql+asyncpg://bullcapital:bullcapital@db:5432/bullcapital
+DATABASE_SSL=false
+OPENAI_API_KEY=
+API_SHARED_SECRET=               # protege chamadas server-to-server Vercel -> Railway
+BRAPI_KEY=                       # https://brapi.dev — apenas no backend/API
+CORS_ORIGINS=http://localhost:3000
+```
+
+---
+
+## Notas
+
+- `API_SHARED_SECRET` deve ser **idêntico** nos dois lados para autenticar chamadas server-to-server.
+- `BRAPI_KEY` fica **apenas** no backend/API — nunca exposta ao client.
+- `ENABLE_DOCS=true` é necessário para servir `/docs` em produção (caso contrário redireciona para `/404`).

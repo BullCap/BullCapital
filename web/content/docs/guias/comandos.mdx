@@ -1,0 +1,44 @@
+---
+title: Comandos Essenciais
+description: Scripts de desenvolvimento, teste e build para web e api.
+---
+
+# Comandos Essenciais
+
+---
+
+## Web (`web/`)
+
+```bash
+pnpm install            # instala dependências
+pnpm dev                # http://localhost:3000
+pnpm db:migrate         # cria/atualiza schema Prisma
+pnpm db:studio          # GUI do Prisma
+pnpm lint               # ESLint
+pnpm type-check         # tsc --noEmit
+pnpm test               # Vitest
+pnpm test:coverage      # cobertura
+pnpm build              # build de produção
+```
+
+## API (`api/`)
+
+```bash
+python -m uvicorn app.main:app --reload --port 8001
+ruff check .            # lint
+mypy app/               # type check
+pytest                  # testes
+```
+
+## Stack completa via Docker
+
+```bash
+docker compose up       # Postgres + API
+# o web roda separado com `pnpm dev`
+```
+
+---
+
+## Ações destrutivas — confirme antes
+
+Sempre confirme antes de: `git reset --hard`, `git push --force`, `git checkout -- .`, apagar arquivos não-versionados (especialmente `OpenFinancePortfolio.tsx`), rodar migration que dropa coluna/tabela, ou mexer em settings do Vercel/Railway.

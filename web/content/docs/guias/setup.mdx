@@ -1,0 +1,61 @@
+---
+title: Setup Local
+description: Subir frontend, backend e banco para desenvolver localmente.
+---
+
+# Setup Local
+
+Pré-requisitos: **Node.js v20+**, **Python 3.11** e **Docker**.
+
+---
+
+## 1. Clonar e instalar
+
+```bash
+git clone <repo>
+pnpm install          # no root do monorepo
+```
+
+## 2. Subir o banco
+
+```bash
+docker compose up -d  # Postgres (+ API, se configurado)
+```
+
+## 3. Configurar variáveis de ambiente
+
+Crie `web/.env.local` e `api/.env`. Veja todos os valores em [Variáveis de Ambiente](/docs/guias/variaveis-ambiente).
+
+## 4. Migrar o banco
+
+```bash
+cd web
+pnpm db:migrate
+```
+
+## 5. Rodar os serviços
+
+```bash
+# Frontend (web/)
+pnpm dev                          # http://localhost:3000
+
+# Backend (api/) — em outro terminal
+cd api
+python -m uvicorn app.main:app --reload --port 8001
+```
+
+---
+
+## Acessar a documentação
+
+Esta documentação fica em `/docs` e usa **Fumadocs**. Em produção a rota é **bloqueada por padrão** (`next.config.ts` redireciona para `/404`) — habilite com `ENABLE_DOCS=true`. Em dev local ela está sempre acessível em `http://localhost:3000/docs`.
+
+O conteúdo vive em `web/content/docs/*.mdx`; a estrutura do menu em arquivos `meta.json`.
+
+---
+
+## Próximos passos
+
+- Entenda o produto em [Visão de Produto](/docs/produto).
+- Conheça o código em [Frontend](/docs/frontend) e [Backend](/docs/backend).
+- Siga o fluxo de features em [Spec Kit](/docs/guias/spec-kit).

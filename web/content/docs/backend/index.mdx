@@ -1,0 +1,62 @@
+---
+title: Backend (api/)
+description: Serviço FastAPI em Python 3.11 — estrutura, stack e responsabilidades.
+---
+
+# Backend — `api/`
+
+FastAPI em **Python 3.11**, async, focado em **orquestração de agentes de IA**, embeddings e processamento pesado de dados de mercado. Tudo que é IA pesada vive aqui para não poluir o Next.
+
+---
+
+## Stack
+
+| Camada | Escolha | Observações |
+| :--- | :--- | :--- |
+| Framework | FastAPI | Async, Pydantic v2 |
+| Runtime | Python 3.11 | `target-version` no Ruff |
+| ORM | SQLAlchemy 2.x | Async |
+| Vectors | pgvector | Embeddings de análise |
+| Agente IA | Agno | Framework de agentes — ver [Agentes de IA](/docs/backend/agentes-ia) |
+| Modelo | OpenAI gpt-4o | Configurado em `core/config.py` |
+| Data de mercado | yfinance | Fallback secundário (Brapi é primário no web) |
+| Lint | Ruff | Config em `pyproject.toml` |
+| Type check | mypy strict | `python_version = "3.11"` |
+| Testes | pytest + pytest-asyncio | `pnpm` não roda aqui |
+
+**Não adicione:** Django, Flask, Celery/RQ (sem fila no MVP), LangChain (o framework é Agno).
+
+---
+
+## Estrutura
+
+```
+api/app/
+├── main.py                    # FastAPI bootstrap, CORS, lifespan
+├── core/
+│   ├── config.py              # Pydantic settings (env vars)
+│   └── database.py            # SQLAlchemy async session
+├── api/routes/
+│   ├── analysis.py            # POST/GET /api/v1/analysis
+│   ├── conversation.py        # POST /api/v1/conversation (spec 005)
+│   ├── market.py              # Endpoints de mercado (yfinance fallback)
+│   └── health.py              # GET /health
+├── agent/
+│   ├── base.py                # AbstractBaseAgent
+│   └── market_analysis.py     # MarketAnalysisAgent (Agno + gpt-4o, lazy init)
+├── models/
+│   ├── analysis.py            # Analysis ORM (pgvector)
+│   └── conversation.py        # Conversation + Message (pgvector)
+└── services/
+    └── yfinance_market.py     # Fallback yfinance
+```
+
+---
+
+## Convenções Python
+
+- **Async sempre**: rotas, sessões de DB e chamadas externas.
+- **Pydantic v2** para schemas; validação no boundary.
+- **mypy strict**: tipagem completa.
+- **Ruff** para lint + format; rodar antes de commit.
+- **Não criar abstração antes da terceira ocorrência** — sem `BaseService` se só existe um service.

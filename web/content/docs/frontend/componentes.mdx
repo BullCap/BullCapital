@@ -1,0 +1,75 @@
+---
+title: Componentes
+description: Inventário dos componentes por domínio — reutilize antes de criar.
+---
+
+# Componentes — `web/src/components/`
+
+> **Regra crítica:** antes de criar componente, busque aqui. Duplicação é o maior fator de degradação deste repo. Estenda o que existe; não reescreva.
+
+---
+
+## Atoms (`atoms/`)
+
+Primitivos reutilizáveis, sem dependências.
+
+- `MarketTemperatureDial.tsx` — dial SVG do termômetro de mercado. Props: `{ value, stateName }`.
+- `VariationBadge.tsx` — badge de variação de preço (positivo/negativo). **Usar em todo lugar** com mudança de preço.
+- `GlassHighlight.tsx` — shimmer do topo de cards de vidro. Props: `{ widthPercent, className }`. **Obrigatório em todo card.**
+- `CompanyIcon.tsx` — ícone/logo do ativo.
+- `MarkdownBody.tsx` — renderiza markdown da IA com estilo editorial.
+
+## Home (`home/`)
+
+Composição do dashboard diário.
+
+- `DailyBriefHero.tsx`, `DailyBriefContent.tsx` — briefing do topo.
+- `TemperatureCard.tsx`, `VixCard.tsx`, `SELICCard.tsx`, `IndexCard.tsx` — cards de indicadores.
+- `MoversSection.tsx`, `MoverItem.tsx` — top gainers/losers.
+- `RadarPulseSection.tsx`, `WatchlistRadarSection.tsx` — radar shortlist.
+- `MarketBubbleMap.tsx`, `MarketMapSection.tsx`, `MarketTreeMap.tsx` — visualizações de mercado.
+- `StoryDigestSection.tsx`, `StoryDigestLoader.tsx`, `StoryNote.tsx` — digest de notícias.
+- `AnalysisCTA.tsx` — CTA para conversa IA.
+- `MarketPlaybookSection.tsx` — playbook do mercado.
+
+## Asset (`asset/`)
+
+- `AssetHeader.tsx`, `AssetProfileCard.tsx`, `AssetNewsSection.tsx`, `AssetQuotesTable.tsx`.
+- `PriceChartClient.tsx` — gráfico com Recharts.
+- `RadarSection.tsx` — radar chart (5 dimensões).
+- `FollowButton.tsx`, `AssetAnalysisCTA.tsx`.
+
+## Analysis (`analysis/`)
+
+Conversa IA.
+
+- `AnalysisClient.tsx`, `AnalysisSkeleton.tsx`.
+- `ConversationThread.tsx`, `ConversationInput.tsx`, `ConversationSuggestions.tsx`, `ConversationDisclaimer.tsx`, `ConversationArtifacts.tsx`.
+- `MetricStoryModal.tsx` — modal de história por métrica.
+- `artifacts/` — artefatos renderizáveis dentro da conversa.
+
+## Terminal (`terminal/`)
+
+Mesa do Analista (Sprint 1).
+
+- `TerminalClient.tsx`, `TerminalCopilot.tsx` — shell do terminal.
+- `AssetComparator.tsx` — comparador 2-4 ativos (recebe `tickers: string[]`).
+- `DividendCalculator.tsx`, `SavingsSimulator.tsx` — **ocultados no pivô** (não atendem CFP/influencer); não usar de exemplo.
+- `OpenFinancePortfolio.tsx` — **untracked, fora do MVP**; nunca commitar.
+
+## Navigation (`navigation/`)
+
+- `AppShell.tsx` — shell unificado (spec 006); layout phone/tablet/desktop.
+- `AppDock.tsx` — navegação primária.
+- `AccountMenu.tsx` — dropdown de conta.
+- `NavigationProgress.tsx`, `PageLoadingContent.tsx` — feedback de navegação.
+
+## News, Search, Auth, UI
+
+`ui/` contém os primitivos shadcn/Radix. Os demais são auto-explicativos por domínio.
+
+---
+
+## Regra de tamanho
+
+Composição **>** props gigantes. Se um componente passa de ~250 linhas, separar.
