@@ -26,15 +26,17 @@ function TerminalWorkspaceFallback() {
       <GlassHighlight widthPercent={64} />
       <div className="flex h-full min-h-[408px] flex-col justify-between gap-6">
         <div>
-          <p className="bull-eyebrow">Mesa</p>
-          <h2 className="mt-2 font-serif text-2xl text-[#F4F0FF]">Preparando terminal</h2>
+          <p className="bull-eyebrow">Inteligência de Carteira</p>
+          <h2 className="mt-2 font-serif text-2xl text-[#F4F0FF]">Preparando workstation</h2>
           <p className="mt-2 max-w-xl text-sm leading-6 text-[#F4F0FF]/50">
-            Cotações, status de mercado e câmbio estão sendo atualizados.
+            Cotações, status de mercado e leitura consolidada da carteira estão sendo atualizados.
           </p>
         </div>
-        <div className="grid gap-3 lg:grid-cols-[18rem_minmax(0,1fr)] xl:grid-cols-[20rem_minmax(0,1fr)]">
-          <div className="min-h-[18rem] rounded-[1.75rem] border border-white/[0.08] bg-black/20" />
-          <div className="min-h-[18rem] rounded-[1.75rem] border border-white/[0.08] bg-black/20" />
+        <div className="rounded-xl border border-white/[0.06] bg-white/[0.025] p-4">
+          <p className="text-xs leading-6 text-[#F4F0FF]/40">
+            Assim que os dados iniciais chegarem, a mesa abre com KPIs, performance,
+            alocação, risco, eventos e posições consolidadas.
+          </p>
         </div>
       </div>
     </section>
@@ -47,15 +49,6 @@ export default async function TerminalPage() {
 
   return (
     <AppShell active="terminal" contentClassName="md:max-w-none" sessionUser={session.user}>
-      <header className="px-1 mb-2">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-[#F4F0FF]/35">
-          Mesa do Analista
-        </p>
-        <h1 className="mt-1 font-serif text-2xl font-semibold tracking-tight text-[#F4F0FF]">
-          Terminal Bull
-        </h1>
-      </header>
-
       <Suspense fallback={<TerminalWorkspaceFallback />}>
         <TerminalWorkspace />
       </Suspense>

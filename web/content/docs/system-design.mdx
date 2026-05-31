@@ -1,0 +1,47 @@
+---
+title: Design System
+description: As diretrizes e tokens visuais que compõem a identidade da BullCapital.
+---
+
+# The Financial Reading Room
+
+Nosso design system adota o conceito de **"The Financial Reading Room"** (Sala de Leitura Financeira). Buscamos transmitir calma, contemplação e materialidade digital, fugindo do visual frenético de "sala de pregão" e do minimalismo sem profundidade do "flat design".
+
+---
+
+## 🎨 Paleta de Cores (Tokens)
+
+As superfícies da BullCapital combinam vidros espessos e sombras intensas sobre um fundo cósmico infinito.
+
+| Token | Valor Hex/RGBA | Uso Recomendado |
+| :--- | :--- | :--- |
+| **Void** | `#0C0F15` | Fundo absoluto da aplicação |
+| **Surface** | `#12161F` | Base sólida para cards e painéis opacos |
+| **Starlight** | `#E2DEF0` | Cor de texto primária (alta legibilidade) |
+| **Amethyst** | `#82759F` | Elemento ativo, acento, estados positivos e brilhos sônicos |
+| **Glass Rim** | `rgba(255,255,255,0.035)` | Bordas finas superiores que dão reflexo ao vidro |
+| **Shadow Soft** | `rgba(0,0,0,0.35)` | Sombras projetadas de elevação intermediária |
+
+---
+
+## 📐 Anatomia do Card de Vidro
+
+Todo card translúcido na interface **precisa** possuir relevo e desfoque de fundo. Abaixo está o padrão Tailwind CSS que define nossa assinatura visual:
+
+```tsx
+<section className="relative overflow-hidden rounded-xl border border-white/[0.035] bg-[#111520]/60 backdrop-blur-2xl transition-all duration-500 shadow-[inset_0_1px_0px_rgba(255,255,255,0.035),0_12px_32px_rgba(0,0,0,0.4)]">
+  {/* Conteúdo do Card */}
+</section>
+```
+
+---
+
+## 🚫 Regras de Ouro (Invioláveis)
+
+Para manter a consistência estética premium desejada, siga rigidamente estas regras:
+
+1. **Flat Design é proibido**: Toda superfície deve simular alguma profundidade no espaço.
+2. **Semáforo agressivo é proibido**: Evite usar vermelho (`#ff0000`) ou verde (`#00ff00`) puros. Utilize variações pastel filtradas sob o vidro (como Amethyst para positivo e Rose/soft-red para negativo).
+3. **Arredondamento generoso**: O raio mínimo de bordas é `rounded-xl` (ou `rounded-[2.5rem]` para grandes painéis centrais). Cantos retos absolutos são proibidos.
+4. **Respiro editorial**: Mantenha pelo menos `p-8` (2.5rem) de margem interna em blocos de texto gerados por IA para garantir uma leitura confortável.
+5. **Zero Emojis na UI**: Não utilize emojis em textos estruturados da interface ou em elementos de microcopy.

@@ -353,3 +353,148 @@ function EmptyFeed({ activeTab, hasWatchlist }: { activeTab: FeedTab; hasWatchli
     </div>
   )
 }
+
+export function NewsRadarFeedSkeleton() {
+  return (
+    <div className="grid gap-4 animate-fade-in" aria-hidden="true">
+      {/* Skeleton Tab bar */}
+      <div className="bull-panel p-1.5 opacity-60">
+        <div className="grid grid-cols-3 gap-1 rounded-[1.35rem] border border-white/[0.08] bg-black/20 p-1">
+          {FEED_TABS.map((tab, i) => (
+            <div
+              key={tab.id}
+              className={`min-h-10 rounded-[1rem] flex items-center justify-center text-xs font-semibold select-none ${
+                i === 0
+                  ? 'border border-white/[0.08] bg-white/[0.06] text-[#F4F0FF]/50'
+                  : 'text-[#F4F0FF]/20'
+              }`}
+            >
+              {tab.label}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="grid gap-4">
+        {[0, 1, 2].map((i) => (
+          <div
+            key={i}
+            className="bull-panel-quiet p-4 md:p-5 flex flex-col gap-4"
+          >
+            {/* Main layout: Avatar + content */}
+            <div className="flex items-start gap-3 md:gap-4">
+              {/* Left side: Avatar skeleton + connecting line */}
+              <div className="flex flex-col items-center self-stretch shrink-0">
+                <div
+                  className="flex size-10 md:size-11 animate-pulse items-center justify-center rounded-full bg-white/[0.06] shadow-[0_4px_12px_rgba(0,0,0,0.3)] relative overflow-hidden"
+                  style={{ animationDelay: `${i * 120}ms` }}
+                >
+                  <div className="absolute inset-0 bg-gradient-to-tr from-black/20 to-transparent" />
+                </div>
+                {/* Connection thread line to AI Commentary below */}
+                {i < 2 && (
+                  <div className="w-[1.5px] grow bg-gradient-to-b from-[#8B5CF6]/15 to-[#8B5CF6]/3 mt-2 rounded" />
+                )}
+              </div>
+
+              {/* Right side: content */}
+              <div className="flex-1 min-w-0 flex flex-col gap-2">
+                {/* Metadata Header */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    {/* Publisher placeholder */}
+                    <div
+                      className="h-4 w-28 animate-pulse rounded-full bg-white/[0.06]"
+                      style={{ animationDelay: `${i * 120 + 20}ms` }}
+                    />
+                    <span className="text-[#F4F0FF]/15 text-xs hidden sm:inline select-none">•</span>
+                    {/* Handle placeholder */}
+                    <div
+                      className="h-3 w-16 animate-pulse rounded-full bg-white/[0.04] hidden sm:block"
+                      style={{ animationDelay: `${i * 120 + 40}ms` }}
+                    />
+                    <span className="text-[#F4F0FF]/15 text-xs hidden sm:inline select-none">•</span>
+                    {/* Timeago placeholder */}
+                    <div
+                      className="h-3 w-10 animate-pulse rounded-full bg-white/[0.04]"
+                      style={{ animationDelay: `${i * 120 + 60}ms` }}
+                    />
+                  </div>
+
+                  {/* Scope badge placeholder */}
+                  <div
+                    className="h-6 w-20 animate-pulse rounded-full border border-white/[0.06] bg-white/[0.02]"
+                    style={{ animationDelay: `${i * 120 + 80}ms` }}
+                  />
+                </div>
+
+                {/* News title (Headline) */}
+                <div className="mt-1 space-y-2">
+                  <div
+                    className="h-4 w-full animate-pulse rounded-full bg-white/[0.06]"
+                    style={{ animationDelay: `${i * 120 + 100}ms` }}
+                  />
+                  <div
+                    className="h-4 w-4/5 animate-pulse rounded-full bg-white/[0.05]"
+                    style={{ animationDelay: `${i * 120 + 120}ms` }}
+                  />
+                </div>
+
+                {/* Ticker Badges */}
+                <div className="flex flex-wrap gap-1.5 mt-1.5">
+                  {[0, 1].map((tickerIdx) => (
+                    <div
+                      key={tickerIdx}
+                      className="h-6 w-12 animate-pulse rounded border border-[#8B5CF6]/10 bg-[#8B5CF6]/3"
+                      style={{ animationDelay: `${i * 120 + 140 + tickerIdx * 30}ms` }}
+                    />
+                  ))}
+                </div>
+
+                {/* Image placeholder (Only for first item to make list organic) */}
+                {i === 0 && (
+                  <div
+                    className="mt-3 aspect-[16/10] max-h-[260px] md:max-h-[300px] w-full animate-pulse rounded-[1.25rem] border border-white/[0.06] bg-white/[0.03] shadow-[0_8px_24px_rgba(0,0,0,0.3)]"
+                    style={{ animationDelay: '250ms' }}
+                  />
+                )}
+              </div>
+            </div>
+
+            {/* AI Expert Reply Commentary */}
+            {i < 2 && (
+              <div className="flex items-start gap-3 md:gap-4 -mt-2">
+                <div className="flex flex-col items-center shrink-0 w-10 md:w-11">
+                  <div className="flex size-7 items-center justify-center rounded-full border border-[#8B5CF6]/20 bg-[#8b5cf6]/5 text-[#C4B5FD]/40 relative overflow-hidden animate-pulse">
+                    <Sparkles size={11} />
+                  </div>
+                </div>
+
+                <div className="flex-1 bg-[#8B5CF6]/3 border-l-2 border-[#8B5CF6]/20 p-3 rounded-r-xl rounded-bl-xl space-y-2">
+                  <div className="h-3 w-28 animate-pulse rounded bg-[#8B5CF6]/10" />
+                  <div className="h-3.5 w-full animate-pulse rounded-full bg-white/[0.04]" />
+                  <div className="h-3.5 w-5/6 animate-pulse rounded-full bg-white/[0.03]" />
+                </div>
+              </div>
+            )}
+
+            {/* Actions Footer Bar */}
+            <div className="border-t border-white/[0.06] pt-3 flex items-center justify-between gap-2 mt-1">
+              <div className="h-8 w-32 animate-pulse rounded-full border border-[#8B5CF6]/10 bg-[#8B5CF6]/5" />
+
+              <div className="flex items-center gap-1.5">
+                {[0, 1].map((btnIdx) => (
+                  <div
+                    key={btnIdx}
+                    className="size-8 animate-pulse rounded-full border border-white/10 bg-white/[0.03]"
+                    style={{ animationDelay: `${i * 120 + 200 + btnIdx * 50}ms` }}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}

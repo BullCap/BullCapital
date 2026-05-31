@@ -22,10 +22,12 @@ export function AssetNewsSectionSkeleton() {
       <div className="flex flex-col divide-y divide-white/[0.05]">
         {[0, 1, 2].map((i) => (
           <div key={i} className="flex gap-4 py-4 first:pt-0 last:pb-0">
+            {/* Thumbnail placeholder */}
             <div
               className="h-20 w-20 sm:h-20 sm:w-28 shrink-0 animate-pulse rounded-xl bg-white/[0.06]"
               style={{ animationDelay: `${i * 60}ms` }}
             />
+            {/* Title & info placeholder */}
             <div className="min-w-0 flex-1 flex flex-col justify-between py-0.5">
               <div className="space-y-2">
                 <div
@@ -42,6 +44,12 @@ export function AssetNewsSectionSkeleton() {
                 style={{ animationDelay: `${i * 60 + 75}ms` }}
               />
             </div>
+            {/* Arrow icon placeholder for identical alignment */}
+            <ArrowUpRight
+              size={14}
+              className="mt-0.5 shrink-0 text-[#F4F0FF]/10 select-none animate-pulse"
+              style={{ animationDelay: `${i * 60 + 90}ms` }}
+            />
           </div>
         ))}
       </div>

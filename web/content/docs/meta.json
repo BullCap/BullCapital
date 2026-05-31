@@ -1,0 +1,16 @@
+{
+  "title": "BullCapital Docs",
+  "root": true,
+  "pages": [
+    "index",
+    "---Produto---",
+    "produto",
+    "---Engenharia---",
+    "arquitetura",
+    "frontend",
+    "backend",
+    "design-system",
+    "---Operação---",
+    "guias"
+  ]
+}

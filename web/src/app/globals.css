@@ -1,6 +1,111 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@import "fumadocs-ui/css/neutral.css";
+@import "fumadocs-ui/css/preset.css";
+
+@source "../node_modules/fumadocs-ui/dist/**/*.js";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --screen-3xl: 1800px;
+
+  --color-void: #050308;
+  --color-surface: #0D0A13;
+  --color-starlight: #e2def0;
+
+  --color-amethyst: #82759F;
+  --color-amethyst-light: #B1A9C4;
+  --color-amethyst-dim: #5F5675;
+
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+
+  --font-serif: var(--font-playfair), Georgia, serif;
+  --font-sans: var(--font-inter), system-ui, sans-serif;
+}
+
+@plugin "tailwindcss-animate";
+
+/* ---------------------------------------------------------------------------
+   Fumadocs (/docs) — alinhamento ao design system "The Financial Reading Room".
+   Sobrescreve os tokens neutros padrao (--color-fd-*) com a paleta void/amethyst.
+   Vem DEPOIS dos imports de fumadocs-ui acima para vencer a cascata.
+   App e dark-only: nao redefinimos os tokens light (o tema fica travado em dark).
+--------------------------------------------------------------------------- */
+.dark {
+  --color-fd-background: #0c0f15;
+  --color-fd-foreground: #e2def0;
+
+  --color-fd-muted: #12161f;
+  --color-fd-muted-foreground: rgba(226, 222, 240, 0.55);
+
+  --color-fd-popover: #0d0a13;
+  --color-fd-popover-foreground: #e2def0;
+
+  --color-fd-card: #12161f;
+  --color-fd-card-foreground: #e2def0;
+
+  --color-fd-border: rgba(255, 255, 255, 0.06);
+
+  --color-fd-primary: #b1a9c4;
+  --color-fd-primary-foreground: #0c0f15;
+
+  --color-fd-secondary: #12161f;
+  --color-fd-secondary-foreground: #e2def0;
+
+  --color-fd-accent: rgba(130, 117, 159, 0.14);
+  --color-fd-accent-foreground: #e2def0;
+
+  --color-fd-ring: rgba(130, 117, 159, 0.6);
+  --color-fd-overlay: rgba(5, 3, 8, 0.6);
+}
+
+/* O preset neutro clareia a sidebar (#nd-sidebar) com cinzas frios.
+   Re-ancoramos na superficie quieta para a barra lateral parecer vidro escuro. */
+.dark #nd-sidebar {
+  --color-fd-muted: rgba(130, 117, 159, 0.1);
+  --color-fd-secondary: rgba(130, 117, 159, 0.1);
+  --color-fd-muted-foreground: rgba(226, 222, 240, 0.62);
+  background-color: rgba(9, 12, 18, 0.6);
+  border-color: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px);
+}
+
+/* TOC e card ativos herdam o acento amestista de forma sutil. */
+.dark #nd-toc a[data-active='true'],
+.dark #nd-sidebar a[data-active='true'] {
+  color: var(--color-amethyst-light);
+}
+
 
 @layer base {
   :root {

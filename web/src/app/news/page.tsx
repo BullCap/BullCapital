@@ -4,7 +4,7 @@ import { auth } from '@/lib/auth'
 import { getWatchlist } from '@/lib/actions/watchlist'
 import { getNewsRadarItems } from '@/lib/news-radar'
 import AppShell from '@/components/navigation/AppShell'
-import NewsRadarFeed from '@/components/news/NewsRadarFeed'
+import NewsRadarFeed, { NewsRadarFeedSkeleton } from '@/components/news/NewsRadarFeed'
 import ScrollFocus from '@/components/ui/ScrollFocus'
 import WatchlistRadarSection from '@/components/home/WatchlistRadarSection'
 import { GlassHighlight } from '@/components/atoms/GlassHighlight'
@@ -122,7 +122,7 @@ function NewsSidebarFallback() {
       <GlassHighlight widthPercent={58} />
       <p className="bull-eyebrow">Radar do dia</p>
       <h2 className="mt-2 font-serif text-xl text-[#F4F0FF]">Nomes para acompanhar</h2>
-      <div className="mt-5 rounded-[1.5rem] border border-white/[0.06] bg-black/15 px-5 py-8 text-center">
+      <div className="mt-5 rounded-[1.5rem] border border-white/[0.06] bg-black/15 px-5 py-8 text-center animate-pulse">
         <p className="text-sm text-[#F4F0FF]/42">Radar em atualização.</p>
       </div>
     </section>
@@ -154,10 +154,10 @@ export default async function NewsPage() {
             <Suspense
               fallback={
                 <>
-                  <div className="flex flex-wrap gap-2 px-1">
+                  <div className="flex flex-wrap gap-2 px-1 mb-2">
                     <span className="bull-chip">Radar em atualização</span>
                   </div>
-                  <NewsRadarFeed hasWatchlist={false} items={[]} />
+                  <NewsRadarFeedSkeleton />
                 </>
               }
             >

@@ -1,0 +1,46 @@
+---
+title: Introdução
+description: Base de conhecimento técnico da BullCapital — arquitetura, design system e sistemas que compõem a plataforma.
+---
+
+# BullCapital Developer Documentation
+
+Bem-vindo à base de conhecimento técnico da **BullCapital**, a plataforma de inteligência de mercado financeiro brasileiro para **planejadores CFP, criadores de conteúdo financeiro e AAIs**.
+
+Esta documentação orienta engenheiros e designers na manutenção e evolução da plataforma, garantindo a integridade da arquitetura e o respeito estrito ao **Design System**.
+
+> A fonte canônica de contexto do repositório é o `AGENTS.md`. Estas páginas são a versão navegável e organizada por sistema desse conhecimento. Quando houver conflito, **o código é a fonte de verdade**.
+
+---
+
+## O que é a Bull
+
+A Bull **embasa narrativas de mercado** — quem recomenda é o profissional. A plataforma nunca diz "compre" ou "venda".
+
+> "Munição de research e narrativa para quem precisa explicar mercado para outros."
+
+- **Não é** app de trader, robo-advisor ou fintech generalista.
+- **É** a fundamentação que o profissional usa para opinar com mais confiança.
+- **Idioma do produto**: pt-BR exclusivo em todo texto voltado ao usuário.
+- **Deadline do MVP B2B**: 10 de julho de 2026.
+
+---
+
+## Mapa da documentação
+
+| Seção | Conteúdo |
+| :--- | :--- |
+| [Produto](/docs/produto) | Personas, modelo de negócio, postura editorial e roadmap do MVP. |
+| [Arquitetura](/docs/arquitetura) | Visão de sistemas, decisões arquiteturais e fontes de dados. |
+| [Frontend](/docs/frontend) | App Next.js: rotas, componentes, serviços e convenções. |
+| [Backend](/docs/backend) | FastAPI, agentes de IA (Agno) e camada de dados. |
+| [Design System](/docs/design-system) | Tokens, anatomia de vidro e regras de ouro. |
+| [Guias](/docs/guias) | Setup local, variáveis de ambiente, comandos e workflow Spec Kit. |
+
+---
+
+## Stack em uma frase
+
+**Next.js 15 (App Router + PWA)** no frontend, **FastAPI (Python 3.11)** para IA/embeddings, e **PostgreSQL 16 + pgvector** como banco único.
+
+Para começar a desenvolver agora, vá direto para o [Guia de Setup](/docs/guias/setup).
