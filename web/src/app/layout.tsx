@@ -8,11 +8,13 @@ import './globals.css'
 const inter = Inter({
   subsets: ['latin'],
   variable: '--font-inter',
+  display: 'swap',
 })
 
 const playfair = Playfair_Display({
   subsets: ['latin'],
   variable: '--font-playfair',
+  display: 'swap',
 })
 
 export const metadata: Metadata = {
@@ -35,8 +37,12 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="pt-BR" className="dark" suppressHydrationWarning>
-      <body className={`${inter.variable} ${playfair.variable} ${inter.className}`}>
+    <html
+      lang="pt-BR"
+      className={`${inter.variable} ${playfair.variable} dark`}
+      suppressHydrationWarning
+    >
+      <body className="font-sans">
         <NavigationProgress />
         <PWARegister />
         <RootProvider
@@ -57,4 +63,3 @@ export default function RootLayout({
     </html>
   )
 }
-

@@ -10,6 +10,13 @@ interface AssetQuotesTableProps {
   history: AssetHistoricalPrice[]
 }
 
+function toValidDate(timestamp: number) {
+  if (!Number.isFinite(timestamp) || timestamp <= 0) return null
+  const multiplier = timestamp > 1_000_000_000_000 ? 1 : 1000
+  const date = new Date(timestamp * multiplier)
+  return Number.isNaN(date.getTime()) ? null : date
+}
+
 export function AssetQuotesTableSkeleton({ ticker }: { ticker: string }) {
   const cols = ['Data', 'Abertura', 'Fechamento', 'Variação', 'Mínimo', 'Máximo', 'Volume']
   return (
@@ -76,7 +83,22 @@ export default function AssetQuotesTable({ ticker, history }: AssetQuotesTablePr
 
   // Format historical series, sort chronologically, calculate variations, then reverse to show latest first.
   // High, low, open and volume are displayed only when the backend returns real OHLCV values.
-  const sortedHistory = [...history].sort((a, b) => a.timestamp - b.timestamp)
+  const sortedHistory = [...history]
+    .filter((day) => toValidDate(day.timestamp) && Number.isFinite(day.close) && day.close > 0)
+    .sort((a, b) => a.timestamp - b.timestamp)
+
+  if (sortedHistory.length === 0) {
+    return (
+      <section className="bull-panel p-5">
+        <GlassHighlight widthPercent={55} />
+        <p className="bull-eyebrow mb-3">OHLCV diário</p>
+        <div className="flex h-24 items-center justify-center">
+          <p className="text-sm text-[#F4F0FF]/40">Histórico de cotações indisponível</p>
+        </div>
+      </section>
+    )
+  }
+
   const rows = sortedHistory.map((day, idx) => {
     const prevDay = sortedHistory[idx - 1]
     let change = 0
@@ -84,7 +106,7 @@ export default function AssetQuotesTable({ ticker, history }: AssetQuotesTablePr
       change = ((day.close - prevDay.close) / prevDay.close) * 100
     }
 
-    const dateObj = new Date(day.timestamp * 1000)
+    const dateObj = toValidDate(day.timestamp) ?? new Date(0)
     
     return {
       date: new Intl.DateTimeFormat('pt-BR', {

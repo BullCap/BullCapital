@@ -142,6 +142,13 @@ function buildDomain(closes: number[]): [number, number] {
   return [min - pad, max + pad]
 }
 
+function toValidDate(timestamp: number) {
+  if (!Number.isFinite(timestamp) || timestamp <= 0) return null
+  const multiplier = timestamp > 1_000_000_000_000 ? 1 : 1000
+  const date = new Date(timestamp * multiplier)
+  return Number.isNaN(date.getTime()) ? null : date
+}
+
 function CustomActiveDot(props: {
   cx?: number
   cy?: number
@@ -210,8 +217,10 @@ export default function PriceChartClient({
   const { chartData, refPrice, seriesHigh, seriesLow, maxVal, minVal } = useMemo(() => {
     const ref = history[0]?.close ?? null
 
-    const data = history.map((h) => {
-      const d = new Date(h.timestamp * 1000)
+    const data = history.flatMap((h) => {
+      const d = toValidDate(h.timestamp)
+      if (!d || !Number.isFinite(h.close) || h.close <= 0) return []
+
       const date =
         range === '1d'
           ? d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
@@ -223,7 +232,7 @@ export default function PriceChartClient({
       const closeBelow = ref !== null ? Math.min(close, ref) : close
       const isUp = ref !== null ? close >= ref : true
 
-      return { date, close, high: h.high, low: h.low, closeAbove, closeBelow, isUp }
+      return [{ date, close, high: h.high, low: h.low, closeAbove, closeBelow, isUp }]
     })
 
     const highs = history.map((h) => h.high ?? h.close).filter((v) => Number.isFinite(v) && v > 0)

@@ -386,9 +386,15 @@ def _coingecko_history(symbol: str, range_name: str = "1mo") -> list[dict]:
         prices = resp.json().get("prices", [])
         points = []
         for ts_ms, price in prices:
-            from datetime import datetime, timezone
-            dt = datetime.fromtimestamp(ts_ms / 1000, tz=timezone.utc)
-            points.append({"date": dt.isoformat(), "close": price, "open": price, "high": price, "low": price, "volume": 0})
+            timestamp = int(ts_ms / 1000)
+            points.append({
+                "timestamp": timestamp,
+                "close": price,
+                "open": price,
+                "high": price,
+                "low": price,
+                "volume": 0,
+            })
         return points
     except Exception as e:
         import logging
