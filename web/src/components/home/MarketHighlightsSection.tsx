@@ -1,7 +1,6 @@
 'use client'
 
 import Link from 'next/link'
-import { GlassHighlight } from '@/components/atoms/GlassHighlight'
 import { CompanyIcon } from '@/components/atoms/CompanyIcon'
 import { VariationBadge } from '@/components/atoms/VariationBadge'
 import { buildAssetHref } from '@/lib/market-routing'
@@ -51,7 +50,7 @@ function HighlightItem({ asset }: { asset: DisplayAsset }) {
   return (
     <Link
       href={buildAssetHref(asset.stock)}
-      className="flex items-center gap-3 rounded-2xl border border-white/5 bg-white/[0.02] px-4 py-3 transition-all duration-300 hover:-translate-y-px hover:border-white/10 hover:bg-white/[0.05]"
+      className="flex items-center gap-3 rounded-xl border border-transparent px-4 py-2.5 transition-colors duration-300 hover:border-white/[0.06] hover:bg-white/[0.025]"
     >
       <CompanyIcon ticker={asset.stock} size={36} className="shrink-0" />
       <div className="min-w-0 flex-1">
@@ -76,28 +75,23 @@ function HighlightList({
   data: DisplayAsset[]
 }) {
   return (
-    <div className="group relative flex flex-1 flex-col overflow-hidden rounded-[2rem] border border-white/[0.08] bg-[#0f0c18]/50 p-6 shadow-[inset_0_1px_0px_rgba(255,255,255,0.08),0_10px_32px_rgba(0,0,0,0.4)] backdrop-blur-2xl transition-all duration-700">
-      <div className="pointer-events-none absolute -top-16 left-1/2 h-48 w-48 -translate-x-1/2 rounded-full bg-[#8B5CF6]/10 blur-[80px] transition-all duration-700 group-hover:bg-[#8B5CF6]/18" />
-      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
-      <GlassHighlight widthPercent={50} />
-
-      <div className="mb-5 flex items-center gap-3 px-1">
-        <span className="text-white/55">{icon}</span>
-        <h3 className="font-serif text-xl tracking-tight text-[#F4F0FF]">{title}</h3>
+    <div className="bull-card-calm flex flex-1 flex-col p-6">
+      <div className="mb-4 flex items-center gap-3 px-1">
+        <span className="text-starlight/40">{icon}</span>
+        <h3 className="font-serif text-lg tracking-tight text-starlight">{title}</h3>
       </div>
 
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-0.5">
         {data.length > 0 ? (
           data.slice(0, 5).map((asset) => (
             <HighlightItem key={asset.stock} asset={asset} />
           ))
         ) : (
-          <div className="rounded-2xl border border-white/5 bg-white/[0.02] px-4 py-5 text-sm text-white/35">
+          <div className="px-4 py-5 text-sm text-starlight/30">
             Dados indisponíveis
           </div>
         )}
       </div>
-
     </div>
   )
 }
@@ -120,21 +114,15 @@ export function MarketHighlightsSkeleton() {
       </div>
       <div className="mt-5 grid w-full grid-cols-1 gap-5 md:grid-cols-3">
         {titles.map((title, cardIdx) => (
-          <div
-            key={title}
-            className="group relative flex flex-1 flex-col overflow-hidden rounded-[2rem] border border-white/[0.08] bg-[#0f0c18]/50 p-6 shadow-[inset_0_1px_0px_rgba(255,255,255,0.08),0_10px_32px_rgba(0,0,0,0.4)] backdrop-blur-2xl"
-          >
-            <div className="pointer-events-none absolute -top-16 left-1/2 h-48 w-48 -translate-x-1/2 rounded-full bg-[#8B5CF6]/10 blur-[80px]" />
-            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
-            <GlassHighlight widthPercent={50} />
-            <div className="mb-5 flex items-center gap-3 px-1">
+          <div key={title} className="bull-card-calm flex flex-1 flex-col p-6">
+            <div className="mb-4 flex items-center gap-3 px-1">
               <div
-                className="h-4 w-4 animate-pulse rounded bg-white/[0.07]"
+                className="h-4 w-4 animate-pulse rounded bg-white/[0.06]"
                 style={{ animationDelay: `${cardIdx * 60}ms` }}
               />
-              <h3 className="font-serif text-xl tracking-tight text-[#F4F0FF]">{title}</h3>
+              <h3 className="font-serif text-lg tracking-tight text-starlight">{title}</h3>
             </div>
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-1">
               {[0, 1, 2, 3, 4].map((i) => (
                 <div
                   key={i}
@@ -206,24 +194,18 @@ export default function MarketHighlightsSection({
         </div>
 
         {/* Tab Selector */}
-        <div className="flex rounded-xl bg-white/[0.03] border border-white/5 p-1 select-none">
+        <div className="bull-segmented">
           <button
             onClick={() => setActiveTab('b3')}
-            className={`rounded-lg px-4 py-1.5 text-xs font-bold transition duration-300 ${
-              activeTab === 'b3'
-                ? 'bg-[#8B5CF6]/20 text-[#F4F0FF] border border-[#8B5CF6]/30 shadow-[0_0_12px_rgba(139,92,246,0.15)]'
-                : 'text-white/40 hover:text-white border border-transparent'
-            }`}
+            className="bull-tab"
+            data-active={activeTab === 'b3'}
           >
             B3
           </button>
           <button
             onClick={() => setActiveTab('alt')}
-            className={`rounded-lg px-4 py-1.5 text-xs font-bold transition duration-300 ${
-              activeTab === 'alt'
-                ? 'bg-[#8B5CF6]/20 text-[#F4F0FF] border border-[#8B5CF6]/30 shadow-[0_0_12px_rgba(139,92,246,0.15)]'
-                : 'text-white/40 hover:text-white border border-transparent'
-            }`}
+            className="bull-tab"
+            data-active={activeTab === 'alt'}
           >
             Renda fixa
           </button>

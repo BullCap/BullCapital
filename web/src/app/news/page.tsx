@@ -7,7 +7,6 @@ import AppShell from '@/components/navigation/AppShell'
 import NewsRadarFeed, { NewsRadarFeedSkeleton } from '@/components/news/NewsRadarFeed'
 import ScrollFocus from '@/components/ui/ScrollFocus'
 import WatchlistRadarSection from '@/components/home/WatchlistRadarSection'
-import { GlassHighlight } from '@/components/atoms/GlassHighlight'
 import { getMarketListings, getMultipleQuotes } from '@/lib/services/market'
 import { buildAssetHref } from '@/lib/market-routing'
 import type { RadarPulseItem } from '@/components/home/RadarPulseSection'
@@ -118,12 +117,11 @@ async function NewsSidebarPanel() {
 
 function NewsSidebarFallback() {
   return (
-    <section className="bull-panel h-full p-5 md:p-6">
-      <GlassHighlight widthPercent={58} />
+    <section className="bull-frame h-full p-6 md:p-7">
       <p className="bull-eyebrow">Radar do dia</p>
-      <h2 className="mt-2 font-serif text-xl text-[#F4F0FF]">Nomes para acompanhar</h2>
-      <div className="mt-5 rounded-[1.5rem] border border-white/[0.06] bg-black/15 px-5 py-8 text-center animate-pulse">
-        <p className="text-sm text-[#F4F0FF]/42">Radar em atualização.</p>
+      <h2 className="mt-2 font-serif text-xl text-starlight">Nomes para acompanhar</h2>
+      <div className="mt-5 rounded-2xl border border-white/[0.06] bg-white/[0.012] px-5 py-8 text-center">
+        <p className="text-sm text-starlight/40">Radar em atualização.</p>
       </div>
     </section>
   )
@@ -138,15 +136,13 @@ export default async function NewsPage() {
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1fr_22rem] 2xl:grid-cols-[1fr_24rem] items-start w-full">
         {/* Coluna Esquerda: Feed Principal de Notícias */}
         <div className="flex flex-col gap-5 min-w-0">
-          <header className="px-1">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="bull-eyebrow">Radar editorial com Brapi PRO</p>
-                <h1 className="mt-2 font-serif text-3xl tracking-tight text-[#F4F0FF]">Notícias</h1>
-                <p className="mt-1 max-w-xl text-sm leading-6 text-[#DBEAFE]/55">
-                  Manchetes confirmadas para cruzar fonte, ativo, preço, fundamentos e macro.
-                </p>
-              </div>
+          <header className="bull-page-header">
+            <div>
+              <p className="bull-eyebrow">Radar editorial</p>
+              <h1 className="bull-page-title mt-2">Notícias</h1>
+              <p className="bull-page-subtitle mt-1">
+                Manchetes filtradas para transformar movimento de mercado em narrativa.
+              </p>
             </div>
           </header>
 

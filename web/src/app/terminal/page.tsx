@@ -22,12 +22,12 @@ async function TerminalWorkspace() {
 
 function TerminalWorkspaceFallback() {
   return (
-    <section className="bull-panel mt-4 min-h-[460px] p-6">
+    <section className="bull-frame mt-4 min-h-[460px] p-6">
       <GlassHighlight widthPercent={64} />
       <div className="flex h-full min-h-[408px] flex-col justify-between gap-6">
         <div>
           <p className="bull-eyebrow">Inteligência de Carteira</p>
-          <h2 className="mt-2 font-serif text-2xl text-[#F4F0FF]">Preparando workstation</h2>
+          <h2 className="mt-2 font-serif text-2xl text-[#F4F0FF]">Preparando terminal</h2>
           <p className="mt-2 max-w-xl text-sm leading-6 text-[#F4F0FF]/50">
             Cotações, status de mercado e leitura consolidada da carteira estão sendo atualizados.
           </p>

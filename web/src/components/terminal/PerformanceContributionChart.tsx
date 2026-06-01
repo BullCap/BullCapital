@@ -40,7 +40,7 @@ function ContributionBlock({
   positive: boolean
 }) {
   return (
-    <div className="bull-panel-quiet p-4">
+    <div className="bull-card-calm p-4">
       <h3 className="mb-3 text-sm font-bold text-[#F4F0FF]">{title}</h3>
       {data.length > 0 ? (
         <div className="h-[210px]">
@@ -65,7 +65,7 @@ function ContributionBlock({
               <Tooltip content={<ContributionTooltip />} />
               <Bar dataKey="impactPct" radius={[0, 6, 6, 0]} barSize={14}>
                 {data.map((item) => (
-                  <Cell key={item.symbol} fill={positive ? '#8B5CF6' : '#F43F5E'} opacity={positive ? 0.9 : 0.78} />
+                  <Cell key={item.symbol} fill={positive ? '#82759F' : '#c98c9a'} opacity={positive ? 0.9 : 0.78} />
                 ))}
               </Bar>
             </BarChart>
@@ -85,7 +85,7 @@ export default function PerformanceContributionChart({
   detractors,
 }: PerformanceContributionChartProps) {
   return (
-    <section className="bull-panel p-4 md:p-5">
+    <section className="bull-frame p-4 md:p-5">
       <div className="mb-4">
         <p className="bull-eyebrow">Explicação do retorno</p>
         <h2 className="mt-0.5 font-serif text-lg text-[#F4F0FF]">Contribuição de performance</h2>

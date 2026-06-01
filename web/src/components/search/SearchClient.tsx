@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef, type ReactNode } from 'react'
 import Link from 'next/link'
 import { Search, ArrowUpRight } from 'lucide-react'
-import { GlassHighlight } from '@/components/atoms/GlassHighlight'
 import type { AssetNewsItem, AssetSearchResult } from '@/types/market'
 import { buildAssetHref } from '@/lib/market-routing'
 import { CompanyIcon } from '@/components/atoms/CompanyIcon'
@@ -39,8 +38,7 @@ interface SearchClientProps {
 
 export function RecentNewsWidget({ news = [] }: { news?: AssetNewsItem[] }) {
   return (
-    <div className="bull-panel p-5 w-full">
-      <GlassHighlight widthPercent={55} />
+    <div className="bull-frame p-6 w-full">
       <div className="mb-4 flex items-center justify-between gap-3">
         <p className="bull-eyebrow">Notícias recentes</p>
         <span className="bull-chip">B3</span>
@@ -48,7 +46,7 @@ export function RecentNewsWidget({ news = [] }: { news?: AssetNewsItem[] }) {
 
       {news.length === 0 ? (
         <div className="flex h-24 items-center justify-center">
-          <p className="text-sm text-[#F4F0FF]/40">Nenhuma notícia disponível</p>
+          <p className="text-sm text-starlight/40">Nenhuma notícia disponível</p>
         </div>
       ) : (
         <div className="flex flex-col">
@@ -60,7 +58,7 @@ export function RecentNewsWidget({ news = [] }: { news?: AssetNewsItem[] }) {
               rel="noopener noreferrer"
               className="group flex items-start gap-3.5 border-t border-white/[0.06] py-4 first:border-t-0 first:pt-0 last:pb-0 transition-opacity hover:opacity-75"
             >
-              <span className="mt-0.5 shrink-0 font-mono text-[10px] tabular-nums text-[#8B5CF6]/50">
+              <span className="mt-0.5 shrink-0 font-mono text-[10px] tabular-nums text-starlight/30">
                 {String(i + 1).padStart(2, '0')}
               </span>
               <div className="min-w-0 flex-1">
@@ -123,21 +121,19 @@ export default function SearchClient({ news = [], mobileNews, desktopNews }: Sea
     <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1fr_22rem] 2xl:grid-cols-[1fr_24rem] items-start w-full">
       {/* Coluna Esquerda: Campo de Busca & Resultados / Atalhos Rápidos */}
       <div className="flex flex-col gap-4 min-w-0">
-        <div className="bull-panel overflow-hidden p-0 group/portal focus-within:border-[#8B5CF6]/55 focus-within:shadow-[inset_0_2px_4px_rgba(0,0,0,0.55),0_0_24px_rgba(139,92,246,0.22)] focus-within:bg-[#0f0c18]/95 focus-within:scale-[0.995] focus-within:-translate-y-0">
-          <GlassHighlight widthPercent={60} />
-
-          <div className="flex items-center gap-3.5 pl-7 pr-5 py-[22px]">
-            <Search size={20} className="shrink-0 text-[#F4F0FF]/35 transition-colors duration-300 group-focus-within/portal:text-[#8B5CF6] group-focus-within/portal:filter group-focus-within/portal:drop-shadow-[0_0_8px_#8B5CF6]" />
+        <div className="bull-card-calm overflow-hidden p-0 group/portal transition-colors focus-within:border-amethyst/40">
+          <div className="flex items-center gap-3.5 pl-6 pr-5 py-5">
+            <Search size={20} className="shrink-0 text-starlight/35 transition-colors duration-300 group-focus-within/portal:text-starlight/70" />
             <input
               autoFocus
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="PETR4, Vale, Itaú…"
-              className="flex-1 bg-transparent text-[17px] font-bold text-white placeholder:text-[#F4F0FF]/25 focus:outline-none"
+              placeholder="PETR4, Vale, Itaú..."
+              className="flex-1 bg-transparent text-[17px] font-medium text-starlight placeholder:text-starlight/25 focus:outline-none"
             />
             {loading && (
-              <span className="text-xs text-[#8B5CF6] font-mono font-bold animate-pulse">Buscando…</span>
+              <span className="text-xs text-starlight/45 animate-pulse">Buscando…</span>
             )}
           </div>
 
@@ -146,7 +142,7 @@ export default function SearchClient({ news = [], mobileNews, desktopNews }: Sea
               <div className="mx-4 h-px bg-white/[0.06]" />
               {isEmpty ? (
                 <div className="flex h-20 items-center justify-center">
-                  <p className="text-sm font-semibold text-[#F4F0FF]/40">Nenhum ativo encontrado</p>
+                  <p className="text-sm font-medium text-starlight/40">Nenhum ativo encontrado</p>
                 </div>
               ) : (
                 <div className="bull-scroll max-h-72 overflow-y-auto p-2">
@@ -154,26 +150,26 @@ export default function SearchClient({ news = [], mobileNews, desktopNews }: Sea
                     <Link
                       key={item.symbol}
                       href={buildAssetHref(item.symbol)}
-                      className="group flex items-center gap-3.5 rounded-[1.25rem] px-4 py-3.5 transition-all duration-300 hover:bg-white/[0.05] hover:shadow-[inset_0_1px_0px_rgba(255,255,255,0.06)]"
+                      className="group flex items-center gap-3.5 rounded-xl px-4 py-3 transition-colors duration-300 hover:bg-white/[0.03]"
                     >
                       <CompanyIcon
                         ticker={item.symbol}
                         size={44}
-                        className="rounded-[0.95rem] bg-[#0A0810]/60 border border-white/10 group-hover:border-[#8B5CF6]/50 group-hover:bg-[#8B5CF6]/15 group-hover:shadow-[0_0_12px_rgba(139,92,246,0.15)] transition-all duration-300"
+                        className="rounded-[0.95rem] bg-[#0A0810]/60 border border-white/10 transition-colors duration-300 group-hover:border-white/20"
                       />
                       <div className="min-w-0 flex-1">
-                        <p className="text-base font-bold text-[#F4F0FF] group-hover:text-white transition-colors">{item.symbol}</p>
-                        <p className="truncate text-xs font-semibold text-[#DBEAFE]/45 group-hover:text-[#DBEAFE]/60 transition-colors">{item.name}</p>
+                        <p className="text-base font-semibold text-starlight transition-colors">{item.symbol}</p>
+                        <p className="truncate text-xs font-medium text-starlight/45 transition-colors group-hover:text-starlight/60">{item.name}</p>
                       </div>
                       <div className="flex items-center gap-3">
                         {item.type && TYPE_LABELS[item.type] && (
-                          <span className="rounded-full border border-[#8B5CF6]/30 bg-[#8B5CF6]/8 px-3 py-0.5 text-[10px] uppercase tracking-wider font-extrabold text-[#C4B5FD]">
+                          <span className="rounded-full border border-white/[0.08] bg-white/[0.02] px-3 py-0.5 text-[10px] uppercase tracking-wider font-semibold text-starlight/50">
                             {TYPE_LABELS[item.type]}
                           </span>
                         )}
                         <ArrowUpRight
                           size={16}
-                          className="text-[#F4F0FF]/35 group-hover:text-[#8B5CF6] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all duration-300"
+                          className="text-starlight/30 transition-all duration-300 group-hover:text-starlight/60 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
                         />
                       </div>
                     </Link>
@@ -186,22 +182,21 @@ export default function SearchClient({ news = [], mobileNews, desktopNews }: Sea
 
         {query.trim().length === 0 && (
           <>
-            <div className="bull-panel p-5 flex flex-col gap-3">
-              <GlassHighlight widthPercent={50} />
+            <div className="bull-frame p-6 flex flex-col gap-3">
               <p className="bull-eyebrow">Atalhos rápidos</p>
               <div className="flex flex-wrap gap-2 mt-1">
                 {['PETR4', 'VALE3', 'ITUB4', 'MXRF11', 'BTC', 'ETH', 'TESOURO_SELIC_2029', 'TESOURO_IPCA_2035'].map((ticker) => (
                   <Link
                     key={ticker}
                     href={buildAssetHref(ticker)}
-                    className="px-3.5 py-2 rounded-xl border border-white/[0.06] bg-white/[0.03] text-xs font-bold text-[#C4B5FD] transition hover:bg-[#8B5CF6]/15 hover:border-[#8B5CF6]/30 active:scale-[0.98]"
+                    className="bull-action min-h-9 px-3.5 py-2 text-xs"
                   >
                     {ticker === 'TESOURO_SELIC_2029' ? 'Tesouro Selic' : ticker === 'TESOURO_IPCA_2035' ? 'Tesouro IPCA+' : ticker}
                   </Link>
                 ))}
               </div>
             </div>
-            <p className="px-2 text-xs text-[#F4F0FF]/35">Digite o código ou nome do ativo para pesquisar mais.</p>
+            <p className="px-2 text-xs text-starlight/35">Digite o código ou nome do ativo para pesquisar mais.</p>
           </>
         )}
 

@@ -18,10 +18,13 @@ function SeverityIcon({ severity }: { severity: AiInsight['severity'] }) {
 
 export default function AiInsightsPanel({ insights, onOpenTicker }: AiInsightsPanelProps) {
   return (
-    <aside className="bull-panel-focus flex h-full flex-col p-4 md:p-5">
+    <aside className="bull-frame flex h-full flex-col p-4 md:p-5">
       <div className="mb-4 flex shrink-0 items-center gap-2">
-        <Brain size={16} className="text-[#C4B5FD]" />
-        <h2 className="font-serif text-lg text-[#F4F0FF]">Insights da IA</h2>
+        <Brain size={16} className="text-starlight/45" />
+        <div>
+          <p className="bull-eyebrow">Curadoria</p>
+          <h2 className="mt-1 font-serif text-lg text-[#F4F0FF]">Insights da IA</h2>
+        </div>
       </div>
 
       {insights.length > 0 ? (
@@ -49,7 +52,7 @@ export default function AiInsightsPanel({ insights, onOpenTicker }: AiInsightsPa
                 onClick={() => {
                   if (insight.ticker) onOpenTicker?.(insight.ticker)
                 }}
-                className="mt-4 inline-flex items-center gap-1.5 text-xs font-bold text-[#C4B5FD] transition hover:text-[#F4F0FF] focus:outline-none focus:ring-2 focus:ring-[#8B5CF6]/40"
+                className="bull-action mt-4 min-h-8 px-3 text-xs"
               >
                 {insight.cta}
                 <ArrowUpRight size={13} />

@@ -2,6 +2,8 @@
 
 import { ChevronRight } from 'lucide-react'
 import { CompanyIcon } from '@/components/atoms/CompanyIcon'
+import { GlassHighlight } from '@/components/atoms/GlassHighlight'
+import { VariationBadge } from '@/components/atoms/VariationBadge'
 import { cn } from '@/lib/utils'
 import type { PortfolioHolding } from './portfolioMock'
 import { formatMoney, formatPercentValue, toneClass } from './portfolio-format'
@@ -15,7 +17,9 @@ export default function HoldingsTable({ holdings, onSelectHolding }: HoldingsTab
   const sortedHoldings = [...holdings].sort((a, b) => Math.abs(b.pnl) - Math.abs(a.pnl))
 
   return (
-    <section className="bull-panel overflow-hidden p-0">
+    <section className="bull-frame p-0">
+      <GlassHighlight widthPercent={60} />
+      
       <div className="flex flex-col gap-2 border-b border-white/[0.06] p-4 md:flex-row md:items-end md:justify-between md:p-5">
         <div>
           <p className="bull-eyebrow">Posições</p>
@@ -28,20 +32,20 @@ export default function HoldingsTable({ holdings, onSelectHolding }: HoldingsTab
         <>
           <div className="bull-scroll hidden max-h-[460px] overflow-auto xl:block">
             <table className="w-full min-w-[1180px] border-collapse text-left">
-              <thead className="sticky top-0 z-10 bg-[#0D0B14]/95 backdrop-blur">
-                <tr className="border-b border-white/[0.06] text-[10px] font-bold uppercase tracking-widest text-[#F4F0FF]/30">
-                  <th className="px-5 py-3">Ativo</th>
-                  <th className="px-3 py-3">Classe</th>
-                  <th className="px-3 py-3">Setor</th>
-                  <th className="px-3 py-3 text-right">Qtd.</th>
-                  <th className="px-3 py-3 text-right">Preço médio</th>
-                  <th className="px-3 py-3 text-right">Preço atual</th>
-                  <th className="px-3 py-3 text-right">P&L</th>
-                  <th className="px-3 py-3 text-right">Rent.</th>
-                  <th className="px-3 py-3 text-right">Peso</th>
-                  <th className="px-3 py-3 text-right">DY</th>
-                  <th className="px-3 py-3 text-right">Vol.</th>
-                  <th className="px-5 py-3">Status</th>
+              <thead className="sticky top-0 z-10 bg-[#10131c]/95 backdrop-blur">
+                <tr className="border-b border-white/[0.06] text-[10px] font-medium uppercase tracking-[0.14em] text-[#F4F0FF]/30">
+                  <th className="px-5 py-4 first:rounded-s-xl last:rounded-e-xl">Ativo</th>
+                  <th className="px-3 py-4 first:rounded-s-xl last:rounded-e-xl">Classe</th>
+                  <th className="px-3 py-4 first:rounded-s-xl last:rounded-e-xl">Setor</th>
+                  <th className="px-3 py-4 text-right first:rounded-s-xl last:rounded-e-xl">Qtd.</th>
+                  <th className="px-3 py-4 text-right first:rounded-s-xl last:rounded-e-xl">Preço médio</th>
+                  <th className="px-3 py-4 text-right first:rounded-s-xl last:rounded-e-xl">Preço atual</th>
+                  <th className="px-3 py-4 text-right first:rounded-s-xl last:rounded-e-xl">P&L</th>
+                  <th className="px-3 py-4 text-center first:rounded-s-xl last:rounded-e-xl">Rent.</th>
+                  <th className="px-3 py-4 text-right first:rounded-s-xl last:rounded-e-xl">Peso</th>
+                  <th className="px-3 py-4 text-right first:rounded-s-xl last:rounded-e-xl">DY</th>
+                  <th className="px-3 py-4 text-right first:rounded-s-xl last:rounded-e-xl">Vol.</th>
+                  <th className="px-5 py-4 first:rounded-s-xl last:rounded-e-xl">Status</th>
                 </tr>
               </thead>
               <tbody>
@@ -57,7 +61,7 @@ export default function HoldingsTable({ holdings, onSelectHolding }: HoldingsTab
                       }}
                       className="cursor-pointer border-b border-white/[0.04] transition hover:bg-white/[0.035] focus:bg-white/[0.04] focus:outline-none"
                     >
-                      <td className="px-5 py-3">
+                      <td className="px-5 py-3.5">
                         <div className="flex items-center gap-3">
                           <CompanyIcon
                             ticker={holding.symbol}
@@ -70,44 +74,39 @@ export default function HoldingsTable({ holdings, onSelectHolding }: HoldingsTab
                           </div>
                         </div>
                       </td>
-                      <td className="px-3 py-3 text-xs text-[#F4F0FF]/55">{holding.className}</td>
-                      <td className="px-3 py-3 text-xs text-[#F4F0FF]/55">{holding.sector}</td>
-                      <td className="px-3 py-3 text-right font-mono text-xs text-[#F4F0FF]/60">
+                      <td className="px-3 py-3.5 text-xs text-[#F4F0FF]/55">{holding.className}</td>
+                      <td className="px-3 py-3.5 text-xs text-[#F4F0FF]/55">{holding.sector}</td>
+                      <td className="px-3 py-3.5 text-right font-mono text-xs text-[#F4F0FF]/60">
                         {holding.quantity.toLocaleString('pt-BR')}
                       </td>
-                      <td className="px-3 py-3 text-right font-mono text-xs text-[#F4F0FF]/60">
+                      <td className="px-3 py-3.5 text-right font-mono text-xs text-[#F4F0FF]/60">
                         {formatMoney(holding.avgPrice)}
                       </td>
-                      <td className="px-3 py-3 text-right font-mono text-xs font-bold text-[#F4F0FF]">
+                      <td className="px-3 py-3.5 text-right font-mono text-xs font-bold text-[#F4F0FF]">
                         {formatMoney(holding.currentPrice)}
                       </td>
                       <td
                         className={cn(
-                          'px-3 py-3 text-right font-mono text-xs font-bold',
-                          pnlPositive ? 'text-emerald-300' : 'text-rose-300'
+                          'px-3 py-3.5 text-right font-mono text-xs font-bold',
+                          pnlPositive ? 'text-[#7fb59a]' : 'text-[#c98c9a]'
                         )}
                       >
                         {formatMoney(holding.pnl)}
                       </td>
-                      <td
-                        className={cn(
-                          'px-3 py-3 text-right font-mono text-xs font-bold',
-                          holding.returnPct >= 0 ? 'text-emerald-300' : 'text-rose-300'
-                        )}
-                      >
-                        {formatPercentValue(holding.returnPct, { signed: true })}
+                      <td className="px-3 py-3.5 text-center">
+                        <VariationBadge variation={holding.returnPct} />
                       </td>
-                      <td className="px-3 py-3 text-right font-mono text-xs text-[#F4F0FF]/70">
+                      <td className="px-3 py-3.5 text-right font-mono text-xs text-[#F4F0FF]/70">
                         {formatPercentValue(holding.weight)}
                       </td>
-                      <td className="px-3 py-3 text-right font-mono text-xs text-[#F4F0FF]/70">
+                      <td className="px-3 py-3.5 text-right font-mono text-xs text-[#F4F0FF]/70">
                         {formatPercentValue(holding.dividendYield)}
                       </td>
-                      <td className="px-3 py-3 text-right font-mono text-xs text-[#F4F0FF]/70">
+                      <td className="px-3 py-3.5 text-right font-mono text-xs text-[#F4F0FF]/70">
                         {formatPercentValue(holding.volatility)}
                       </td>
-                      <td className="px-5 py-3">
-                        <span className={cn('rounded-full border px-2 py-1 text-[10px] font-bold', toneClass(holding.tone))}>
+                      <td className="px-5 py-3.5">
+                        <span className={cn('rounded-full border px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wide', toneClass(holding.tone))}>
                           {holding.status}
                         </span>
                       </td>
@@ -124,7 +123,7 @@ export default function HoldingsTable({ holdings, onSelectHolding }: HoldingsTab
                 key={holding.symbol}
                 type="button"
                 onClick={() => onSelectHolding(holding)}
-                className="bull-panel-quiet p-4 text-left focus:outline-none focus:ring-2 focus:ring-[#8B5CF6]/40"
+                className="bull-card-calm p-4 text-left focus:outline-none focus:ring-2 focus:ring-amethyst/30"
               >
                 <div className="flex items-center gap-3">
                   <CompanyIcon
@@ -141,7 +140,7 @@ export default function HoldingsTable({ holdings, onSelectHolding }: HoldingsTab
                 <div className="mt-4 grid grid-cols-3 gap-3 text-xs">
                   <div>
                     <p className="text-[#F4F0FF]/30">P&L</p>
-                    <p className={cn('mt-1 font-mono font-bold', holding.pnl >= 0 ? 'text-emerald-300' : 'text-rose-300')}>
+                    <p className={cn('mt-1 font-mono font-bold', holding.pnl >= 0 ? 'text-[#7fb59a]' : 'text-[#c98c9a]')}>
                       {formatMoney(holding.pnl)}
                     </p>
                   </div>

@@ -11,7 +11,7 @@ export default function DynamicTitle() {
         layout
         className="z-10 flex flex-col items-center justify-center px-4 text-center font-serif text-4xl leading-snug tracking-tight text-[#F4F0FF] sm:text-5xl md:text-6xl lg:text-7xl"
       >
-        <motion.span layout>Inteligência Brapi PRO</motion.span>
+        <motion.span layout>Inteligência de mercado</motion.span>
         <motion.span layout className="mt-2 flex flex-wrap items-center justify-center sm:mt-4">
           <motion.span layout className="mr-2 sm:mr-4">
             para explicar

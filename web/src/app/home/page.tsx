@@ -3,9 +3,7 @@ import { Suspense, cache } from 'react'
 import { auth } from '@/lib/auth'
 import { getHomeHighlightsSnapshot, getMarketPulseSnapshot } from '@/lib/services/market'
 import { isMarketOpen } from '@/lib/market-utils'
-import IndexCard, { IndexCardSkeleton } from '@/components/home/IndexCard'
-import SELICCard, { SELICCardSkeleton } from '@/components/home/SELICCard'
-import VixCard, { VixCardSkeleton } from '@/components/home/VixCard'
+import MarketPulseFrame from '@/components/home/MarketPulseFrame'
 import { DailyBriefContent, DailyBriefSkeleton } from '@/components/home/DailyBriefContent'
 import type { BriefPulseData } from '@/components/home/DailyBriefHero'
 import MarketMapSection from '@/components/home/MarketMapSection'
@@ -179,8 +177,7 @@ const getMarketMapAssets = cache(async (): Promise<MarketListingItem[]> => {
 })
 
 async function MarketNowSection() {
-  const { ibov, sp500, vix, selicData, ipcaData, ibovCloses, sp500Closes, marketOpen } =
-    await getCoreMarketPulse()
+  const { ibov, sp500, vix, selicData, ipcaData, marketOpen } = await getCoreMarketPulse()
 
   return (
     <section className="space-y-4">
@@ -189,32 +186,16 @@ async function MarketNowSection() {
         <h2 className="mt-1 font-serif text-2xl tracking-tight text-[#F4F0FF]/80">Agora</h2>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-4">
-        <ScrollFocus>
-          <IndexCard
-            name="IBOVESPA"
-            price={ibov?.price ?? null}
-            changePercent={ibov?.changePercent ?? null}
-            isOpen={marketOpen}
-            historyData={ibovCloses}
-          />
-        </ScrollFocus>
-        <ScrollFocus>
-          <IndexCard
-            name="S&P 500"
-            price={sp500?.price ?? null}
-            changePercent={sp500?.changePercent ?? null}
-            isOpen={marketOpen}
-            historyData={sp500Closes}
-          />
-        </ScrollFocus>
-        <ScrollFocus>
-          <SELICCard selic={selicData} ipca={ipcaData} />
-        </ScrollFocus>
-        <ScrollFocus>
-          <VixCard value={vix} />
-        </ScrollFocus>
-      </div>
+      <ScrollFocus>
+        <MarketPulseFrame
+          ibov={ibov}
+          sp500={sp500}
+          selic={selicData}
+          ipca={ipcaData}
+          vix={vix}
+          marketOpen={marketOpen}
+        />
+      </ScrollFocus>
     </section>
   )
 }
@@ -229,12 +210,7 @@ function MarketNowFallback() {
         <h2 className="mt-1 font-serif text-2xl tracking-tight text-[#F4F0FF]/80">Agora</h2>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-4">
-        <ScrollFocus><IndexCardSkeleton name="IBOVESPA" isOpen={marketOpen} /></ScrollFocus>
-        <ScrollFocus><IndexCardSkeleton name="S&P 500" isOpen={marketOpen} /></ScrollFocus>
-        <ScrollFocus><SELICCardSkeleton /></ScrollFocus>
-        <ScrollFocus><VixCardSkeleton /></ScrollFocus>
-      </div>
+      <MarketPulseFrame ibov={null} sp500={null} selic={null} ipca={null} vix={null} marketOpen={marketOpen} />
     </section>
   )
 }
@@ -304,13 +280,13 @@ export default async function HomePage() {
       contentClassName="md:max-w-none xl:max-w-[1560px] 2xl:max-w-[1720px]"
       sessionUser={session.user}
     >
-      <header className="flex flex-col gap-4 px-1 pb-1 sm:flex-row sm:items-end sm:justify-between">
+      <header className="bull-page-header">
         <div>
           <p className="bull-eyebrow">{dateLabel}</p>
-          <h1 className="mt-2 font-serif text-3xl tracking-tight text-[#F4F0FF] md:text-4xl">
+          <h1 className="bull-page-title mt-2">
             {greetingStart}, <span className="text-gradient-amethyst font-semibold">{firstName}</span>.
           </h1>
-          <p className="mt-1 text-sm text-[#DBEAFE]/50">{contextLine}</p>
+          <p className="bull-page-subtitle mt-1">{contextLine}</p>
         </div>
       </header>
 

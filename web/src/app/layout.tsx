@@ -19,7 +19,7 @@ const playfair = Playfair_Display({
 
 export const metadata: Metadata = {
   title: 'BCAP',
-  description: 'Inteligência de mercado brasileiro com dados Brapi PRO para profissionais financeiros',
+  description: 'Inteligência de mercado brasileiro para profissionais financeiros',
   manifest: '/manifest.json',
 }
 

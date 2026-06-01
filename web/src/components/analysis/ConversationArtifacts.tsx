@@ -21,9 +21,9 @@ interface ConversationArtifactsProps {
 }
 
 const TONE_CLASSES = {
-  positive: 'border-[#8B5CF6]/25 bg-[#8B5CF6]/10 text-[#DDD6FE]',
-  negative: 'border-[#F43F5E]/25 bg-[#F43F5E]/10 text-[#FFE4E6]',
-  neutral: 'border-white/[0.08] bg-white/[0.04] text-[#F4F0FF]/80',
+  positive: 'border-[#7fb59a]/25 bg-[#7fb59a]/8 text-starlight/85',
+  negative: 'border-[#c98c9a]/25 bg-[#c98c9a]/8 text-starlight/85',
+  neutral: 'border-white/[0.08] bg-white/[0.04] text-starlight/80',
 }
 
 function ArtifactHeader({
@@ -39,16 +39,16 @@ function ArtifactHeader({
 
   return (
     <div className="mb-3 flex items-start gap-2.5">
-      <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-xl border border-[#8B5CF6]/20 bg-[#8B5CF6]/10 text-[#C4B5FD]">
+      <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.04] text-starlight/55">
         <Icon size={14} />
       </span>
       <div className="min-w-0">
         {eyebrow && (
-          <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#8B5CF6]/75">
+          <p className="text-[10px] font-medium uppercase tracking-[0.16em] text-starlight/40">
             {eyebrow}
           </p>
         )}
-        {title && <h4 className="text-sm font-semibold leading-5 text-[#F4F0FF]">{title}</h4>}
+        {title && <h4 className="text-sm font-semibold leading-5 text-starlight">{title}</h4>}
       </div>
     </div>
   )
@@ -103,13 +103,13 @@ function FlowArtifact({ artifact }: { artifact: ConversationFlowArtifact }) {
         {artifact.steps.map((step, index) => (
           <div key={`${step}-${index}`} className="flex items-center gap-2.5">
             <div className="flex min-h-11 flex-1 items-center rounded-2xl border border-white/[0.07] bg-white/[0.035] px-3 py-2 text-xs font-medium leading-5 text-[#F4F0FF]/82">
-              <span className="mr-2 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#8B5CF6]/15 text-[10px] font-bold text-[#C4B5FD]">
+              <span className="mr-2 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/[0.06] text-[10px] font-semibold text-starlight/55">
                 {index + 1}
               </span>
               {step}
             </div>
             {index < artifact.steps.length - 1 && (
-              <ArrowRight size={14} className="hidden shrink-0 text-[#8B5CF6]/55 sm:block" />
+              <ArrowRight size={14} className="hidden shrink-0 text-starlight/35 sm:block" />
             )}
           </div>
         ))}

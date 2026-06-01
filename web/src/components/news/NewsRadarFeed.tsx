@@ -37,25 +37,6 @@ function filterItems(items: NewsRadarItem[], tab: FeedTab) {
   return items
 }
 
-const PRESET_GRADIENTS = [
-  'linear-gradient(135deg, #3B82F6, #1D4ED8)', // Cobalt Blue
-  'linear-gradient(135deg, #10B981, #047857)', // Mint Green
-  'linear-gradient(135deg, #F59E0B, #B45309)', // Amber
-  'linear-gradient(135deg, #EC4899, #BE185D)', // Pink
-  'linear-gradient(135deg, #8B5CF6, #6D28D9)', // Amethyst
-  'linear-gradient(135deg, #06B6D4, #0891B2)', // Cyan
-  'linear-gradient(135deg, #EF4444, #B91C1C)', // Rose/Red
-]
-
-function getPublisherGradient(publisher: string): string {
-  let hash = 0
-  for (let i = 0; i < publisher.length; i++) {
-    hash = publisher.charCodeAt(i) + ((hash << 5) - hash)
-  }
-  const index = Math.abs(hash) % PRESET_GRADIENTS.length
-  return PRESET_GRADIENTS[index]
-}
-
 function getPublisherInitials(publisher: string): string {
   const parts = publisher.split(' ').filter(Boolean)
   if (parts.length >= 2) {
@@ -108,10 +89,10 @@ function ShareButton({ url, headline }: { url: string; headline: string }) {
     <button
       onClick={handleShare}
       title={copied ? 'Link copiado!' : 'Compartilhar notícia'}
-      className={`flex size-8 md:size-9 items-center justify-center rounded-full border transition duration-300 ${
+      className={`flex size-8 md:size-9 items-center justify-center rounded-xl border transition duration-300 ${
         copied
-          ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400'
-          : 'border-white/10 bg-white/[0.04] text-[#F4F0FF]/70 hover:bg-white/[0.1] hover:text-white hover:border-white/20'
+          ? 'border-[#7fb59a]/30 bg-[#7fb59a]/10 text-[#a9d6bd]'
+          : 'border-white/[0.07] bg-white/[0.025] text-[#F4F0FF]/65 hover:border-white/[0.12] hover:bg-white/[0.045] hover:text-white'
       }`}
     >
       {copied ? <Check size={12} /> : <Share2 size={12} />}
@@ -130,29 +111,20 @@ export default function NewsRadarFeed({ hasWatchlist, items }: NewsRadarFeedProp
 
   return (
     <section className="grid gap-4">
-      <div className="bull-panel p-1.5">
-        <div
-          role="tablist"
-          aria-label="Filtros do radar de notícias"
-          className="grid grid-cols-3 gap-1 rounded-[1.35rem] border border-white/[0.08] bg-black/20 p-1"
-        >
-          {FEED_TABS.map((tab) => (
-            <button
-              key={tab.id}
-              type="button"
-              role="tab"
-              aria-selected={activeTab === tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`min-h-10 rounded-[1rem] px-2 text-xs font-semibold transition ${
-                activeTab === tab.id
-                  ? 'border border-white/[0.08] bg-white/[0.1] text-[#F4F0FF] shadow-[inset_0_1px_1px_rgba(255,255,255,0.12)]'
-                  : 'text-[#F4F0FF]/52 hover:bg-white/[0.05] hover:text-[#F4F0FF]/82'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
+      <div role="tablist" aria-label="Filtros do radar de notícias" className="bull-segmented-grid grid-cols-3">
+        {FEED_TABS.map((tab) => (
+          <button
+            key={tab.id}
+            type="button"
+            role="tab"
+            aria-selected={activeTab === tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className="bull-tab"
+            data-active={activeTab === tab.id}
+          >
+            {tab.label}
+          </button>
+        ))}
       </div>
 
       {visibleItems.length === 0 ? (
@@ -162,21 +134,17 @@ export default function NewsRadarFeed({ hasWatchlist, items }: NewsRadarFeedProp
           {visibleItems.map((item) => (
             <article
               key={item.href}
-              className="bull-panel-quiet p-4 md:p-5 flex flex-col gap-4 hover:border-[#8b5cf6]/20 transition-all duration-300"
+              className="bull-card-calm p-4 md:p-5 flex flex-col gap-4"
             >
               {/* Main tweet layout: Avatar + content */}
               <div className="flex items-start gap-3 md:gap-4">
-                {/* Left side: circular initials avatar with hash gradient */}
+                {/* Left side: circular initials avatar (neutral monochrome) */}
                 <div className="flex flex-col items-center self-stretch shrink-0">
-                  <div
-                    className="flex size-10 md:size-11 items-center justify-center rounded-full text-xs font-extrabold text-white shadow-[0_4px_12px_rgba(0,0,0,0.3)] relative overflow-hidden"
-                    style={{ background: getPublisherGradient(item.publisher) }}
-                  >
+                  <div className="flex size-10 md:size-11 items-center justify-center rounded-full border border-white/[0.06] bg-white/[0.05] text-xs font-semibold text-starlight/70">
                     {getPublisherInitials(item.publisher)}
-                    <div className="absolute inset-0 bg-gradient-to-tr from-black/20 to-transparent" />
                   </div>
                   {/* Subtle connection thread line to the AI Commentary below */}
-                  <div className="w-[1.5px] grow bg-gradient-to-b from-[#8B5CF6]/30 to-[#8B5CF6]/5 mt-2 rounded" />
+                  <div className="w-px grow bg-white/[0.06] mt-2" />
                 </div>
 
                 {/* Right side: content */}
@@ -184,10 +152,10 @@ export default function NewsRadarFeed({ hasWatchlist, items }: NewsRadarFeedProp
                   {/* Metadata Header */}
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 sm:gap-2">
                     <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className="font-semibold text-sm md:text-[15px] text-[#F4F0FF] flex items-center gap-1">
+                      <span className="font-semibold text-sm md:text-[15px] text-starlight flex items-center gap-1">
                         {item.publisher}
                         {isVerifiedPublisher(item.publisher) && (
-                          <CheckCircle2 size={13} className="text-[#8B5CF6] fill-[#8B5CF6]/10 shrink-0" />
+                          <CheckCircle2 size={13} className="text-starlight/45 shrink-0" />
                         )}
                       </span>
                       <span className="text-xs text-[#F4F0FF]/40 font-mono">
@@ -231,7 +199,7 @@ export default function NewsRadarFeed({ hasWatchlist, items }: NewsRadarFeedProp
                       {item.tickers.map((ticker) => (
                         <span
                           key={`${item.href}-${ticker}`}
-                          className="inline-flex min-h-6 items-center rounded border border-[#8B5CF6]/20 bg-[#8B5CF6]/5 px-2 py-0.5 text-[10px] font-extrabold text-[#C4B5FD] transition hover:bg-[#8B5CF6]/15 cursor-pointer uppercase"
+                          className="inline-flex min-h-6 items-center rounded-md border border-white/[0.06] bg-white/[0.02] px-2 py-0.5 text-[10px] font-semibold text-starlight/55 transition-colors hover:border-white/[0.12] hover:text-starlight/80 cursor-pointer uppercase tracking-wide"
                         >
                           {ticker}
                         </span>
@@ -267,19 +235,16 @@ export default function NewsRadarFeed({ hasWatchlist, items }: NewsRadarFeedProp
               {/* AI Expert Reply Commentary */}
               <div className="flex items-start gap-3 md:gap-4 -mt-2">
                 <div className="flex flex-col items-center shrink-0 w-10 md:w-11">
-                  <div className="flex size-7 items-center justify-center rounded-full border border-[#8B5CF6]/30 bg-[#8b5cf6]/10 text-[#C4B5FD] shadow-inner relative overflow-hidden animate-pulse-glow">
+                  <div className="flex size-7 items-center justify-center rounded-full border border-white/[0.08] bg-white/[0.04] text-starlight/55">
                     <Sparkles size={11} />
                   </div>
                 </div>
 
-                <div className="flex-1 bg-[#8B5CF6]/5 border-l-2 border-[#8B5CF6]/40 p-3 rounded-r-xl rounded-bl-xl text-xs md:text-[13px] leading-relaxed text-[#F4F0FF]/80 relative overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-r from-[#8B5CF6]/5 to-transparent pointer-events-none" />
-                  <div className="relative z-10">
-                    <span className="font-bold text-[#C4B5FD] flex items-center gap-1.5 mb-1 text-[10px] uppercase tracking-wider">
-                      Curadoria BullCapital
-                    </span>
-                    <p className="italic text-[#F4F0FF]/75">{item.note}</p>
-                  </div>
+                <div className="flex-1 border-l border-white/[0.10] pl-3.5 text-xs md:text-[13px] leading-relaxed">
+                  <span className="mb-1 flex items-center gap-1.5 text-[10px] uppercase tracking-[0.14em] text-starlight/40">
+                    Curadoria BullCapital
+                  </span>
+                  <p className="text-starlight/70">{item.note}</p>
                 </div>
               </div>
 
@@ -287,9 +252,9 @@ export default function NewsRadarFeed({ hasWatchlist, items }: NewsRadarFeedProp
               <div className="border-t border-white/[0.06] pt-3 flex items-center justify-between gap-2 mt-1">
                 <Link
                   href={item.askHref}
-                  className="inline-flex min-h-8 md:min-h-9 items-center gap-1.5 rounded-full border border-[#8B5CF6]/28 bg-[#8B5CF6]/12 px-3.5 text-xs font-bold text-[#DDD6FE] transition duration-300 hover:bg-[#8B5CF6]/22 hover:border-[#8B5CF6]/50 hover:shadow-[0_0_12px_rgba(139,92,246,0.15)]"
+                  className="bull-action-primary min-h-8 px-3.5 text-xs md:min-h-9"
                 >
-                  <Sparkles size={11} className="text-[#C4B5FD] shrink-0" />
+                  <Sparkles size={11} className="shrink-0" />
                   Analisar impacto
                 </Link>
 
@@ -298,7 +263,7 @@ export default function NewsRadarFeed({ hasWatchlist, items }: NewsRadarFeedProp
                     <Link
                       href={item.relatedHref}
                       title={item.relatedLabel}
-                      className="flex size-8 md:size-9 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-[#F4F0FF]/70 transition duration-300 hover:bg-white/[0.1] hover:text-white hover:border-white/20"
+                      className="bull-icon-button size-8 md:size-9"
                     >
                       <ArrowRight size={13} />
                     </Link>
@@ -309,7 +274,7 @@ export default function NewsRadarFeed({ hasWatchlist, items }: NewsRadarFeedProp
                     target="_blank"
                     rel="noopener noreferrer"
                     title="Ver artigo original"
-                    className="flex size-8 md:size-9 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-[#F4F0FF]/70 transition duration-300 hover:bg-white/[0.1] hover:text-white hover:border-white/20"
+                    className="bull-icon-button size-8 md:size-9"
                   >
                     <ExternalLink size={13} />
                   </Link>
@@ -329,14 +294,14 @@ function EmptyFeed({ activeTab, hasWatchlist }: { activeTab: FeedTab; hasWatchli
   const followingEmpty = activeTab === 'following'
 
   return (
-    <div className="bull-panel flex min-h-56 flex-col items-center justify-center px-6 py-8 text-center">
-      <span className="flex size-11 items-center justify-center rounded-full border border-white/10 bg-white/[0.05] text-[#DBEAFE]/65">
+    <div className="bull-card-calm flex min-h-44 flex-col items-center justify-center px-6 py-10 text-center">
+      <span className="flex size-11 items-center justify-center rounded-full border border-white/[0.08] bg-white/[0.04] text-starlight/55">
         {followingEmpty ? <Bookmark size={18} /> : <Newspaper size={18} />}
       </span>
-      <p className="mt-4 text-sm font-semibold text-[#F4F0FF]">
+      <p className="mt-4 text-sm font-semibold text-starlight">
         {followingEmpty && !hasWatchlist ? 'Sua lista ainda está vazia' : 'Sem histórias neste filtro'}
       </p>
-      <p className="mt-1 max-w-xs text-sm leading-6 text-[#F4F0FF]/52">
+      <p className="mt-1 max-w-xs text-sm leading-6 text-starlight/50">
         {followingEmpty
           ? 'Siga ativos para puxar notícias confirmadas deles para este radar.'
           : 'Volte ao radar geral enquanto novas manchetes confirmadas chegam.'}
@@ -344,7 +309,7 @@ function EmptyFeed({ activeTab, hasWatchlist }: { activeTab: FeedTab; hasWatchli
       {followingEmpty && !hasWatchlist ? (
         <Link
           href="/search"
-          className="mt-4 inline-flex min-h-10 items-center gap-1.5 rounded-full border border-[#8B5CF6]/25 bg-[#8B5CF6]/12 px-4 text-xs font-semibold text-[#DDD6FE] transition hover:bg-[#8B5CF6]/22"
+          className="bull-action-primary mt-4 text-xs"
         >
           <Bookmark size={12} />
           Seguir ativos
@@ -358,28 +323,24 @@ export function NewsRadarFeedSkeleton() {
   return (
     <div className="grid gap-4 animate-fade-in" aria-hidden="true">
       {/* Skeleton Tab bar */}
-      <div className="bull-panel p-1.5 opacity-60">
-        <div className="grid grid-cols-3 gap-1 rounded-[1.35rem] border border-white/[0.08] bg-black/20 p-1">
-          {FEED_TABS.map((tab, i) => (
-            <div
-              key={tab.id}
-              className={`min-h-10 rounded-[1rem] flex items-center justify-center text-xs font-semibold select-none ${
-                i === 0
-                  ? 'border border-white/[0.08] bg-white/[0.06] text-[#F4F0FF]/50'
-                  : 'text-[#F4F0FF]/20'
-              }`}
-            >
-              {tab.label}
-            </div>
-          ))}
-        </div>
+      <div className="grid grid-cols-3 gap-1 rounded-xl border border-white/[0.06] bg-white/[0.015] p-1 opacity-70">
+        {FEED_TABS.map((tab, i) => (
+          <div
+            key={tab.id}
+            className={`min-h-10 rounded-lg flex items-center justify-center text-xs font-medium select-none ${
+              i === 0 ? 'bg-white/[0.06] text-starlight/50' : 'text-starlight/20'
+            }`}
+          >
+            {tab.label}
+          </div>
+        ))}
       </div>
 
       <div className="grid gap-4">
         {[0, 1, 2].map((i) => (
           <div
             key={i}
-            className="bull-panel-quiet p-4 md:p-5 flex flex-col gap-4"
+            className="bull-card-calm p-4 md:p-5 flex flex-col gap-4"
           >
             {/* Main layout: Avatar + content */}
             <div className="flex items-start gap-3 md:gap-4">
@@ -393,7 +354,7 @@ export function NewsRadarFeedSkeleton() {
                 </div>
                 {/* Connection thread line to AI Commentary below */}
                 {i < 2 && (
-                  <div className="w-[1.5px] grow bg-gradient-to-b from-[#8B5CF6]/15 to-[#8B5CF6]/3 mt-2 rounded" />
+                  <div className="w-px grow bg-white/[0.05] mt-2" />
                 )}
               </div>
 
@@ -445,7 +406,7 @@ export function NewsRadarFeedSkeleton() {
                   {[0, 1].map((tickerIdx) => (
                     <div
                       key={tickerIdx}
-                      className="h-6 w-12 animate-pulse rounded border border-[#8B5CF6]/10 bg-[#8B5CF6]/3"
+                      className="h-6 w-12 animate-pulse rounded-md border border-white/[0.06] bg-white/[0.02]"
                       style={{ animationDelay: `${i * 120 + 140 + tickerIdx * 30}ms` }}
                     />
                   ))}
@@ -465,13 +426,13 @@ export function NewsRadarFeedSkeleton() {
             {i < 2 && (
               <div className="flex items-start gap-3 md:gap-4 -mt-2">
                 <div className="flex flex-col items-center shrink-0 w-10 md:w-11">
-                  <div className="flex size-7 items-center justify-center rounded-full border border-[#8B5CF6]/20 bg-[#8b5cf6]/5 text-[#C4B5FD]/40 relative overflow-hidden animate-pulse">
+                  <div className="flex size-7 items-center justify-center rounded-full border border-white/[0.06] bg-white/[0.03] text-starlight/30 relative overflow-hidden animate-pulse">
                     <Sparkles size={11} />
                   </div>
                 </div>
 
-                <div className="flex-1 bg-[#8B5CF6]/3 border-l-2 border-[#8B5CF6]/20 p-3 rounded-r-xl rounded-bl-xl space-y-2">
-                  <div className="h-3 w-28 animate-pulse rounded bg-[#8B5CF6]/10" />
+                <div className="flex-1 border-l border-white/[0.08] pl-3.5 space-y-2">
+                  <div className="h-3 w-28 animate-pulse rounded bg-white/[0.05]" />
                   <div className="h-3.5 w-full animate-pulse rounded-full bg-white/[0.04]" />
                   <div className="h-3.5 w-5/6 animate-pulse rounded-full bg-white/[0.03]" />
                 </div>
@@ -480,7 +441,7 @@ export function NewsRadarFeedSkeleton() {
 
             {/* Actions Footer Bar */}
             <div className="border-t border-white/[0.06] pt-3 flex items-center justify-between gap-2 mt-1">
-              <div className="h-8 w-32 animate-pulse rounded-full border border-[#8B5CF6]/10 bg-[#8B5CF6]/5" />
+              <div className="h-8 w-32 animate-pulse rounded-full border border-white/[0.06] bg-white/[0.03]" />
 
               <div className="flex items-center gap-1.5">
                 {[0, 1].map((btnIdx) => (

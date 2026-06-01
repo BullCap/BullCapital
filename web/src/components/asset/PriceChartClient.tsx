@@ -17,7 +17,7 @@ import { GlassHighlight } from '@/components/atoms/GlassHighlight'
 
 export function PriceChartSkeleton() {
   return (
-    <section className="bull-panel p-4 md:p-5" aria-hidden="true">
+    <section className="bull-frame p-4 md:p-5" aria-hidden="true">
       <GlassHighlight widthPercent={65} />
       <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
         <div>
@@ -27,7 +27,7 @@ export function PriceChartSkeleton() {
             <div className="h-2.5 w-20 animate-pulse rounded-full bg-white/[0.04]" style={{ animationDelay: '40ms' }} />
           </div>
         </div>
-        <div className="inline-flex rounded-xl border border-white/[0.08] bg-black/20 p-0.5">
+        <div className="bull-segmented">
           {['1D', '1M', '3M', '6M', '1A'].map((label, i) => (
             <div
               key={label}
@@ -55,8 +55,8 @@ const RANGE_LABELS: Record<Range, string> = {
   '6mo': '6M',
   '1y': '1A',
 }
-const COLOR_UP = '#22C55E'
-const COLOR_DOWN = '#EF4444'
+const COLOR_UP = '#7fb59a'
+const COLOR_DOWN = '#c98c9a'
 
 interface PriceChartClientProps {
   ticker: string
@@ -259,7 +259,7 @@ export default function PriceChartClient({
   }, [refPrice, maxVal, minVal])
 
   return (
-    <section className="bull-panel p-4 md:p-5">
+    <section className="bull-frame p-4 md:p-5">
       <GlassHighlight widthPercent={65} />
 
       <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
@@ -277,23 +277,22 @@ export default function PriceChartClient({
         </div>
         <div className="flex flex-wrap items-center gap-2 md:justify-end">
           {isMockHistory && (
-            <span className="rounded-full border border-[#60A5FA]/20 bg-[#3B82F6]/10 px-2 py-1 text-[10px] text-[#DBEAFE]/70">
+            <span className="rounded-full border border-white/[0.06] bg-white/[0.025] px-2 py-1 text-[10px] text-starlight/55">
               Indisponível
             </span>
           )}
           {!isMarketOpen && range === '1d' && (
-            <span className="rounded-full border border-[#F43F5E]/30 bg-[#F43F5E]/10 px-2 py-0.5 text-[10px] text-[#F43F5E]">
+            <span className="rounded-full border border-[#c98c9a]/25 bg-[#c98c9a]/10 px-2 py-0.5 text-[10px] text-[#e8bdc6]">
               Mercado fechado
             </span>
           )}
-          <div className="inline-flex rounded-xl border border-white/[0.08] bg-black/20 p-0.5">
+          <div className="bull-segmented">
             {(Object.keys(RANGE_LABELS) as Range[]).map((r) => (
               <button
                 key={r}
                 onClick={() => setRange(r)}
-                className={`relative min-h-8 min-w-10 rounded-lg px-2.5 text-xs font-medium transition-colors ${
-                  range === r ? 'bg-[#3B82F6]/18 text-[#F4F0FF]' : 'text-[#F4F0FF]/40 hover:text-[#F4F0FF]/70'
-                }`}
+                className="bull-tab min-h-8 min-w-10 px-2.5"
+                data-active={range === r}
               >
                 {RANGE_LABELS[r]}
               </button>

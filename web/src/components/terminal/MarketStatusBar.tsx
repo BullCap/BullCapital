@@ -46,7 +46,7 @@ function Delta({ value }: { value: number | null | undefined }) {
 
   const positive = value >= 0
   return (
-    <span className={cn('tabular-nums', positive ? 'text-emerald-400' : 'text-rose-400')}>
+    <span className={cn('tabular-nums', positive ? 'text-[#7fb59a]' : 'text-[#c98c9a]')}>
       {positive ? '+' : ''}
       {value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%
     </span>
@@ -58,7 +58,7 @@ export default function MarketStatusBar({ marketStatus, usdBrl }: MarketStatusBa
   const marketOpen = isB3Open()
 
   return (
-    <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 border border-white/[0.08] bg-[#0D0B14]/70 px-4 py-2.5">
+    <div className="bull-frame flex flex-wrap items-center gap-x-5 gap-y-1.5 px-4 py-2.5">
       <div className="flex items-center gap-2.5 text-xs">
         <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-[#F4F0FF]/30">
           IBOV
@@ -91,7 +91,7 @@ export default function MarketStatusBar({ marketStatus, usdBrl }: MarketStatusBa
         <span
           className={cn(
             'h-1.5 w-1.5 rounded-full',
-            marketOpen ? 'bg-emerald-400' : 'bg-white/20'
+            marketOpen ? 'bg-[#7fb59a]' : 'bg-white/20'
           )}
         />
         <span className="text-[#F4F0FF]/40">

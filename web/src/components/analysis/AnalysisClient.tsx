@@ -9,10 +9,7 @@ import {
   Lightbulb,
   Newspaper,
   TrendingUp,
-  Sparkles,
 } from 'lucide-react'
-import { cn } from '@/lib/utils'
-import { GlassHighlight } from '@/components/atoms/GlassHighlight'
 import { MarkdownBody } from '@/components/atoms/MarkdownBody'
 import ScrollFocus from '@/components/ui/ScrollFocus'
 import {
@@ -52,7 +49,7 @@ const SECTIONS: SectionConfig[] = [
 
 const TONE_STYLES: Record<NonNullable<AnalysisArtifact['tone']>, string> = {
   neutral: 'text-[#F4F0FF]/70',
-  positive: 'text-[#8B5CF6]',
+  positive: 'text-[#7fb59a]',
   negative: 'text-[#F43F5E]',
 }
 
@@ -93,6 +90,12 @@ const TEMPLATE_CHOICES: AnalysisTemplate[] = [
     label: 'Clima do dia',
     prompt: 'Explique como está o clima do mercado hoje e como o ativo se posiciona nesse contexto.',
   },
+]
+
+const DEFAULT_SUGGESTIONS = [
+  'O que devo acompanhar no mercado?',
+  'Quais são os principais riscos?',
+  'Explique o mercado em linguagem de cliente',
 ]
 
 function extractInitialSuggestions(result: AnalysisResult): string[] {
@@ -335,15 +338,20 @@ export default function AnalysisClient({ ticker, focusLabel, initialQuestion, so
   }, [result])
 
   const focusSubject = ticker ?? focusLabel
+  const shownSuggestions = currentSuggestions.length
+    ? currentSuggestions
+    : turns.length === 0 && !sending
+      ? DEFAULT_SUGGESTIONS
+      : []
 
   // ── News / event mode stage ──────────────────────────────────────────────────
   const NewsStage = activeMode === 'news' && (
     <ScrollFocus>
-      <section className={`bull-advisor-stage flex flex-col p-5 ${turns.length > 0 ? 'py-4' : 'min-h-[18rem]'}`}>
+      <section className={`bull-frame flex flex-col p-5 ${turns.length > 0 ? 'py-4' : 'min-h-[18rem]'}`}>
         {turns.length === 0 ? (
           // First answer still loading
           <div className="my-auto flex flex-col items-center px-4 py-8 text-center">
-            <span className="bull-advisor-orb animate-pulse-glow">
+            <span className="bull-advisor-orb">
               <span className="bull-brand-mark scale-[1.65]" />
             </span>
             <p className="mt-5 text-sm text-[#DBEAFE]/60">{focusLabel}</p>
@@ -360,7 +368,7 @@ export default function AnalysisClient({ ticker, focusLabel, initialQuestion, so
           // Answer arrived — collapse to a compact context bar
           <div className="flex items-center justify-between gap-3">
             <div className="flex min-w-0 items-center gap-2.5">
-              <Newspaper size={14} className="shrink-0 text-[#8B5CF6]/60" />
+              <Newspaper size={14} className="shrink-0 text-starlight/40" />
               <div className="min-w-0">
                 <p className="text-[11px] uppercase tracking-[0.12em] text-[#DBEAFE]/40">
                   {focusLabel} · Evento
@@ -375,7 +383,7 @@ export default function AnalysisClient({ ticker, focusLabel, initialQuestion, so
             {ticker && (
               <button
                 onClick={() => run(ticker, pendingTemplate)}
-                className="inline-flex shrink-0 min-h-9 items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.05] px-3 text-xs text-[#F4F0FF]/65 transition hover:bg-white/[0.09] hover:text-[#F4F0FF]"
+                className="bull-action min-h-9 shrink-0 px-3 text-xs"
               >
                 <Compass size={13} />
                 Análise completa
@@ -390,15 +398,15 @@ export default function AnalysisClient({ ticker, focusLabel, initialQuestion, so
   // ── Asset analysis mode stage ─────────────────────────────────────────────
   const AssetStage = activeMode !== 'news' && (
     <ScrollFocus>
-      <section className="bull-advisor-stage flex min-h-[28rem] flex-col p-5">
+      <section className="bull-frame flex min-h-[28rem] flex-col p-5">
         {loading ? (
           <div className="flex flex-col items-center px-4 pt-10 pb-8 text-center">
-            <span className="bull-advisor-orb animate-pulse-glow">
+            <span className="bull-advisor-orb">
               <span className="bull-brand-mark scale-[1.65]" />
             </span>
             <p className="mt-5 text-sm text-[#DBEAFE]/60">Analisando {focusLabel}</p>
             <h2 className="mt-1.5 max-w-[15rem] font-serif text-2xl leading-tight text-[#F4F0FF]">
-              Lendo os sinais…
+              Lendo os sinais...
             </h2>
           </div>
         ) : error ? (
@@ -415,14 +423,14 @@ export default function AnalysisClient({ ticker, focusLabel, initialQuestion, so
             )}
             <button
               onClick={() => run(focusSubject, pendingTemplate)}
-              className="mt-5 inline-flex min-h-10 items-center rounded-2xl border border-white/10 bg-white/[0.05] px-5 py-2 text-sm text-[#F4F0FF]/70 transition hover:bg-white/[0.09]"
+              className="bull-action mt-5"
             >
               Tentar novamente
             </button>
           </div>
         ) : result ? (
           <div className="flex flex-col items-center px-4 pt-8 pb-6 text-center">
-            <span className="bull-advisor-orb animate-float">
+            <span className="bull-advisor-orb">
               <span className="bull-brand-mark scale-[1.65]" />
             </span>
             <p className="mt-6 text-sm text-[#DBEAFE]/60">{result.subject}</p>
@@ -438,30 +446,26 @@ export default function AnalysisClient({ ticker, focusLabel, initialQuestion, so
         ) : (
           <>
             <div className="flex flex-col items-center px-4 pt-10 pb-6 text-center">
-              <span className="bull-advisor-orb animate-float">
+              <span className="bull-advisor-orb">
                 <span className="bull-brand-mark scale-[1.65]" />
               </span>
-              <p className="mt-6 text-sm text-[#DBEAFE]/60">Advisor BullCapital</p>
-              <h2 className="mt-2 max-w-[15rem] font-serif text-3xl leading-tight text-[#F4F0FF]">
+              <h2 className="mt-6 max-w-[15rem] font-serif text-3xl leading-tight text-starlight">
                 Pergunte sobre {focusLabel}
               </h2>
-              <p className="mt-3 max-w-[17rem] text-sm leading-6 text-[#F4F0FF]/60">
-                Escolha um ângulo abaixo para começar a análise.
-              </p>
             </div>
 
             <div className="mb-3 w-full">
-              <div className="bull-scroll flex max-h-40 w-full flex-col gap-3 overflow-y-auto pb-1 pr-1 scroll-smooth snap-y snap-mandatory">
+              <div className="bull-scroll flex max-h-40 w-full flex-col gap-2 overflow-y-auto pb-1 pr-1 scroll-smooth snap-y snap-mandatory">
               {TEMPLATE_CHOICES.map((template) => (
                 <button
                   key={template.id}
                   type="button"
                   onClick={() => run(focusSubject, template)}
                   disabled={loading}
-                  className={`w-full snap-start px-5 py-3 rounded-xl border text-sm font-semibold tracking-wide transition-all duration-300 ${
+                  className={`w-full snap-start rounded-xl border px-5 py-3 text-sm font-medium transition-colors duration-300 ${
                     activeTemplate === template.id
-                      ? 'border-[#8B5CF6]/45 bg-[#8b5cf6]/14 text-white shadow-[0_4px_16px_rgba(139,92,246,0.15),inset_0_1px_0px_rgba(255,255,255,0.12)]'
-                      : 'border-white/[0.06] bg-white/[0.03] text-[#F4F0FF]/80 hover:border-[#8B5CF6]/25 hover:bg-[#8b5cf6]/5 hover:text-[#C4B5FD] hover:-translate-y-0.5'
+                      ? 'border-amethyst/30 bg-amethyst/[0.08] text-starlight'
+                      : 'border-white/[0.06] bg-white/[0.02] text-starlight/75 hover:border-white/[0.12] hover:bg-white/[0.04] hover:text-starlight'
                   } ${loading ? 'cursor-not-allowed opacity-50' : ''}`}
                 >
                   {template.label}
@@ -476,8 +480,56 @@ export default function AnalysisClient({ ticker, focusLabel, initialQuestion, so
   )
 
   return (
-    <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1fr_24rem] 2xl:grid-cols-[1fr_28rem] 3xl:grid-cols-[1fr_32rem] items-start w-full">
-      {/* Coluna Esquerda: Análise Principal & Gráficos */}
+    <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1fr_22rem] 2xl:grid-cols-[1fr_24rem] 3xl:grid-cols-[1fr_26rem] items-start w-full">
+      {/* Coluna Esquerda (principal/foco): Conversa */}
+      <div className="flex flex-col xl:sticky xl:top-24 w-full min-w-0">
+        <div className="bull-frame p-6 flex flex-col h-[650px] xl:h-[calc(100vh-10rem)] min-h-[480px]">
+          <div className="flex items-center gap-2 px-1 pb-3 border-b border-white/[0.06] mb-3">
+            <span className="h-1.5 w-1.5 rounded-full bg-starlight/30" />
+            <p className="bull-eyebrow">Copiloto</p>
+          </div>
+
+          <div className="flex-1 overflow-y-auto mb-4 pr-1 bull-scroll">
+            {turns.length === 0 && !sending ? (
+              <div className="flex h-full flex-col items-center justify-center px-6 py-8 text-center">
+                <span className="bull-advisor-orb">
+                  <span className="bull-brand-mark scale-[1.65]" />
+                </span>
+                <p className="bull-eyebrow mt-6">Chat de análise</p>
+                <h2 className="mt-3 max-w-md font-serif text-2xl leading-tight text-starlight">
+                  Pergunte, refine e transforme a leitura em narrativa.
+                </h2>
+                <p className="mt-3 max-w-md text-sm leading-6 text-starlight/55">
+                  Use o painel à direita como contexto. O chat permanece aberto para aprofundar
+                  riscos, explicar movimentos e preparar argumentos para clientes.
+                </p>
+              </div>
+            ) : (
+              <ConversationThread turns={turns} sending={sending} loadingArtifacts={loadingArtifacts} ticker={ticker} />
+            )}
+          </div>
+
+          <div className="mt-auto space-y-4">
+            <ConversationSuggestions
+              suggestions={shownSuggestions}
+              onSelect={handleQuestion}
+              disabled={sending}
+            />
+            <ConversationInput
+              onSubmit={handleQuestion}
+              disabled={sending}
+              subjectLabel={
+                ticker ?? (activeMode === 'news' ? 'este evento' : (result?.subject ?? focusLabel))
+              }
+              initialValue={activeMode === 'news' ? '' : pendingQuestion}
+            />
+          </div>
+
+          <ConversationDisclaimer variant="footer" className="mt-2 text-[10px]" />
+        </div>
+      </div>
+
+      {/* Coluna Direita (contexto): Análise & Gráficos */}
       <div className="flex flex-col gap-5 min-w-0">
         {NewsStage}
         {AssetStage}
@@ -537,11 +589,10 @@ export default function AnalysisClient({ ticker, focusLabel, initialQuestion, so
 
               return (
                 <ScrollFocus key={key}>
-                  <section className="bull-panel p-5">
-                    <GlassHighlight widthPercent={55} />
+                  <section className="bull-frame p-6">
                     {artifact.eyebrow && <p className="bull-eyebrow">{artifact.eyebrow}</p>}
                     {artifact.title && (
-                      <h3 className="mt-2 font-serif text-xl text-[#F4F0FF]">{artifact.title}</h3>
+                      <h3 className="mt-2 font-serif text-xl text-starlight">{artifact.title}</h3>
                     )}
                     {artifact.body && (
                       <MarkdownBody className={`mt-3 ${TONE_STYLES[artifact.tone ?? 'neutral']}`}>
@@ -549,27 +600,27 @@ export default function AnalysisClient({ ticker, focusLabel, initialQuestion, so
                       </MarkdownBody>
                     )}
                     {artifact.template === 'signal_list' && artifact.bullets?.length ? (
-                      <ul className="mt-4 space-y-2 text-sm text-[#F4F0FF]/70">
+                      <ul className="mt-4 space-y-2 text-sm text-starlight/70">
                         {artifact.bullets.map((item, i) => (
                           <li key={`${item}-${i}`} className="flex items-start gap-2">
-                            <span className="mt-1 h-1.5 w-1.5 rounded-full bg-[#8B5CF6]" />
+                            <span className="mt-1.5 h-1 w-1 rounded-full bg-starlight/40" />
                             <span>{item}</span>
                           </li>
                         ))}
                       </ul>
                     ) : null}
                     {artifact.template === 'metrics' && artifact.metrics?.length ? (
-                      <div className="mt-4 grid gap-3">
+                      <div className="mt-4 grid gap-2">
                         {artifact.metrics.map((metric, i) => (
                           <button
                             key={`${metric.label}-${i}`}
                             onClick={() => setSelectedMetric({ label: metric.label, value: metric.value })}
-                            className="flex w-full items-center justify-between rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 cursor-pointer hover:bg-white/[0.08] hover:border-[#8B5CF6]/30 active:scale-[0.98] transition-all duration-300 text-left group"
+                            className="flex w-full items-center justify-between rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3 cursor-pointer transition-colors duration-300 hover:border-white/[0.12] hover:bg-white/[0.04] text-left group"
                           >
-                            <span className="text-xs uppercase tracking-[0.2em] text-[#F4F0FF]/40 group-hover:text-[#A78BFA] transition-colors">{metric.label}</span>
-                            <span className="text-sm font-semibold text-[#F4F0FF] flex items-center gap-1.5">
+                            <span className="text-xs uppercase tracking-[0.16em] text-starlight/40 transition-colors group-hover:text-starlight/60">{metric.label}</span>
+                            <span className="text-sm font-medium text-starlight flex items-center gap-1.5">
                               {metric.value}
-                              <span className="text-xs opacity-40 group-hover:opacity-100 group-hover:text-[#8B5CF6] transition-all duration-300">↗</span>
+                              <span className="text-xs opacity-30 transition-opacity duration-300 group-hover:opacity-70">↗</span>
                             </span>
                           </button>
                         ))}
@@ -589,10 +640,9 @@ export default function AnalysisClient({ ticker, focusLabel, initialQuestion, so
               if (!text) return null
               return (
                 <ScrollFocus key={key}>
-                  <section className="bull-panel p-5">
-                    <GlassHighlight widthPercent={60} />
+                  <section className="bull-frame p-6">
                     <div className="mb-3 flex items-center gap-2">
-                      <Icon size={13} className="text-[#F4F0FF]/40" />
+                      <Icon size={13} className="text-starlight/40" />
                       <p className="bull-eyebrow">{label}</p>
                     </div>
                     <MarkdownBody>{text}</MarkdownBody>
@@ -604,7 +654,7 @@ export default function AnalysisClient({ ticker, focusLabel, initialQuestion, so
             {ticker && (
               <button
                 onClick={() => run(ticker)}
-                className="inline-flex min-h-11 w-full items-center justify-center rounded-2xl border border-white/10 bg-white/[0.04] text-sm text-[#F4F0FF]/50 transition hover:bg-white/[0.08] hover:text-[#F4F0FF]/75"
+                className="bull-action w-full"
               >
                 Atualizar análise
               </button>
@@ -612,111 +662,6 @@ export default function AnalysisClient({ ticker, focusLabel, initialQuestion, so
           </div>
         )}
       </div>
-
-      {/* Coluna Direita: Conversa Interativa OU Painel de Insights Iniciais */}
-      {activeMode === 'news' || result ? (
-        <div className="flex flex-col gap-5 xl:sticky xl:top-24 w-full">
-          <div className="bull-panel p-5 flex flex-col h-[650px] xl:h-[calc(100vh-10rem)] min-h-[480px]">
-            <GlassHighlight widthPercent={45} />
-            <div className="flex items-center gap-2 px-1 pb-3 border-b border-white/[0.06] mb-3">
-              <span className="h-2 w-2 rounded-full bg-[#8B5CF6] animate-pulse" />
-              <p className="bull-eyebrow">Copiloto BullCapital</p>
-            </div>
-            
-            <div className="flex-1 overflow-y-auto mb-4 pr-1 bull-scroll">
-              <ConversationThread turns={turns} sending={sending} loadingArtifacts={loadingArtifacts} ticker={ticker} />
-            </div>
-
-            {/* In news mode only show input once first answer has arrived */}
-            {(activeMode !== 'news' || !initialQuestion || turns.length > 0) && (
-              <div className="mt-auto space-y-4">
-                <ConversationSuggestions
-                  suggestions={currentSuggestions}
-                  onSelect={handleQuestion}
-                  disabled={sending}
-                />
-
-                <ConversationInput
-                  onSubmit={handleQuestion}
-                  disabled={sending}
-                  subjectLabel={
-                    ticker ?? (activeMode === 'news' ? 'este evento' : (result?.subject ?? focusLabel))
-                  }
-                  initialValue={activeMode === 'news' ? '' : pendingQuestion}
-                />
-              </div>
-            )}
-
-            <ConversationDisclaimer variant="footer" className="mt-2 text-[10px]" />
-          </div>
-        </div>
-      ) : (
-        <div className="hidden xl:flex flex-col gap-5 xl:sticky xl:top-24 w-full animate-float">
-          <div className="bull-panel p-5 flex flex-col gap-4">
-            <GlassHighlight widthPercent={55} />
-            <div className="flex items-center gap-2 pb-3 border-b border-white/[0.06]">
-              <Sparkles size={14} className="text-[#8B5CF6]" />
-              <p className="bull-eyebrow">Destaques do Advisor</p>
-            </div>
-            
-            <p className="text-xs text-[#F4F0FF]/60 leading-relaxed font-semibold">
-              Explore leituras rápidas sobre nomes acompanhados do pregão com dados Brapi PRO e contexto editorial:
-            </p>
-
-            {/* Lista de Ativos em Tendência */}
-            <div className="grid gap-2.5 mt-1">
-              {[
-                { ticker: 'PETR4', name: 'Petrobras PN', dy: '14.5%', change: 1.25 },
-                { ticker: 'VALE3', name: 'Vale ON', dy: '8.0%', change: -0.85 },
-                { ticker: 'ITUB4', name: 'Itaú Unibanco PN', dy: '5.5%', change: 0.45 },
-                { ticker: 'BBAS3', name: 'Banco do Brasil ON', dy: '9.0%', change: 2.1 },
-              ].map((item) => (
-                <button
-                  key={item.ticker}
-                  onClick={() => run(item.ticker)}
-                  className="flex items-center justify-between p-3 rounded-xl border border-white/[0.06] bg-[#0A0810]/60 hover:bg-[#8B5CF6]/10 hover:border-[#8B5CF6]/30 transition-all duration-300 group text-left w-full active:scale-[0.98] cursor-pointer"
-                >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/[0.05] border border-white/10 text-xs font-bold text-[#F4F0FF] group-hover:bg-[#8B5CF6]/15 group-hover:text-[#C4B5FD] transition">
-                      {item.ticker.slice(0, 4)}
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-xs font-bold text-[#F4F0FF] truncate group-hover:text-white transition">{item.name}</p>
-                      <p className="text-[9px] text-[#F4F0FF]/45 font-semibold mt-0.5">DY {item.dy}</p>
-                    </div>
-                  </div>
-                  <div className="text-right shrink-0">
-                    <span className={cn(
-                      'text-xs font-mono font-bold',
-                      item.change >= 0 ? 'text-[#8B5CF6]' : 'text-[#FB7185]'
-                    )}>
-                      {item.change >= 0 ? '+' : ''}{item.change.toFixed(2)}%
-                    </span>
-                  </div>
-                </button>
-              ))}
-            </div>
-
-            {/* Sugestões de Perguntas Macro Rápidas */}
-            <div className="mt-3 pt-3 border-t border-white/[0.06] flex flex-col gap-2">
-              <p className="text-[10px] font-extrabold uppercase tracking-wider text-[#F4F0FF]/40">Leituras Recomendadas</p>
-              {[
-                { label: 'Ciclo de Commodities na B3', q: 'Como a dinâmica atual das commodities impacta o Ibovespa e ativos de exportação?' },
-                { label: 'Dinâmica de Juros e Bancos', q: 'De que forma a manutenção da SELIC elevada afeta a rentabilidade e o risco de crédito dos grandes bancos?' },
-                { label: 'Dividendos vs Renda Fixa', q: 'Com a taxa SELIC atual, como contextualizar ações pagadoras de dividendos frente à renda fixa?' },
-              ].map((item, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => handleQuestion(item.q)}
-                  className="text-left text-xs text-[#C4B5FD] hover:text-[#DDD6FE] hover:underline leading-relaxed font-semibold transition cursor-pointer"
-                >
-                  {item.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
 
       <MetricStoryModal
         metricLabel={selectedMetric?.label ?? ''}

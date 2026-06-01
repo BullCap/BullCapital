@@ -71,12 +71,12 @@ export function PriceChartArtifact({ ticker, title, range = '1mo', chartNote }: 
   const first = data[0]?.close ?? 0
   const last = data[data.length - 1]?.close ?? 0
   const positive = last >= first
-  const stroke = positive ? '#8B5CF6' : '#F43F5E'
+  const stroke = positive ? '#7fb59a' : '#c98c9a'
   // Sanitise ticker so special chars (e.g. ^ in ^BVSP) don't break SVG id / url() refs
   const gradId = `pchart-${ticker.replace(/[^a-zA-Z0-9]/g, '_')}-${activeRange}`
 
   return (
-    <section className="bull-panel p-5">
+    <section className="bull-frame p-5">
       <GlassHighlight widthPercent={55} />
 
       <div className="mb-4 flex items-start justify-between gap-3">
@@ -86,7 +86,7 @@ export function PriceChartArtifact({ ticker, title, range = '1mo', chartNote }: 
         </div>
         <div className="flex shrink-0 items-center gap-1">
           {isUnavailable && (
-            <span className="mr-1 rounded-full border border-[#60A5FA]/20 bg-[#3B82F6]/10 px-2 py-1 text-[10px] text-[#DBEAFE]/70">
+            <span className="mr-1 rounded-full border border-white/[0.06] bg-white/[0.025] px-2 py-1 text-[10px] text-starlight/55">
               Indisponível
             </span>
           )}
@@ -96,7 +96,7 @@ export function PriceChartArtifact({ ticker, title, range = '1mo', chartNote }: 
               onClick={() => setActiveRange(r)}
               className={`rounded-lg px-2 py-1 text-[11px] transition ${
                 activeRange === r
-                  ? 'bg-[#8B5CF6]/20 text-[#A78BFA]'
+                  ? 'bg-white/[0.065] text-starlight'
                   : 'text-[#F4F0FF]/35 hover:text-[#F4F0FF]/60'
               }`}
             >

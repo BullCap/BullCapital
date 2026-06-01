@@ -45,6 +45,14 @@ interface TerminalClientProps {
 
 type WatchlistDrawer = 'watchlist' | null
 type WorkspaceTab = 'carteira' | 'comparar'
+type PortfolioView = 'resumo' | 'alocacao' | 'risco' | 'posicoes'
+
+const PORTFOLIO_VIEWS: Array<{ key: PortfolioView; label: string }> = [
+  { key: 'resumo', label: 'Resumo' },
+  { key: 'alocacao', label: 'Alocação' },
+  { key: 'risco', label: 'Risco' },
+  { key: 'posicoes', label: 'Posições' },
+]
 
 function parseStoredWatchlist(value: string | null): string[] {
   if (!value) return [...DEFAULT_WATCHLIST]
@@ -74,6 +82,7 @@ export default function TerminalClient({ initialQuotes, marketStatus, usdBrl }: 
   const [selectedPortfolio, setSelectedPortfolio] = useState<PortfolioId>('principal')
   const [selectedRange, setSelectedRange] = useState<TimeRange>('YTD')
   const [chartMode, setChartMode] = useState<ChartMode>('patrimonio')
+  const [portfolioView, setPortfolioView] = useState<PortfolioView>('resumo')
   const [selectedHolding, setSelectedHolding] = useState<PortfolioHolding | null>(null)
 
   useEffect(() => {
@@ -246,7 +255,7 @@ export default function TerminalClient({ initialQuotes, marketStatus, usdBrl }: 
 
   if (!hydrated) {
     return (
-      <div className="bull-panel mt-4 flex min-h-[460px] items-center justify-center p-6">
+      <div className="bull-frame mt-4 flex min-h-[460px] items-center justify-center p-6">
         <div className="flex items-center gap-3">
           <div className="h-4 w-4 animate-spin rounded-full border border-[#8B5CF6]/30 border-t-[#8B5CF6]" />
           <p className="text-xs text-[#F4F0FF]/45">Preparando inteligência de carteira...</p>
@@ -268,20 +277,18 @@ export default function TerminalClient({ initialQuotes, marketStatus, usdBrl }: 
       />
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex rounded-lg border border-white/[0.08] bg-[#0D0B14]/70 p-1">
+        <div className="bull-segmented">
           {[
-            { key: 'carteira' as const, label: 'Visão de carteira' },
-            { key: 'comparar' as const, label: 'Comparar ativos' },
+            { key: 'carteira' as const, label: 'Gestão de carteira' },
+            { key: 'comparar' as const, label: 'Comparador' },
           ].map((tab) => (
             <button
               key={tab.key}
               type="button"
               onClick={() => setWorkspaceTab(tab.key)}
               className={cn(
-                'h-9 rounded-md px-3 text-xs font-bold transition focus:outline-none focus:ring-2 focus:ring-[#8B5CF6]/40',
-                workspaceTab === tab.key
-                  ? 'bg-[#8B5CF6]/20 text-[#F4F0FF]'
-                  : 'text-[#F4F0FF]/40 hover:text-[#F4F0FF]/75'
+                'bull-tab',
+                workspaceTab === tab.key && 'bg-white/[0.065] text-[#F4F0FF]'
               )}
               aria-pressed={workspaceTab === tab.key}
             >
@@ -295,7 +302,7 @@ export default function TerminalClient({ initialQuotes, marketStatus, usdBrl }: 
             <button
               type="button"
               onClick={() => setWatchlistDrawer('watchlist')}
-              className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-white/[0.08] bg-[#0D0B14]/70 px-3 text-xs font-bold text-[#F4F0FF]/70 transition hover:border-white/[0.14] hover:text-[#F4F0FF] lg:hidden"
+              className="bull-action min-h-9 px-3 text-xs lg:hidden"
             >
               <ListChecks size={13} />
               Watchlist
@@ -304,7 +311,7 @@ export default function TerminalClient({ initialQuotes, marketStatus, usdBrl }: 
           <button
             type="button"
             onClick={() => setCopilotOpen(true)}
-            className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-white/[0.08] bg-[#0D0B14]/70 px-3 text-xs font-bold text-[#F4F0FF]/70 transition hover:border-white/[0.14] hover:text-[#F4F0FF]"
+            className="bull-action min-h-9 px-3 text-xs"
           >
             <MessageSquareText size={13} />
             Copiloto
@@ -312,38 +319,72 @@ export default function TerminalClient({ initialQuotes, marketStatus, usdBrl }: 
         </div>
       </div>
 
-      {workspaceTab === 'carteira' ? (
+      {workspaceTab === 'carteira' && (
         <>
           <PortfolioKpiGrid kpis={portfolio.kpis} />
 
-          <div className="grid min-w-0 gap-4 xl:h-[460px] xl:grid-cols-[minmax(0,1fr)_24rem]">
-            <PortfolioPerformanceChart
-              data={portfolio.performanceHistory}
-              mode={chartMode}
-              benchmark={portfolio.benchmark}
-              onModeChange={setChartMode}
-            />
-            <AiInsightsPanel insights={portfolio.aiInsights} onOpenTicker={handleOpenTickerFromInsight} />
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="bull-eyebrow">Gestão</p>
+              <h2 className="mt-1 font-serif text-xl text-starlight">Visão da carteira</h2>
+            </div>
+            <div className="bull-segmented-grid grid-cols-2 sm:inline-grid sm:grid-cols-4">
+              {PORTFOLIO_VIEWS.map((view) => (
+                <button
+                  key={view.key}
+                  type="button"
+                  onClick={() => setPortfolioView(view.key)}
+                  className="bull-tab"
+                  data-active={portfolioView === view.key}
+                  aria-pressed={portfolioView === view.key}
+                >
+                  {view.label}
+                </button>
+              ))}
+            </div>
           </div>
 
-          <div className="grid gap-4 2xl:grid-cols-[minmax(0,1fr)_minmax(34rem,0.85fr)]">
-            <AllocationSection
-              byClass={portfolio.allocationByClass}
-              bySector={portfolio.allocationBySector}
-              byRisk={portfolio.allocationByRisk}
-              byLiquidity={portfolio.allocationByLiquidity}
-            />
-            <PerformanceContributionChart
-              top={portfolio.performanceContribution.top}
-              detractors={portfolio.performanceContribution.detractors}
-            />
-          </div>
+          {portfolioView === 'resumo' && (
+            <div className="grid min-w-0 gap-4 xl:h-[460px] xl:grid-cols-[minmax(0,1fr)_24rem]">
+              <PortfolioPerformanceChart
+                data={portfolio.performanceHistory}
+                mode={chartMode}
+                benchmark={portfolio.benchmark}
+                onModeChange={setChartMode}
+              />
+              <AiInsightsPanel insights={portfolio.aiInsights} onOpenTicker={handleOpenTickerFromInsight} />
+            </div>
+          )}
 
-          <RiskOverview metrics={portfolio.riskMetrics} correlation={portfolio.correlation} />
-          <HoldingsTable holdings={portfolio.holdings} onSelectHolding={setSelectedHolding} />
-          <MarketEventsPanel events={portfolio.marketEvents} />
+          {portfolioView === 'alocacao' && (
+            <div className="grid gap-4 2xl:grid-cols-[minmax(0,1fr)_minmax(34rem,0.85fr)]">
+              <AllocationSection
+                byClass={portfolio.allocationByClass}
+                bySector={portfolio.allocationBySector}
+                byRisk={portfolio.allocationByRisk}
+                byLiquidity={portfolio.allocationByLiquidity}
+              />
+              <PerformanceContributionChart
+                top={portfolio.performanceContribution.top}
+                detractors={portfolio.performanceContribution.detractors}
+              />
+            </div>
+          )}
+
+          {portfolioView === 'risco' && (
+            <div className="grid gap-4 2xl:grid-cols-[minmax(0,1fr)_24rem]">
+              <RiskOverview metrics={portfolio.riskMetrics} correlation={portfolio.correlation} />
+              <MarketEventsPanel events={portfolio.marketEvents} />
+            </div>
+          )}
+
+          {portfolioView === 'posicoes' && (
+            <HoldingsTable holdings={portfolio.holdings} onSelectHolding={setSelectedHolding} />
+          )}
         </>
-      ) : (
+      )}
+
+      {workspaceTab === 'comparar' && (
         <section className="grid min-w-0 grid-cols-1 gap-3 lg:grid-cols-[18rem_minmax(0,1fr)] xl:grid-cols-[20rem_minmax(0,1fr)]">
           <aside className="hidden min-w-0 lg:block">{watchlistPanel}</aside>
           <main className="min-w-0">

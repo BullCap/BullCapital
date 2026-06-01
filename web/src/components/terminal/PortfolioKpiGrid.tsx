@@ -1,7 +1,6 @@
 'use client'
 
 import { Line, LineChart, ResponsiveContainer, YAxis } from 'recharts'
-import { GlassHighlight } from '@/components/atoms/GlassHighlight'
 import { cn } from '@/lib/utils'
 import type { PortfolioKpi } from './portfolioMock'
 import { formatPercentValue, toneClass } from './portfolio-format'
@@ -13,32 +12,36 @@ interface PortfolioKpiGridProps {
 export default function PortfolioKpiGrid({ kpis }: PortfolioKpiGridProps) {
   if (kpis.length === 0) {
     return (
-      <section className="bull-panel p-5 text-sm text-[#F4F0FF]/45">
+      <section className="bull-frame p-5 text-sm text-[#F4F0FF]/45">
         Sem indicadores consolidados para esta carteira.
       </section>
     )
   }
 
   return (
-    <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-8">
+    <section className="bull-frame p-3 md:p-4">
+      <div className="mb-3 flex items-center justify-between gap-3 px-1">
+        <p className="bull-eyebrow">Resumo financeiro</p>
+        <span className="text-xs text-starlight/35">{kpis.length} métricas</span>
+      </div>
+      <div className="grid gap-0 divide-y divide-white/[0.06] sm:grid-cols-2 sm:divide-x sm:divide-y-0 lg:grid-cols-4 2xl:grid-cols-8">
       {kpis.map((kpi) => {
         const positiveVariation = kpi.variation >= 0
         return (
-          <article key={kpi.label} className="bull-panel p-3.5">
-            <GlassHighlight widthPercent={54} />
+          <article key={kpi.label} className="relative min-h-[7.75rem] p-3.5">
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
                 <p
                   title={kpi.label}
-                  className="truncate text-[10px] font-bold uppercase tracking-widest text-[#F4F0FF]/35"
+                  className="truncate text-[10px] font-medium uppercase tracking-[0.14em] text-[#F4F0FF]/35"
                 >
                   {kpi.label}
                 </p>
-                <p className="mt-1.5 font-mono text-xl font-semibold tabular-nums text-[#F4F0FF]">
+                <p className="mt-1.5 font-sans text-xl font-medium tabular-nums text-[#F4F0FF]">
                   {kpi.value}
                 </p>
               </div>
-              <span className={cn('shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-bold', toneClass(kpi.tone))}>
+              <span className={cn('shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-medium', toneClass(kpi.tone))}>
                 {kpi.badge}
               </span>
             </div>
@@ -52,7 +55,7 @@ export default function PortfolioKpiGrid({ kpis }: PortfolioKpiGridProps) {
                       type="monotone"
                       dataKey="value"
                       dot={false}
-                      stroke={positiveVariation ? '#8B5CF6' : '#F43F5E'}
+                      stroke={positiveVariation ? '#7fb59a' : '#c98c9a'}
                       strokeWidth={1.8}
                     />
                   </LineChart>
@@ -61,7 +64,7 @@ export default function PortfolioKpiGrid({ kpis }: PortfolioKpiGridProps) {
               <span
                 className={cn(
                   'font-mono text-xs font-bold tabular-nums',
-                  positiveVariation ? 'text-emerald-300' : 'text-rose-300'
+                  positiveVariation ? 'text-[#7fb59a]' : 'text-[#c98c9a]'
                 )}
               >
                 {formatPercentValue(kpi.variation, { signed: true })}
@@ -70,6 +73,7 @@ export default function PortfolioKpiGrid({ kpis }: PortfolioKpiGridProps) {
           </article>
         )
       })}
+      </div>
     </section>
   )
 }

@@ -20,7 +20,7 @@ function toValidDate(timestamp: number) {
 export function AssetQuotesTableSkeleton({ ticker }: { ticker: string }) {
   const cols = ['Data', 'Abertura', 'Fechamento', 'Variação', 'Mínimo', 'Máximo', 'Volume']
   return (
-    <section className="bull-panel relative overflow-hidden p-4 md:p-5" aria-hidden="true">
+    <section className="bull-frame p-4 md:p-5" aria-hidden="true">
       <GlassHighlight widthPercent={55} />
       <div className="mb-4 flex items-center justify-between gap-3">
         <div>
@@ -71,7 +71,7 @@ export default function AssetQuotesTable({ ticker, history }: AssetQuotesTablePr
 
   if (!history || history.length === 0) {
     return (
-      <section className="bull-panel p-5">
+      <section className="bull-frame p-5">
         <GlassHighlight widthPercent={55} />
         <p className="bull-eyebrow mb-3">OHLCV diário</p>
         <div className="flex h-24 items-center justify-center">
@@ -89,7 +89,7 @@ export default function AssetQuotesTable({ ticker, history }: AssetQuotesTablePr
 
   if (sortedHistory.length === 0) {
     return (
-      <section className="bull-panel p-5">
+      <section className="bull-frame p-5">
         <GlassHighlight widthPercent={55} />
         <p className="bull-eyebrow mb-3">OHLCV diário</p>
         <div className="flex h-24 items-center justify-center">
@@ -155,7 +155,7 @@ export default function AssetQuotesTable({ ticker, history }: AssetQuotesTablePr
   }
 
   return (
-    <section className="bull-panel relative overflow-hidden p-4 md:p-5">
+    <section className="bull-frame p-4 md:p-5">
       <GlassHighlight widthPercent={55} />
 
       <div className="mb-4 flex items-center justify-between gap-3">
@@ -166,12 +166,12 @@ export default function AssetQuotesTable({ ticker, history }: AssetQuotesTablePr
 
         <button
           onClick={handleExportCSV}
-          className="inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.04] px-3 text-xs text-[#F4F0FF]/60 transition hover:bg-white/[0.08] hover:text-[#F4F0FF] active:scale-[0.98]"
+          className="bull-action min-h-9 shrink-0 px-3 text-xs"
           title="Copiar dados como CSV"
         >
           {copied ? (
             <>
-              <Check size={12} className="text-[#22C55E]" />
+              <Check size={12} className="text-[#7fb59a]" />
               Copiado!
             </>
           ) : (
@@ -204,9 +204,9 @@ export default function AssetQuotesTable({ ticker, history }: AssetQuotesTablePr
                 const isUp = row.change > 0
                 const isDown = row.change < 0
                 const changeColor = isUp
-                  ? 'text-[#22C55E]'
+                  ? 'text-[#7fb59a]'
                   : isDown
-                    ? 'text-[#F43F5E]'
+                    ? 'text-[#c98c9a]'
                     : 'text-[#F4F0FF]/40'
 
                 return (

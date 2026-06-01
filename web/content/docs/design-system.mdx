@@ -39,20 +39,25 @@ Valores reais definidos em `web/src/app/globals.css` (`@theme` + `:root`). **Use
 
 ---
 
-## Anatomia do card de vidro
+## Anatomia das superficies
 
-Todo card translúcido **precisa** de relevo e desfoque de fundo. Padrão Tailwind da nossa assinatura visual:
+Todo card translúcido **precisa** de relevo e desfoque de fundo. A direção atual usa duas camadas: a base material (`.bull-panel`) e a camada calma (`.bull-frame`) para telas densas de trabalho.
 
 ```tsx
-<section className="relative overflow-hidden rounded-xl border border-white/[0.035] bg-[#111520]/60 backdrop-blur-2xl transition-all duration-500 shadow-[inset_0_1px_0px_rgba(255,255,255,0.035),0_12px_32px_rgba(0,0,0,0.4)]">
-  {/* Conteúdo do Card */}
+<section className="bull-frame p-5">
+  {/* Conteudo */}
 </section>
 ```
 
 Utilitários prontos em `globals.css` (prefira-os a reescrever o estilo):
 
-- `.glass-card`, `.bull-panel`, `.bull-panel-focus`, `.bull-panel-quiet` — superfícies de vidro com hover.
-- `<GlassHighlight />` (atom) — shimmer do topo, **obrigatório em todo card**.
+- `.bull-frame` — moldura principal da camada calma: hairline, blur, sombra curta e highlight superior via CSS.
+- `.bull-card-calm` — card interno para listas, itens repetidos e subpaineis.
+- `.glass-card`, `.bull-panel`, `.bull-panel-focus`, `.bull-panel-quiet` — superfícies de vidro legadas, hoje suavizadas para não competir com a camada calma.
+- `<GlassHighlight />` (atom) — shimmer explícito para cards legados ou composições que precisam de reflexo mais marcado. Não é obrigatório em `.bull-frame`.
+- `.bull-page-header`, `.bull-page-title`, `.bull-page-subtitle` — cabeçalhos de página consistentes.
+- `.bull-segmented`, `.bull-segmented-grid`, `.bull-tab` — controles segmentados para alternância de modos.
+- `.bull-action`, `.bull-action-primary`, `.bull-icon-button` — botões e ações discretas.
 - `.bull-eyebrow`, `.bull-chip`, `.bull-wordmark` — microcomponentes de marca.
 
 ---
@@ -64,6 +69,89 @@ Utilitários prontos em `globals.css` (prefira-os a reescrever o estilo):
 3. **Arredondamento generoso.** Mínimo `rounded-xl`; grandes painéis `rounded-[2.5rem]`. Cantos retos são proibidos.
 4. **Respiro editorial.** Pelo menos `p-8` (2.5rem) de padding ao redor de texto gerado por IA.
 5. **Zero emojis na UI.** Nem em microcopy.
+
+---
+
+## Camada "calm" — minimalismo dentro do dark
+
+> Evolução em curso (branch `refactor/ui-minimalista`). Mantemos o tema dark e a marca, mas reduzimos ruído: menos glow, menos sombra projetada, mais respiro. Referência de linguagem: o padrão _hairline-frame_ do checkout do AbacatePay, traduzido para o nosso fundo escuro.
+
+A regra "flat é proibido" continua valendo no espírito — superfícies ainda têm profundidade —, mas a profundidade passa a vir de **borda fina (hairline) + hierarquia + espaço**, não de empilhamento de sombras e brilho. O acento amethyst entra com **parcimônia**: quase tudo é `starlight` em diferentes opacidades; cor de acento só em estado ativo e CTA.
+
+### Princípios
+
+1. **Agrupar, não multiplicar.** Vários dados relacionados vivem numa **moldura única** com divisores finos, em vez de N cards flutuantes competindo por atenção.
+2. **Glow é exceção.** Sem `drop-shadow` colorido em sparkline, sem halo amethyst por padrão.
+3. **Tendência dessaturada.** Alta/baixa em tons suaves (`#7fb59a` / `#c98c9a`), nunca verde/vermelho puros — muitas vezes basta a cor do texto da variação.
+4. **Números calmos.** Inter tabular, peso médio; nada de `font-mono` agressivo de terminal.
+5. **Respiro > ornamento.** Mais padding e menos elementos decorativos.
+
+### Utilitários (em `globals.css`)
+
+| Classe | Uso |
+| :--- | :--- |
+| `.bull-frame` | Moldura hairline que agrupa vários dados. Borda `white/6`, fundo quase imperceptível, **sem glow**. |
+| `.bull-card-calm` | Card calmo: borda fina + hover que só clareia a borda (sem translate/glow). Oposto do `.bull-panel` skeuomórfico. |
+| `.bull-divider-v` | Divisor vertical fino entre blocos dentro de uma moldura. |
+| `.bull-stat-label` | Label neutro, baixo contraste, tracking generoso (não amethyst). |
+| `.bull-stat-value` | Valor Inter tabular, peso médio. |
+| `.bull-trend-up` / `.bull-trend-down` | Cor de tendência dessaturada. |
+| `.bull-page-header` / `.bull-page-title` / `.bull-page-subtitle` | Cabeçalho padrão das páginas principais. |
+| `.bull-segmented` / `.bull-segmented-grid` / `.bull-tab` | Segmentação de modos e subvisões. |
+| `.bull-action` / `.bull-action-primary` / `.bull-icon-button` | Botões, CTAs e botões somente com ícone. |
+
+### Primeira aplicação — a home (`/home`)
+
+A `/home` é a tela-âncora da direção calma. Mudanças aplicadas:
+
+- **`MarketPulseFrame`** (`web/src/components/home/MarketPulseFrame.tsx`) substitui os quatro cards de vidro do bloco **"Agora"** por uma única moldura hairline (Ibovespa · S&P 500 · Selic · VIX com divisores).
+- **Briefing** (`DailyBriefHero`) virou narrativa editorial full-width sobre `.bull-frame` — removido o painel de cotações da direita (`BriefMarketPulse`), que **duplicava** os indicadores da moldura "Agora".
+- **Destaques** (`MarketHighlightsSection`): cards de vidro com glow roxo → `.bull-card-calm`; tabs e estados de hover neutralizados.
+- **Radar de histórias** e **Mapa por setor**: container `.bull-panel` → `.bull-frame`; removidos glows roxos decorativos.
+
+### Segunda aplicação — notícias (`/news`)
+
+- **Feed** (`NewsRadarFeed`): tab bar e cards de notícia → linguagem calma (`.bull-card-calm`). Avatares de publisher deixaram de usar **gradientes coloridos** (arco-íris cobalt/mint/amber/pink) e viraram círculos monocromáticos neutros. Badges de ticker, selo verificado e o bloco de curadoria IA (antes roxo com glow) ficaram hairline/neutros. CTA "Analisar impacto" neutro com amethyst só no hover.
+- **Sidebar** (`WatchlistRadarSection`): `.bull-panel` → `.bull-frame`; ícones e botões de ação neutralizados.
+
+### Terceira aplicação — busca (`/search`)
+
+- **Portal de busca** (`SearchClient`): `.bull-panel` com glow amethyst no foco → `.bull-card-calm` com foco discreto (só borda amethyst). Ícone, estado "Buscando…" e seta neutralizados.
+- **Resultados**: ícone com halo roxo no hover → borda neutra; badge de tipo (Ação/FII/...) hairline; sem sombras inset.
+- **Atalhos rápidos** e **Notícias recentes**: `.bull-panel` → `.bull-frame`, pills neutras, numeração de notícia em starlight (era amethyst).
+
+### Quarta aplicação — análise / conversa (`/analysis`)
+
+- **Hierarquia invertida**: a **conversa** é a coluna principal (track amplo, à esquerda) e fica **sempre aberta** — com um empty state convidativo ("Pergunte, refine e transforme a leitura em narrativa", orbe + chips de sugestão padrão). A **análise / Advisor** virou a coluna estreita de contexto à direita (templates, gráficos e seções). O foco da tela é o copiloto, não o relatório.
+- Palco do advisor (`.bull-advisor-stage`), cards de seção/artefato e skeleton → `.bull-frame`; orbe sem `animate-pulse-glow`/`animate-float`.
+- Conversa (`ConversationThread`, `ConversationInput`, `ConversationArtifacts`): removidos glows amethyst da marca, do cursor, dos dots e do foco do input; artefatos inline (tabela/flow/métricas) neutralizados. Botão de envio mantém amethyst (ação primária), sem glow.
+- Verbosidade reduzida: eyebrows e subtítulos descritivos dos headers de página removidos (`/news`, `/search`, `/analysis` agora têm só o `h1`).
+
+### Quinta aplicação — terminal e gestão de carteira (`/terminal`)
+
+- **Workspace principal** (`TerminalClient`) foi simplificado para duas entradas: **Gestão de carteira** e **Comparador**. Open Finance saiu da superfície do MVP para reduzir mistura conceitual.
+- **Gestão de carteira** ganhou subvisões internas: `Resumo`, `Alocação`, `Risco` e `Posições`. A tela deixa de empilhar todos os módulos de uma vez e passa a organizar por intenção de trabalho.
+- **KPIs** (`PortfolioKpiGrid`) seguem o padrão de resumo financeiro do AbacatePay: uma moldura única (`.bull-frame`) com divisores, em vez de oito cards concorrentes.
+- **Performance, IA, alocação, contribuição, risco, eventos e posições** foram normalizados para `.bull-frame`/`.bull-card-calm`, com botões e tabs usando `.bull-action` e `.bull-segmented`.
+- **Cores de status** (`portfolio-format`) foram dessaturadas: positivo `#7fb59a`, risco `#c98c9a`, atenção `#d0b982`, informativo `#82759F`.
+
+### Sexta aplicação — detalhe de ativo (`/asset/[ticker]`)
+
+- **`AssetWorkspace`** organiza o detalhe em subvisões: `Resumo`, `Perfil`, `Histórico` e `Notícias`. O objetivo é evitar o scroll longo com gráfico, radar, tabela, notícias, perfil e CTA misturados.
+- **Header do ativo** (`AssetHeader`) virou um resumo compacto: ticker, nome, preço e variação em moldura hairline; o botão de voltar e o botão de seguir usam o vocabulário de ação discreta.
+- **Radar, gráfico, histórico e notícias** herdam a linguagem calma: amethyst menos saturado, verde/rosa suavizados, cards sem hover saltando.
+- **CTA de análise** (`AssetAnalysisCTA`) foi reescrito como "Leitura contextual" e reforça que a análise é ancorada no ativo e não recomenda compra ou venda.
+
+### "Brapi PRO" fora da UI
+
+Todas as menções a "Brapi PRO" voltadas ao usuário foram removidas (auth, footer, landing, headers, metadata). Brapi é fornecedor de dados — não aparece na interface.
+
+### Tokens alterados (impacto global)
+
+- `.bull-eyebrow` deixou de ser amethyst `font-extrabold` e passou a ser **neutro** (`text-starlight/40`, `font-medium`).
+- `.bull-chip` deixou de ser amethyst-tinted e passou a hairline neutro (`border-white/6`, `text-starlight/60`).
+
+Ambos são usados em todo o app, então os _eyebrows_ e chips de seção ficam mais calmos em todas as telas — coerente com a direção, propagação intencional.
 
 ---
 

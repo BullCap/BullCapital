@@ -14,9 +14,9 @@ interface BarChartArtifactProps {
 }
 
 const COLOR_MAP = {
-  positive: 'from-[#6D28D9] to-[#8B5CF6]',
-  negative: 'from-[#9F1239] to-[#F43F5E]',
-  neutral: 'from-[#1E3A5F] to-[#3B82F6]',
+  positive: 'from-[#82759F] to-[#B1A9C4]',
+  negative: 'from-[#9b6673] to-[#c98c9a]',
+  neutral: 'from-[#4f71a6] to-[#8fa6c6]',
 }
 
 export function BarChartArtifact({ title, eyebrow, bars, chartNote }: BarChartArtifactProps) {
@@ -24,7 +24,7 @@ export function BarChartArtifact({ title, eyebrow, bars, chartNote }: BarChartAr
   const max = Math.max(...bars.map((b) => b.value), 1)
 
   return (
-    <section className="bull-panel p-5">
+    <section className="bull-frame p-5">
       <GlassHighlight widthPercent={55} />
       {eyebrow && <p className="bull-eyebrow">{eyebrow}</p>}
       {title && <h3 className="mt-1.5 font-serif text-lg text-[#F4F0FF]">{title}</h3>}

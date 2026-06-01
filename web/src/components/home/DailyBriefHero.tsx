@@ -1,7 +1,5 @@
 import Link from 'next/link'
 import { Sparkles } from 'lucide-react'
-import { GlassHighlight } from '@/components/atoms/GlassHighlight'
-import BriefMarketPulse from './BriefMarketPulse'
 
 export interface BriefPulseData {
   ibovPrice: number | null
@@ -34,53 +32,44 @@ export default function DailyBriefHero({
   headline,
   storiesCount,
   summary,
-  pulse,
 }: DailyBriefHeroProps) {
   const radarLabel = `${storiesCount} ${storiesCount === 1 ? 'história' : 'histórias'} no radar`
 
   return (
-    <section className="bull-panel-focus p-6 md:p-7">
-      <GlassHighlight widthPercent={74} />
+    <section className="bull-frame px-6 py-8 sm:px-10 sm:py-10">
+      <div className="flex max-w-3xl flex-col gap-6">
+        <p className="bull-eyebrow">
+          Briefing · {dateLabel}
+          {aiGenerated ? ' · IA' : ''}
+        </p>
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] 2xl:grid-cols-[minmax(0,1fr)_22rem] lg:items-start">
-        <div className="flex min-w-0 flex-col gap-5">
-          <div className="max-w-3xl">
-            <p className="bull-eyebrow">
-              Briefing · {dateLabel}
-              {aiGenerated ? ' · IA' : ''}
-            </p>
-            <h2 className="mt-3 font-serif text-[2rem] leading-tight tracking-tight text-white md:text-[2.45rem]">
-              {headline}
-            </h2>
-            <p className="mt-4 max-w-2xl text-sm font-medium leading-6 text-[#F4F0FF]/74 md:text-[15px]">
-              {summary}
-            </p>
-          </div>
+        <h2 className="font-serif text-[2rem] leading-[1.15] tracking-tight text-starlight md:text-[2.6rem]">
+          {headline}
+        </h2>
 
-          <ul className="grid gap-2 text-sm text-[#F4F0FF]/70 md:grid-cols-3">
-            {focusPoints.map((point) => (
-              <li key={point} className="border-t border-white/[0.07] pt-3 leading-5">
-                {point}
-              </li>
-            ))}
-          </ul>
+        <p className="max-w-2xl text-[15px] leading-7 text-starlight/65">
+          {summary}
+        </p>
 
-          <div className="flex items-center gap-4 pt-1">
-            <Link
-              href="/analysis"
-              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[#8B5CF6]/25 bg-[#8B5CF6]/12 px-5 text-sm font-semibold text-white transition-all duration-300 hover:bg-[#8B5CF6]/18 active:scale-[0.98]"
-            >
-              <Sparkles size={16} />
-              Analisar
-            </Link>
-            <span className="text-xs uppercase tracking-[0.14em] text-[#DBEAFE]/35">
-              {radarLabel} · {contextLine}
-            </span>
-          </div>
-        </div>
+        <ul className="grid gap-x-8 gap-y-3 text-sm text-starlight/55 sm:grid-cols-3">
+          {focusPoints.map((point) => (
+            <li key={point} className="border-t border-white/[0.06] pt-3 leading-5">
+              {point}
+            </li>
+          ))}
+        </ul>
 
-        <div>
-          <BriefMarketPulse {...pulse} />
+        <div className="flex flex-wrap items-center gap-4 pt-1">
+          <Link
+            href="/analysis"
+            className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-white/[0.10] bg-white/[0.03] px-5 text-sm font-medium text-starlight transition-colors duration-300 hover:border-amethyst/40 hover:bg-amethyst/[0.08]"
+          >
+            <Sparkles size={15} />
+            Analisar
+          </Link>
+          <span className="text-[11px] uppercase tracking-[0.14em] text-starlight/30">
+            {radarLabel} · {contextLine}
+          </span>
         </div>
       </div>
     </section>

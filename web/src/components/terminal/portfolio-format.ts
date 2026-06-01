@@ -23,25 +23,25 @@ export function formatPercentValue(value: number, options?: { signed?: boolean }
 
 export function toneClass(tone: StatusTone): string {
   return cn(
-    tone === 'positivo' && 'border-emerald-400/15 bg-emerald-400/10 text-emerald-200',
+    tone === 'positivo' && 'border-[#7fb59a]/20 bg-[#7fb59a]/10 text-[#b6dcc7]',
     tone === 'neutro' && 'border-white/[0.08] bg-white/[0.04] text-[#F4F0FF]/60',
-    tone === 'atencao' && 'border-amber-300/15 bg-amber-300/10 text-amber-100',
-    tone === 'risco' && 'border-[#F43F5E]/20 bg-[#F43F5E]/10 text-rose-100'
+    tone === 'atencao' && 'border-[#d0b982]/20 bg-[#d0b982]/10 text-[#ead9ad]',
+    tone === 'risco' && 'border-[#c98c9a]/20 bg-[#c98c9a]/10 text-[#e8bdc6]'
   )
 }
 
 export function severityClass(severity: InsightSeverity): string {
   return cn(
-    severity === 'informativo' && 'border-[#8B5CF6]/20 bg-[#8B5CF6]/10 text-[#C4B5FD]',
-    severity === 'atencao' && 'border-amber-300/20 bg-amber-300/10 text-amber-100',
-    severity === 'critico' && 'border-[#F43F5E]/20 bg-[#F43F5E]/10 text-rose-100'
+    severity === 'informativo' && 'border-[#82759F]/20 bg-[#82759F]/10 text-[#B1A9C4]',
+    severity === 'atencao' && 'border-[#d0b982]/20 bg-[#d0b982]/10 text-[#ead9ad]',
+    severity === 'critico' && 'border-[#c98c9a]/20 bg-[#c98c9a]/10 text-[#e8bdc6]'
   )
 }
 
 export function impactClass(impact: EventImpact): string {
   return cn(
     impact === 'baixo' && 'border-white/[0.08] bg-white/[0.04] text-[#F4F0FF]/50',
-    impact === 'medio' && 'border-amber-300/20 bg-amber-300/10 text-amber-100',
-    impact === 'alto' && 'border-[#F43F5E]/20 bg-[#F43F5E]/10 text-rose-100'
+    impact === 'medio' && 'border-[#d0b982]/20 bg-[#d0b982]/10 text-[#ead9ad]',
+    impact === 'alto' && 'border-[#c98c9a]/20 bg-[#c98c9a]/10 text-[#e8bdc6]'
   )
 }

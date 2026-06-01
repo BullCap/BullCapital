@@ -18,9 +18,9 @@ export interface StoryDigestItem {
 
 function timeAgo(timestamp: number): string {
   const seconds = Math.floor(Date.now() / 1000 - timestamp)
-  if (seconds < 3600) return `ha ${Math.max(1, Math.floor(seconds / 60))}m`
-  if (seconds < 86400) return `ha ${Math.floor(seconds / 3600)}h`
-  return `ha ${Math.floor(seconds / 86400)}d`
+  if (seconds < 3600) return `há ${Math.max(1, Math.floor(seconds / 60))}m`
+  if (seconds < 86400) return `há ${Math.floor(seconds / 3600)}h`
+  return `há ${Math.floor(seconds / 86400)}d`
 }
 
 interface StoryDigestSectionProps {
@@ -29,7 +29,7 @@ interface StoryDigestSectionProps {
 
 export default function StoryDigestSection({ stories }: StoryDigestSectionProps) {
   return (
-    <section id="stories" className="bull-panel p-5 md:p-6">
+    <section id="stories" className="bull-frame p-6 md:p-7">
       <GlassHighlight widthPercent={64} />
 
       <div>

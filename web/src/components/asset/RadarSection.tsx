@@ -18,7 +18,7 @@ interface RadarSectionProps {
 
 export function RadarSectionSkeleton() {
   return (
-    <section className="bull-panel p-4 md:p-5" aria-hidden="true">
+    <section className="bull-frame p-4 md:p-5" aria-hidden="true">
       <GlassHighlight widthPercent={60} />
       <div className="mb-4 flex items-center justify-between gap-3">
         <div>
@@ -66,7 +66,7 @@ export default function RadarSection({ data }: RadarSectionProps) {
       : null
 
   return (
-    <section className="bull-panel p-4 md:p-5">
+    <section className="bull-frame p-4 md:p-5">
       <GlassHighlight widthPercent={60} />
 
       <div className="mb-4 flex items-center justify-between gap-3">
@@ -94,9 +94,9 @@ export default function RadarSection({ data }: RadarSectionProps) {
                 <RadarChart data={data} cx="50%" cy="52%" outerRadius="70%">
                   <defs>
                     <radialGradient id="bull-asset-radar-fill">
-                      <stop offset="0%" stopColor="#8B5CF6" stopOpacity={0.24} />
-                      <stop offset="65%" stopColor="#8B5CF6" stopOpacity={0.14} />
-                      <stop offset="100%" stopColor="#8B5CF6" stopOpacity={0.04} />
+                      <stop offset="0%" stopColor="#82759F" stopOpacity={0.22} />
+                      <stop offset="65%" stopColor="#82759F" stopOpacity={0.12} />
+                      <stop offset="100%" stopColor="#82759F" stopOpacity={0.04} />
                     </radialGradient>
                   </defs>
                   <PolarGrid stroke="rgba(255,255,255,0.08)" />
@@ -120,11 +120,11 @@ export default function RadarSection({ data }: RadarSectionProps) {
                   <Radar
                     name="Ativo"
                     dataKey="value"
-                    stroke="#A78BFA"
+                    stroke="#B1A9C4"
                     fill="url(#bull-asset-radar-fill)"
                     fillOpacity={1}
                     strokeWidth={2}
-                    dot={{ r: 2.5, fill: '#A78BFA', stroke: '#0D0B14', strokeWidth: 1.25 }}
+                    dot={{ r: 2.5, fill: '#B1A9C4', stroke: '#0D0B14', strokeWidth: 1.25 }}
                     isAnimationActive
                     animationDuration={700}
                   />
@@ -142,7 +142,7 @@ export default function RadarSection({ data }: RadarSectionProps) {
                     <div className="h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
                       <span
                         style={{ width: `${point.value}%` }}
-                        className="block h-full rounded-full bg-[#A78BFA]"
+                        className="block h-full rounded-full bg-[#B1A9C4]"
                       />
                     </div>
                   </div>

@@ -36,11 +36,10 @@ export default async function AppShell({
   skipUserLookup = false,
 }: AppShellProps) {
   let shellUser = sessionUser ?? null
-  let initialSidebarCollapsed = false
+  const cookieStore = await cookies()
+  const initialSidebarCollapsed = cookieStore.get(SIDEBAR_COLLAPSED_COOKIE)?.value === 'true'
 
   if (!skipUserLookup) {
-    const cookieStore = await cookies()
-    initialSidebarCollapsed = cookieStore.get(SIDEBAR_COLLAPSED_COOKIE)?.value === 'true'
     if (!shellUser) {
       const session = await auth()
       shellUser = session?.user ?? null

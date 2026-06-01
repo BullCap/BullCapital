@@ -24,7 +24,7 @@ export default function MarketOverview({
           Visão Geral com Dados PRO
         </h2>
         <p className="max-w-lg font-sans text-sm leading-relaxed text-[#F4F0FF]/40">
-          Acompanhe preço, liquidez, amplitude e contexto macro vindos do pipeline Brapi PRO da Bull.
+          Acompanhe preço, liquidez, amplitude e contexto macro vindos do pipeline da Bull.
         </p>
       </div>
 

@@ -36,12 +36,14 @@ export default async function SearchPage() {
 
   return (
     <AppShell active="search" sessionUser={session.user}>
-      <header className="px-1">
-        <p className="bull-eyebrow">Busca</p>
-        <h1 className="mt-2 font-serif text-3xl text-[#F4F0FF]">Buscar ativo</h1>
-        <p className="mt-1 text-sm text-[#DBEAFE]/55">
-          Encontre ativos da B3 e abra leituras com preço, histórico, fundamentos e notícias.
-        </p>
+      <header className="bull-page-header">
+        <div>
+          <p className="bull-eyebrow">Pesquisa</p>
+          <h1 className="bull-page-title mt-2">Buscar ativo</h1>
+          <p className="bull-page-subtitle mt-1">
+            Encontre ações, FIIs, cripto e renda fixa para abrir análise contextual.
+          </p>
+        </div>
       </header>
 
       <ScrollFocus>

@@ -4,7 +4,7 @@ import { GlassHighlight } from '@/components/atoms/GlassHighlight'
 
 export function StoryDigestSkeleton() {
   return (
-    <section id="stories" className="bull-panel p-5 md:p-6" aria-hidden="true">
+    <section id="stories" className="bull-frame p-6 md:p-7" aria-hidden="true">
       <GlassHighlight widthPercent={64} />
       <div>
         <div>

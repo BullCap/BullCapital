@@ -10,6 +10,22 @@ interface AllocationSectionProps {
   byLiquidity: AllocationItem[]
 }
 
+function calmColor(color: string): string {
+  const palette: Record<string, string> = {
+    '#8B5CF6': '#82759F',
+    '#A78BFA': '#B1A9C4',
+    '#22D3EE': '#8fa6c6',
+    '#F59E0B': '#d0b982',
+    '#EC4899': '#c98c9a',
+    '#22C55E': '#7fb59a',
+    '#F43F5E': '#c98c9a',
+    '#64748B': '#7f8796',
+    '#94A3B8': '#9aa3b2',
+  }
+
+  return palette[color.toUpperCase()] ?? color
+}
+
 function AllocationTooltip({
   active,
   payload,
@@ -31,7 +47,7 @@ function AllocationTooltip({
 
 function DonutCard({ title, data }: { title: string; data: AllocationItem[] }) {
   return (
-    <article className="bull-panel-quiet p-4">
+    <article className="bull-card-calm p-4">
       <div className="mb-3 flex items-center justify-between gap-3">
         <h3 className="text-sm font-bold text-[#F4F0FF]">{title}</h3>
         <span className="text-[10px] font-bold uppercase tracking-widest text-[#F4F0FF]/25">
@@ -46,7 +62,7 @@ function DonutCard({ title, data }: { title: string; data: AllocationItem[] }) {
               <PieChart>
                 <Pie data={data} innerRadius={38} outerRadius={58} paddingAngle={2} dataKey="value" nameKey="label">
                   {data.map((item) => (
-                    <Cell key={item.label} fill={item.color} stroke="rgba(13,11,20,0.9)" strokeWidth={2} />
+                    <Cell key={item.label} fill={calmColor(item.color)} stroke="rgba(13,11,20,0.9)" strokeWidth={2} />
                   ))}
                 </Pie>
                 <Tooltip content={<AllocationTooltip />} />
@@ -57,7 +73,7 @@ function DonutCard({ title, data }: { title: string; data: AllocationItem[] }) {
             {data.map((item) => (
               <div key={item.label} className="flex items-center justify-between gap-2">
                 <span className="flex min-w-0 items-center gap-2">
-                  <span className="size-2 shrink-0 rounded-full" style={{ backgroundColor: item.color }} />
+                  <span className="size-2 shrink-0 rounded-full" style={{ backgroundColor: calmColor(item.color) }} />
                   <span className="truncate text-xs text-[#F4F0FF]/58">{item.label}</span>
                 </span>
                 <span className="font-mono text-xs font-bold tabular-nums text-[#F4F0FF]">
@@ -78,7 +94,7 @@ function DonutCard({ title, data }: { title: string; data: AllocationItem[] }) {
 
 function StackedCard({ title, data }: { title: string; data: AllocationItem[] }) {
   return (
-    <article className="bull-panel-quiet p-4">
+    <article className="bull-card-calm p-4">
       <div className="mb-4 flex items-center justify-between gap-3">
         <h3 className="text-sm font-bold text-[#F4F0FF]">{title}</h3>
         <span className="text-[10px] font-bold uppercase tracking-widest text-[#F4F0FF]/25">
@@ -92,7 +108,7 @@ function StackedCard({ title, data }: { title: string; data: AllocationItem[] })
               <div
                 key={item.label}
                 className="h-full"
-                style={{ width: `${item.value}%`, backgroundColor: item.color }}
+                style={{ width: `${item.value}%`, backgroundColor: calmColor(item.color) }}
                 title={`${item.label}: ${item.value}%`}
               />
             ))}
@@ -101,7 +117,7 @@ function StackedCard({ title, data }: { title: string; data: AllocationItem[] })
             {data.map((item) => (
               <div key={item.label} className="grid grid-cols-[minmax(0,1fr)_3rem] items-center gap-3">
                 <span className="flex min-w-0 items-center gap-2">
-                  <span className="size-2 shrink-0 rounded-full" style={{ backgroundColor: item.color }} />
+                  <span className="size-2 shrink-0 rounded-full" style={{ backgroundColor: calmColor(item.color) }} />
                   <span className="truncate text-xs text-[#F4F0FF]/58">{item.label}</span>
                 </span>
                 <span className="text-right font-mono text-xs font-bold tabular-nums text-[#F4F0FF]">
@@ -127,7 +143,7 @@ export default function AllocationSection({
   byLiquidity,
 }: AllocationSectionProps) {
   return (
-    <section className="bull-panel p-4 md:p-5">
+    <section className="bull-frame p-4 md:p-5">
       <div className="mb-4">
         <p className="bull-eyebrow">Alocação</p>
         <h2 className="mt-0.5 font-serif text-lg text-[#F4F0FF]">Mapa de exposição</h2>

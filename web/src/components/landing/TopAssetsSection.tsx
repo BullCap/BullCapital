@@ -18,7 +18,7 @@ function buildSummary(assets: MarketListingItem[]) {
         ? 'predomínio de quedas'
         : 'movimento misto'
 
-  return `Entre os maiores ativos por valor de mercado, ${lead.stock} lidera a amostra Brapi PRO com ${lead.change.toLocaleString('pt-BR', {
+  return `Entre os maiores ativos por valor de mercado, ${lead.stock} lidera a amostra com ${lead.change.toLocaleString('pt-BR', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })}% no pregão. A leitura agregada mostra ${direction} e serve como contexto, não recomendação.`

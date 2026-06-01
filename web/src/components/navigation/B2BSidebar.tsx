@@ -22,7 +22,7 @@ const NAV_ITEMS = [
   { label: 'Mercado', href: '/home', icon: BarChart3 },
   { label: 'Notícias', href: '/news', icon: Newspaper },
   { label: 'Buscar', href: '/search', icon: Search },
-  { label: 'Carteira', href: '/terminal', icon: Terminal },
+  { label: 'Terminal', href: '/terminal', icon: Terminal },
   { label: 'Análises', href: '/analysis', icon: Sparkles },
 ] as const
 
@@ -50,8 +50,18 @@ export default function B2BSidebar({
 }: B2BSidebarProps) {
   const [collapsed, setCollapsed] = useState(initialCollapsed)
   const [chatQuery, setChatQuery] = useState('')
+  const [mounted, setMounted] = useState(false)
   const pathname = usePathname()
   const router = useRouter()
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  // Sync state if initialCollapsed changes (e.g. loading templates transition to loaded pages)
+  useEffect(() => {
+    setCollapsed(initialCollapsed)
+  }, [initialCollapsed])
 
   // Sync collapsed state to persistent storage for the next server-rendered navigation.
   useEffect(() => {
@@ -90,7 +100,8 @@ export default function B2BSidebar({
           key={item.href}
           href={item.href}
           className={cn(
-            'group relative flex h-11 items-center rounded-lg text-sm font-medium transition-all duration-300',
+            'group relative flex h-11 items-center rounded-lg text-sm font-medium',
+            mounted ? 'transition-all duration-300' : 'transition-none',
             collapsed ? 'mx-auto w-12 justify-center px-0' : 'w-full gap-3 px-3',
             active
               ? 'border border-[#94a3b8]/20 bg-[#94a3b8]/10 text-white shadow-[inset_0_1px_1px_rgba(255,255,255,0.06)]'
@@ -101,7 +112,8 @@ export default function B2BSidebar({
           <item.icon size={18} className={cn('shrink-0 transition-transform duration-300 group-hover:scale-105', active ? 'text-white' : 'text-[#94a3b8]/50 group-hover:text-[#94a3b8]/80')} />
           <span
             className={cn(
-              'transition-all duration-500 whitespace-nowrap overflow-hidden',
+              'whitespace-nowrap overflow-hidden',
+              mounted ? 'transition-all duration-500' : 'transition-none',
               collapsed ? 'max-w-0 opacity-0 pointer-events-none' : 'max-w-[12rem] opacity-100'
             )}
           >
@@ -125,7 +137,8 @@ export default function B2BSidebar({
   return (
     <aside
       className={cn(
-        'hidden lg:flex shrink-0 flex-col border-r border-white/[0.06] bg-[#090C12]/95 backdrop-blur-2xl transition-all duration-500 ease-out sticky top-0 h-screen z-40',
+        'hidden lg:flex shrink-0 flex-col border-r border-white/[0.06] bg-[#090C12]/95 backdrop-blur-2xl sticky top-0 h-screen z-40',
+        mounted ? 'transition-all duration-500 ease-out' : 'transition-none',
         collapsed ? 'w-[5.25rem]' : 'w-[20rem]'
       )}
     >
@@ -140,7 +153,8 @@ export default function B2BSidebar({
       >
         <div
           className={cn(
-            'flex items-center gap-3 overflow-hidden transition-all duration-500',
+            'flex items-center gap-3 overflow-hidden',
+            mounted ? 'transition-all duration-500' : 'transition-none',
             collapsed ? 'max-w-0 opacity-0 pointer-events-none' : 'max-w-[14rem] opacity-100'
           )}
         >
@@ -154,7 +168,7 @@ export default function B2BSidebar({
         <button
           type="button"
           onClick={() => setCollapsed(!collapsed)}
-          className="relative z-20 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-white/[0.06] bg-white/[0.02] text-[#94a3b8]/60 hover:bg-white/5 hover:text-white"
+          className="bull-icon-button relative z-20 size-8 shrink-0"
           aria-label={collapsed ? 'Expandir barra lateral' : 'Recolher barra lateral'}
         >
           {collapsed ? <PanelLeftOpen size={15} /> : <PanelLeftClose size={15} />}
@@ -197,7 +211,7 @@ export default function B2BSidebar({
           </div>
 
           <p className="px-3 mt-3 text-xs leading-relaxed text-[#94a3b8]/50">
-            Munição de research e narrativa em tempo real para embasar suas decisões de alocação.
+            Research e narrativa para explicar mercado com mais clareza.
           </p>
 
           <div className="mt-4 space-y-1.5">
@@ -247,13 +261,14 @@ export default function B2BSidebar({
           {/* User Initials Circle */}
           <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-white/[0.08] bg-white/[0.04] text-[11px] font-bold text-white shadow-[inset_0_1px_1px_rgba(255,255,255,0.08)]">
             {initials}
-            <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-[#0C0F15] bg-[#4ADE80]" />
+            <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-[#0C0F15] bg-[#7fb59a]" />
           </div>
 
           {/* User Details */}
           <div
             className={cn(
-              'flex flex-1 flex-col overflow-hidden transition-all duration-500 whitespace-nowrap',
+              'flex flex-1 flex-col overflow-hidden whitespace-nowrap',
+              mounted ? 'transition-all duration-500' : 'transition-none',
               collapsed ? 'max-w-0 opacity-0 pointer-events-none' : 'max-w-[12rem] opacity-100'
             )}
           >

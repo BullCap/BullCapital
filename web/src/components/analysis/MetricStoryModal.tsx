@@ -97,16 +97,12 @@ export default function MetricStoryModal({
             transition={{ type: 'spring', damping: 25, stiffness: 350 }}
             className="relative w-full max-w-2xl overflow-hidden rounded-[2.5rem] border border-white/10 bg-[#1A1625]/95 shadow-2xl backdrop-blur-2xl"
           >
-          {/* Subtle Ambient Glowing Orbs */}
-          <div className="absolute -left-12 -top-12 -z-10 h-48 w-48 rounded-full bg-[#8B5CF6]/15 blur-[60px]" />
-          <div className="absolute -bottom-12 -right-12 -z-10 h-48 w-48 rounded-full bg-[#F43F5E]/10 blur-[60px]" />
-
           <GlassHighlight widthPercent={60} />
 
           {/* Modal Header */}
           <div className="flex items-start justify-between p-6 pb-4">
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#8B5CF6]">
+              <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-starlight/45">
                 {activeStory.category}
               </p>
               <h2 className="mt-1 font-serif text-2xl font-semibold text-[#F4F0FF]">
@@ -144,7 +140,7 @@ export default function MetricStoryModal({
               onClick={() => setActiveTab('concept')}
               className={`flex shrink-0 items-center gap-2 border-b-2 pb-3 text-xs font-semibold tracking-wide transition ${
                 activeTab === 'concept'
-                  ? 'border-[#8B5CF6] text-white'
+                  ? 'border-starlight/70 text-starlight'
                   : 'border-transparent text-[#F4F0FF]/40 hover:text-[#F4F0FF]/60'
               }`}
             >
@@ -155,7 +151,7 @@ export default function MetricStoryModal({
               onClick={() => setActiveTab('chart')}
               className={`flex shrink-0 items-center gap-2 border-b-2 pb-3 text-xs font-semibold tracking-wide transition ${
                 activeTab === 'chart'
-                  ? 'border-[#8B5CF6] text-white'
+                  ? 'border-starlight/70 text-starlight'
                   : 'border-transparent text-[#F4F0FF]/40 hover:text-[#F4F0FF]/60'
               }`}
             >
@@ -166,7 +162,7 @@ export default function MetricStoryModal({
               onClick={() => setActiveTab('quotes')}
               className={`flex shrink-0 items-center gap-2 border-b-2 pb-3 text-xs font-semibold tracking-wide transition ${
                 activeTab === 'quotes'
-                  ? 'border-[#8B5CF6] text-white'
+                  ? 'border-starlight/70 text-starlight'
                   : 'border-transparent text-[#F4F0FF]/40 hover:text-[#F4F0FF]/60'
               }`}
             >
@@ -177,7 +173,7 @@ export default function MetricStoryModal({
               onClick={() => setActiveTab('impact')}
               className={`flex shrink-0 items-center gap-2 border-b-2 pb-3 text-xs font-semibold tracking-wide transition ${
                 activeTab === 'impact'
-                  ? 'border-[#8B5CF6] text-white'
+                  ? 'border-starlight/70 text-starlight'
                   : 'border-transparent text-[#F4F0FF]/40 hover:text-[#F4F0FF]/60'
               }`}
             >

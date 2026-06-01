@@ -42,7 +42,7 @@ export function ConversationThread({ turns, sending, loadingArtifacts, ticker }:
             {/* Resposta da IA — só aparece quando há conteúdo */}
             {turn.answer && (
               <div className="flex items-start gap-3">
-                <span className="bull-brand-mark mt-2 shrink-0 scale-[1.1] shadow-[0_0_10px_rgba(139,92,246,0.25)]" />
+                <span className="bull-brand-mark mt-2 shrink-0 scale-[1.1]" />
                 <div className="min-w-0 flex-1 rounded-[1.25rem] rounded-tl-[4px] border border-white/[0.06] bg-[#0F0C18]/45 px-5 py-[1.125rem] shadow-[inset_0_1px_0px_rgba(255,255,255,0.05),0_4px_14px_rgba(0,0,0,0.25)] transition-all duration-300 sm:px-6 sm:py-5">
                   <MarkdownBody className="text-[#F4F0FF]/85 leading-7 text-sm">{turn.answer}</MarkdownBody>
                   <ConversationArtifacts artifacts={turn.artifacts} ticker={ticker} />
@@ -50,18 +50,18 @@ export function ConversationThread({ turns, sending, loadingArtifacts, ticker }:
                   {isLive && (
                     loadingArtifacts
                       ? (
-                        <span className="mt-3 flex items-center gap-2 text-xs text-[#8B5CF6]/60">
+                        <span className="mt-3 flex items-center gap-2 text-xs text-starlight/45">
                           {[0, 1, 2].map((i) => (
                             <span
                               key={i}
-                              className="h-1 w-1 rounded-full bg-[#8B5CF6]/50 animate-pulse"
+                              className="h-1 w-1 rounded-full bg-starlight/40 animate-pulse"
                               style={{ animationDelay: `${i * 180}ms` }}
                             />
                           ))}
                           <span>Montando elementos visuais…</span>
                         </span>
                       )
-                      : <span className="ml-1 inline-block h-4 w-1 animate-pulse rounded-sm bg-[#8B5CF6] shadow-[0_0_8px_#8B5CF6]" />
+                      : <span className="ml-1 inline-block h-4 w-1 animate-pulse rounded-sm bg-starlight/50" />
                   )}
                 </div>
               </div>
@@ -73,12 +73,12 @@ export function ConversationThread({ turns, sending, loadingArtifacts, ticker }:
       {/* Dots — só enquanto aguarda o primeiro token */}
       {sending && (!lastTurn || !lastTurn.answer) && (
         <div className="flex items-start gap-3">
-          <span className="bull-brand-mark mt-2 shrink-0 scale-[1.1] shadow-[0_0_10px_rgba(139,92,246,0.25)]" />
+          <span className="bull-brand-mark mt-2 shrink-0 scale-[1.1]" />
           <div className="flex items-center gap-2 rounded-[1.25rem] rounded-tl-[4px] border border-white/[0.06] bg-[#0F0C18]/45 px-5 py-4 shadow-[inset_0_1px_0px_rgba(255,255,255,0.05),0_4px_14px_rgba(0,0,0,0.25)]">
             {[0, 1, 2].map((i) => (
               <span
                 key={i}
-                className="h-1.5 w-1.5 rounded-full bg-[#8B5CF6] shadow-[0_0_6px_#8B5CF6] animate-pulse"
+                className="h-1.5 w-1.5 rounded-full bg-starlight/40 animate-pulse"
                 style={{ animationDelay: `${i * 180}ms` }}
               />
             ))}

@@ -16,7 +16,7 @@ function SubmitButton() {
     <button
       type="submit"
       disabled={pending}
-      className="inline-flex min-h-12 w-full items-center justify-center rounded-2xl border border-[#60A5FA]/25 bg-[#3B82F6]/20 px-6 text-sm font-medium text-[#F4F0FF] transition hover:bg-[#3B82F6]/30 disabled:opacity-50"
+      className="bull-action-primary min-h-12 w-full"
     >
       {pending ? 'Entrando…' : 'Entrar'}
     </button>
@@ -44,13 +44,13 @@ export default function SignInForm() {
           className="h-16 w-16 rounded-[1.25rem] border border-white/10 shadow-[0_10px_20px_rgba(0,0,0,0.4)] mb-4"
         />
         <p className="bull-eyebrow">BullCapital</p>
-        <h1 className="mt-3 font-serif text-4xl text-[#F4F0FF]">Research com Brapi PRO</h1>
+        <h1 className="mt-3 font-serif text-4xl text-[#F4F0FF]">Research de mercado</h1>
         <p className="mt-2 text-sm text-[#DBEAFE]/55">
           Dados brasileiros para briefing, comparação e narrativa profissional
         </p>
       </div>
 
-      <div className="bull-panel-focus relative overflow-hidden p-8">
+      <div className="bull-frame p-8">
         <GlassHighlight widthPercent={70} />
 
         <div className="mb-6 text-center">
@@ -76,7 +76,7 @@ export default function SignInForm() {
               required
               autoComplete="email"
               placeholder="seu@email.com"
-              className="border-white/10 bg-transparent text-[#F4F0FF] placeholder:text-[#F4F0FF]/40 focus:border-[#8B5CF6] focus:ring-2 focus:ring-[#8B5CF6]/20"
+              className="bg-white/[0.02]"
             />
           </div>
 

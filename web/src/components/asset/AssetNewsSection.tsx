@@ -16,7 +16,7 @@ interface AssetNewsSectionProps {
 
 export function AssetNewsSectionSkeleton() {
   return (
-    <section className="bull-panel p-5" aria-hidden="true">
+    <section className="bull-frame p-5" aria-hidden="true">
       <GlassHighlight widthPercent={55} />
       <p className="bull-eyebrow mb-4">Notícias recentes</p>
       <div className="flex flex-col divide-y divide-white/[0.05]">
@@ -59,7 +59,7 @@ export function AssetNewsSectionSkeleton() {
 
 export default function AssetNewsSection({ news }: AssetNewsSectionProps) {
   return (
-    <section className="bull-panel p-5">
+    <section className="bull-frame p-5">
       <GlassHighlight widthPercent={55} />
 
       <p className="bull-eyebrow mb-4">Notícias recentes</p>
@@ -97,7 +97,7 @@ export default function AssetNewsSection({ news }: AssetNewsSectionProps) {
               {/* Title & Metadata details */}
               <div className="min-w-0 flex-1 flex flex-col justify-between py-0.5">
                 <div>
-                  <p className="text-sm font-semibold leading-snug text-[#F4F0FF]/85 group-hover:text-[#C4B5FD] transition-colors duration-300 line-clamp-2">
+                  <p className="text-sm font-semibold leading-snug text-[#F4F0FF]/85 transition-colors duration-300 group-hover:text-white line-clamp-2">
                     {item.title}
                   </p>
                 </div>

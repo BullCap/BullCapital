@@ -9,21 +9,21 @@ interface MarketEventsPanelProps {
 
 export default function MarketEventsPanel({ events }: MarketEventsPanelProps) {
   return (
-    <section className="bull-panel p-4 md:p-5">
+    <section className="bull-frame p-4 md:p-5">
       <div className="mb-4 flex items-start justify-between gap-3">
         <div>
           <p className="bull-eyebrow">Mercado</p>
-          <h2 className="mt-0.5 font-serif text-lg text-[#F4F0FF]">Eventos que impactam a carteira</h2>
+          <h2 className="mt-0.5 font-serif text-lg text-[#F4F0FF]">Eventos relevantes</h2>
         </div>
         <CalendarClock size={16} className="mt-0.5 text-[#F4F0FF]/35" />
       </div>
 
       {events.length > 0 ? (
-        <div className="grid gap-3 lg:grid-cols-2">
+        <div className="grid gap-3">
           {events.map((event) => (
-            <article key={event.id} className="bull-panel-quiet p-4">
+            <article key={event.id} className="bull-card-calm p-4">
               <div className="mb-3 flex flex-wrap items-center gap-2">
-                <span className="rounded-full border border-[#8B5CF6]/20 bg-[#8B5CF6]/10 px-2 py-1 font-mono text-[10px] font-bold text-[#C4B5FD]">
+                <span className="rounded-full border border-[#82759F]/20 bg-[#82759F]/10 px-2 py-1 font-mono text-[10px] font-medium text-[#B1A9C4]">
                   {event.asset}
                 </span>
                 <span className="rounded-full border border-white/[0.08] bg-white/[0.035] px-2 py-1 text-[10px] font-bold uppercase tracking-widest text-[#F4F0FF]/45">

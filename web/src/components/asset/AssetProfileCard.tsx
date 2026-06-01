@@ -40,7 +40,7 @@ export default function AssetProfileCard({ ticker, profile }: AssetProfileCardPr
   const isLongDescription = summaryText.length > 220
 
   return (
-    <section className="bull-panel relative overflow-hidden p-4">
+    <section className="bull-frame p-4">
       <GlassHighlight widthPercent={60} />
 
       <p className="bull-eyebrow">Empresa</p>
@@ -80,7 +80,7 @@ export default function AssetProfileCard({ ticker, profile }: AssetProfileCardPr
         <div className="mt-3 flex justify-end">
           <button
             onClick={() => setIsExpanded(!isExpanded)}
-            className="inline-flex items-center gap-1 text-xs font-semibold text-[#C4B5FD]/85 transition duration-300 hover:text-white"
+            className="bull-action min-h-8 px-3 text-xs"
           >
             {isExpanded ? (
               <>

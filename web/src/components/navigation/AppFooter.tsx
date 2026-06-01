@@ -10,7 +10,7 @@ const footerLinks = {
   ],
   Recursos: [
     { label: 'Análise contextual', href: '/analysis' },
-    { label: 'Radar Brapi PRO', href: '/home' },
+    { label: 'Radar', href: '/home' },
   ],
   Legal: [
     { label: 'Privacidade', href: '#' },

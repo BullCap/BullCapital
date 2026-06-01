@@ -28,7 +28,7 @@ export function RadarChartArtifact({ title, chartNote, radarData }: RadarChartAr
     : null
 
   return (
-    <section className="bull-panel p-5">
+    <section className="bull-frame p-5">
       <GlassHighlight widthPercent={60} />
       <div className="mb-4 flex items-end justify-between gap-3">
         <div>
@@ -82,7 +82,7 @@ export function RadarChartArtifact({ title, chartNote, radarData }: RadarChartAr
                     <span className="text-[#F4F0FF]/50">{p.metric}</span>
                   </div>
                   <div className="h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
-                    <span style={{ width: `${p.value}%` }} className="block h-full rounded-full bg-gradient-to-r from-[#6D28D9] to-[#A78BFA]" />
+                    <span style={{ width: `${p.value}%` }} className="block h-full rounded-full bg-gradient-to-r from-[#82759F] to-[#B1A9C4]" />
                   </div>
                 </div>
                 <span className="text-right text-[11px] font-medium text-[#F4F0FF]/70">{p.value}</span>

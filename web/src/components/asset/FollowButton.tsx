@@ -29,10 +29,10 @@ export default function FollowButton({ ticker, initialFollowing }: FollowButtonP
     <button
       onClick={toggle}
       aria-label={optimisticFollowing ? `Deixar de seguir ${ticker}` : `Seguir ${ticker}`}
-      className={`inline-flex min-h-10 items-center gap-2 rounded-2xl border px-4 text-sm transition hover:-translate-y-0.5 ${
+      className={`inline-flex min-h-10 items-center gap-2 rounded-xl border px-4 text-sm font-medium transition-colors duration-300 ${
         optimisticFollowing
-          ? 'border-[#8B5CF6]/40 bg-[#8B5CF6]/15 text-[#C4B5FD] hover:bg-[#8B5CF6]/22'
-          : 'border-white/10 bg-white/[0.05] text-[#F4F0FF]/70 hover:bg-white/[0.09] hover:text-[#F4F0FF]'
+          ? 'border-[#82759F]/35 bg-[#82759F]/12 text-[#B1A9C4] hover:bg-[#82759F]/18'
+          : 'border-white/[0.07] bg-white/[0.025] text-[#F4F0FF]/70 hover:border-white/[0.12] hover:bg-white/[0.045] hover:text-[#F4F0FF]'
       }`}
     >
       {optimisticFollowing ? <BookmarkCheck size={15} /> : <Bookmark size={15} />}

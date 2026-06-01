@@ -37,7 +37,7 @@ export function ConversationInput({ onSubmit, disabled, subjectLabel, initialVal
   }
 
   return (
-    <div className="flex items-end gap-3 rounded-[1.35rem] border border-white/[0.08] bg-[#0F0C18]/65 px-4 py-3 shadow-[inset_0_1px_0px_rgba(255,255,255,0.06),0_4px_12px_rgba(0,0,0,0.3)] transition-all duration-300 group/input focus-within:border-[#8B5CF6]/45 focus-within:shadow-[inset_0_2px_4px_rgba(0,0,0,0.55),0_0_24px_rgba(139,92,246,0.18)] focus-within:bg-[#0f0c18]/95">
+    <div className="flex items-end gap-3 rounded-2xl border border-white/[0.08] bg-[#0F0C18]/65 px-4 py-3 transition-colors duration-300 group/input focus-within:border-amethyst/40 focus-within:bg-[#0f0c18]/90">
       <textarea
         ref={textareaRef}
         rows={1}
@@ -46,12 +46,12 @@ export function ConversationInput({ onSubmit, disabled, subjectLabel, initialVal
         onKeyDown={handleKeyDown}
         disabled={disabled}
         placeholder={`Pergunte sobre ${subjectLabel}…`}
-        className="min-h-[28px] flex-1 resize-none bg-transparent text-sm text-[#F4F0FF] placeholder:text-[#F4F0FF]/25 focus:outline-none disabled:opacity-50"
+        className="min-h-[28px] flex-1 resize-none bg-transparent text-sm text-starlight placeholder:text-starlight/25 focus:outline-none disabled:opacity-50"
       />
       <button
         onClick={submit}
         disabled={disabled || !value.trim()}
-        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#8B5CF6] text-white transition-all duration-300 hover:bg-[#a78bfa] hover:shadow-[0_0_12px_rgba(139,92,246,0.5)] active:scale-[0.92] disabled:cursor-not-allowed disabled:bg-white/[0.04] disabled:text-[#F4F0FF]/25 disabled:shadow-none"
+        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amethyst text-white transition-colors duration-300 hover:bg-amethyst-light active:scale-[0.94] disabled:cursor-not-allowed disabled:bg-white/[0.04] disabled:text-starlight/25"
         aria-label="Enviar pergunta"
       >
         <ArrowUp size={15} />

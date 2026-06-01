@@ -8,15 +8,15 @@ interface RiskOverviewProps {
 }
 
 function correlationColor(value: number): string {
-  if (value >= 0.7) return 'rgba(244,63,94,0.34)'
-  if (value >= 0.45) return 'rgba(245,158,11,0.28)'
-  if (value >= 0.25) return 'rgba(139,92,246,0.24)'
-  return 'rgba(34,211,238,0.18)'
+  if (value >= 0.7) return 'rgba(201,140,154,0.22)'
+  if (value >= 0.45) return 'rgba(208,185,130,0.2)'
+  if (value >= 0.25) return 'rgba(130,117,159,0.2)'
+  return 'rgba(143,166,198,0.16)'
 }
 
 export default function RiskOverview({ metrics, correlation }: RiskOverviewProps) {
   return (
-    <section className="bull-panel p-4 md:p-5">
+    <section className="bull-frame p-4 md:p-5">
       <div className="mb-4">
         <p className="bull-eyebrow">Risco</p>
         <h2 className="mt-0.5 font-serif text-lg text-[#F4F0FF]">Concentração e correlação</h2>
@@ -24,7 +24,7 @@ export default function RiskOverview({ metrics, correlation }: RiskOverviewProps
 
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
         {metrics.map((metric) => (
-          <article key={metric.label} className="bull-panel-quiet p-3.5">
+          <article key={metric.label} className="bull-card-calm p-3.5">
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
                 <p className="truncate text-xs font-bold text-[#F4F0FF]/45">{metric.label}</p>
@@ -41,7 +41,7 @@ export default function RiskOverview({ metrics, correlation }: RiskOverviewProps
         ))}
       </div>
 
-      <div className="mt-3 bull-panel-quiet p-4">
+      <div className="bull-card-calm mt-3 p-4">
         <div className="mb-4 flex items-center justify-between gap-3">
           <h3 className="text-sm font-bold text-[#F4F0FF]">Mapa simples de correlação</h3>
           <span className="text-[10px] font-bold uppercase tracking-widest text-[#F4F0FF]/25">

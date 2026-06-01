@@ -59,7 +59,7 @@ function PerformanceTooltip({
         </div>
         <div className="flex gap-4">
           <span className="text-[#F4F0FF]/45">Retorno</span>
-          <span className="ml-auto font-mono font-bold text-emerald-200">
+          <span className="ml-auto font-mono font-bold text-[#7fb59a]">
             {formatPercentValue(point.retorno, { signed: true })}
           </span>
         </div>
@@ -93,23 +93,21 @@ export default function PortfolioPerformanceChart({
   }
 
   return (
-    <section className="bull-panel flex flex-col p-4 md:p-5">
+    <section className="bull-frame flex flex-col p-4 md:p-5">
       <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
         <div>
           <p className="bull-eyebrow">Evolução patrimonial</p>
           <h2 className="mt-0.5 font-serif text-xl text-[#F4F0FF]">Performance consolidada</h2>
         </div>
-        <div className="flex flex-wrap gap-1 rounded-lg border border-white/[0.08] bg-[#0D0B14]/70 p-1">
+        <div className="bull-segmented flex-wrap">
           {modes.map((item) => (
             <button
               key={item.key}
               type="button"
               onClick={() => onModeChange(item.key)}
               className={cn(
-                'h-8 rounded-md px-3 text-[11px] font-bold transition focus:outline-none focus:ring-2 focus:ring-[#8B5CF6]/40',
-                mode === item.key
-                  ? 'bg-[#8B5CF6]/20 text-[#F4F0FF]'
-                  : 'text-[#F4F0FF]/40 hover:text-[#F4F0FF]/75'
+                'bull-tab min-h-8 px-3 text-[11px]',
+                mode === item.key && 'bg-white/[0.065] text-[#F4F0FF]'
               )}
               aria-pressed={mode === item.key}
             >
@@ -125,8 +123,8 @@ export default function PortfolioPerformanceChart({
             <AreaChart data={data} margin={{ top: 10, right: 12, left: 4, bottom: 0 }}>
               <defs>
                 <linearGradient id="portfolioArea" x1="0" x2="0" y1="0" y2="1">
-                  <stop offset="5%" stopColor="#8B5CF6" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#8B5CF6" stopOpacity={0.02} />
+                  <stop offset="5%" stopColor="#82759F" stopOpacity={0.24} />
+                  <stop offset="95%" stopColor="#82759F" stopOpacity={0.02} />
                 </linearGradient>
               </defs>
               <CartesianGrid stroke="rgba(255,255,255,0.045)" vertical={false} />
@@ -147,17 +145,17 @@ export default function PortfolioPerformanceChart({
               <Area
                 type="monotone"
                 dataKey={mode}
-                stroke="#8B5CF6"
+                stroke="#82759F"
                 fill="url(#portfolioArea)"
                 strokeWidth={2.2}
                 dot={false}
-                activeDot={{ r: 4, strokeWidth: 0, fill: '#C4B5FD' }}
+                activeDot={{ r: 4, strokeWidth: 0, fill: '#B1A9C4' }}
               />
               {mode === 'retorno' && (
                 <Line
                   type="monotone"
                   dataKey={benchmarkDataKey}
-                  stroke="#F59E0B"
+                  stroke="#8fa6c6"
                   strokeWidth={1.6}
                   dot={false}
                   strokeDasharray="4 4"
@@ -174,11 +172,11 @@ export default function PortfolioPerformanceChart({
 
       <div className="mt-4 flex flex-wrap gap-4 text-[11px] font-bold text-[#F4F0FF]/45">
         <span className="inline-flex items-center gap-2">
-          <span className="h-0.5 w-5 bg-[#8B5CF6]" />
+          <span className="h-0.5 w-5 bg-[#82759F]" />
           Carteira
         </span>
         <span className="inline-flex items-center gap-2">
-          <span className="h-0.5 w-5 border-t border-dashed border-[#F59E0B]" />
+          <span className="h-0.5 w-5 border-t border-dashed border-[#8fa6c6]" />
           {benchmark}
         </span>
       </div>

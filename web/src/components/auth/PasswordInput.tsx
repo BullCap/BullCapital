@@ -35,7 +35,7 @@ export default function PasswordInput({
           disabled={disabled}
           required
           minLength={8}
-          className="pr-11 bg-transparent border-white/10 text-[#F4F0FF] placeholder:text-[#F4F0FF]/40 focus:border-[#8B5CF6] focus:ring-2 focus:ring-[#8B5CF6]/20"
+          className="bg-white/[0.02] pr-11"
         />
         <button
           type="button"

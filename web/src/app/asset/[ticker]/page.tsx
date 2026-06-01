@@ -12,6 +12,7 @@ import AssetAnalysisCTA from '@/components/asset/AssetAnalysisCTA'
 import AssetNewsSection, { AssetNewsSectionSkeleton } from '@/components/asset/AssetNewsSection'
 import AssetProfileCard from '@/components/asset/AssetProfileCard'
 import AssetQuotesTable, { AssetQuotesTableSkeleton } from '@/components/asset/AssetQuotesTable'
+import AssetWorkspace from '@/components/asset/AssetWorkspace'
 import { isFollowing } from '@/lib/actions/watchlist'
 import AppShell from '@/components/navigation/AppShell'
 import ScrollFocus from '@/components/ui/ScrollFocus'
@@ -103,41 +104,48 @@ export default async function AssetPage({ params }: AssetPageProps) {
         </Suspense>
       </ScrollFocus>
 
-      <div className="grid w-full grid-cols-1 items-start gap-5 xl:grid-cols-[minmax(0,1fr)_22rem] 2xl:grid-cols-[minmax(0,1fr)_24rem]">
-        <div className="flex min-w-0 flex-col gap-5">
+      <AssetWorkspace
+        chart={
           <ScrollFocus>
             <Suspense fallback={<PriceChartSkeleton />}>
               <PriceChartPanel ticker={ticker} />
             </Suspense>
           </ScrollFocus>
+        }
+        radar={
           <ScrollFocus>
             <Suspense fallback={<RadarSectionSkeleton />}>
               <RadarPanel ticker={ticker} />
             </Suspense>
           </ScrollFocus>
+        }
+        quotes={
           <ScrollFocus>
             <Suspense fallback={<AssetQuotesTableSkeleton ticker={ticker} />}>
               <QuotesTablePanel ticker={ticker} />
             </Suspense>
           </ScrollFocus>
+        }
+        news={
           <ScrollFocus>
             <Suspense fallback={<AssetNewsSectionSkeleton />}>
               <AssetNewsPanel ticker={ticker} />
             </Suspense>
           </ScrollFocus>
-        </div>
-
-        <aside className="flex w-full flex-col gap-5 xl:sticky xl:top-24">
+        }
+        profile={
           <ScrollFocus>
             <Suspense fallback={<AssetProfileCard ticker={ticker} profile={null} />}>
               <AssetProfilePanel ticker={ticker} />
             </Suspense>
           </ScrollFocus>
+        }
+        analysis={
           <ScrollFocus>
             <AssetAnalysisCTA ticker={ticker} />
           </ScrollFocus>
-        </aside>
-      </div>
+        }
+      />
     </AppShell>
   )
 }
