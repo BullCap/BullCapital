@@ -109,7 +109,7 @@ Conforme [AGENTS.md §9.4 e §9.5](AGENTS.md):
 - Não usar `git add -A` em massa — adicione arquivos específicos
 - Não amendar commits pushed
 - Não commitar `.env*`
-- **Nunca commitar `OpenFinancePortfolio.tsx`** sem decisão explícita (está untracked propositalmente — ver [AGENTS.md §13.2](AGENTS.md))
+- **Nunca commitar `OpenFinancePortfolio.tsx`** — está no `.gitignore` propositalmente, mantido só localmente (ver [AGENTS.md §13.2](AGENTS.md))
 
 Para commits, **só commite quando o usuário pedir**. Não seja proativo. Se em dúvida, pergunte.
 
@@ -196,7 +196,7 @@ O produto pivotou para B2B (CFP + influencer financeiro) em 24/mai/2026 ([AGENTS
 
 - **Persona muda copy.** Se você ver texto antigo falando com "investidor", "seu dinheiro", "rumo aos objetivos" — é candidato a reescrita.
 - **Algumas telas serão arquivadas** (DividendCalculator, SavingsSimulator). Não as estenda; não as use de exemplo.
-- **OpenFinancePortfolio.tsx existe untracked** — não é bug, é decisão. Não comite.
+- **OpenFinancePortfolio.tsx está no `.gitignore`** (mantido só localmente) — não é bug, é decisão. Não comite.
 - **3 features novas no MVP** (comparador, briefing email, exportação PDF) — sprint atual em [AGENTS.md §13](AGENTS.md).
 
 Se o usuário pedir feature que **claramente é para a persona antiga** (ex: "calculadora de aposentadoria"), **pergunte se ainda faz sentido pós-pivô** antes de codar.

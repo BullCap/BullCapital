@@ -34,15 +34,28 @@ Se um agente sugerir um prompt onde a IA inventa preços, multiplica fundamentos
 ## Fluxo de dados típico
 
 1. O usuário abre `/asset/[ticker]` ou monta uma watchlist no terminal.
-2. Uma **server action** do Next chama a Brapi e retorna os números (quotes, histórico, radar).
+2. O **Next BFF** (`services/market.ts`) chama os endpoints de mercado do FastAPI, que servem os números (quotes, histórico, radar) do cache Postgres ingerido de Brapi/yfinance.
 3. Para gerar análise, o Next chama o **FastAPI** (`/api/v1/analysis` ou `/conversation`), passando os números reais.
 4. O FastAPI orquestra o **agente Agno (gpt-4o)** que escreve a narrativa pt-BR ancorada naqueles números.
 5. A análise é persistida no Postgres com seu **embedding (pgvector)** para retrieval futuro.
 
 ---
 
-## Cache
+## Cache e ingestão
 
-- O Brapi SDK tem cache próprio (ex.: indicadores SELIC/IPCA com TTL de 24h).
-- O Next usa `revalidate` para cachear respostas de server components/actions.
+Os números de mercado **não** são buscados ao vivo a cada request. O FastAPI ingere
+Brapi (primário) e yfinance (fallback) para o Postgres, e o Next lê desse cache:
+
+- **Ingestão (FastAPI)**: scheduler loops in-process em `api/app/main.py` — quotes a cada
+  2 min em pregão / 30 min fora, macro+notícias a cada 12h — mais um `cold_start_ingest`
+  que popula o banco quando `asset_quotes` está vazia. Histórico e quotes também se
+  auto-populam sob demanda (stale-while-revalidate) em `app/services/market_db.py`.
+- **Leitura (Next BFF)**: `services/market.ts` chama os endpoints do FastAPI
+  (`ANALYSIS_API_URL`), não a Brapi direto. Respostas são cacheadas via `revalidate`
+  (quotes ~5 min, indicadores 24h).
+- **Resiliência de snapshot**: os endpoints `/market/snapshot/*` retornam **503** quando
+  todas as fontes vêm vazias (cache frio pós-deploy), em vez de `200`+vazio. O BFF busca
+  snapshot com `cache: 'no-store'` + guard de vazio (nunca cacheia vazio) e serve o
+  **último snapshot válido em memória** no catch — evita a tela em branco na transição de
+  deploy. Ver `getMarketPulseSnapshot`/`getHomeHighlightsSnapshot` em `services/market.ts`.
 - **Sem Redis** — ver [Decisões Arquiteturais](/docs/arquitetura/decisoes).

@@ -248,7 +248,7 @@ Estas regras são **invioláveis** e aparecem em código, UI, prompts da IA e co
 - `TerminalClient.tsx`, `TerminalCopilot.tsx` — shell do terminal
 - `AssetComparator.tsx` — **será promovido a tela top-level no pivô** (§13)
 - `DividendCalculator.tsx`, `SavingsSimulator.tsx` — **serão ocultados no pivô** (não atendem CFP/influencer)
-- `OpenFinancePortfolio.tsx` — untracked; **deixar fora do MVP** (não combina com B2B)
+- `OpenFinancePortfolio.tsx` — no `.gitignore`, mantido só localmente; **fora do MVP** (não combina com B2B)
 
 **Navigation** ([navigation/](web/src/components/navigation/)):
 - `AppShell.tsx` — shell unificado (spec 006); contém o layout para phone/tablet/desktop
@@ -375,7 +375,7 @@ Novas specs do MVP B2B: **008-terminal-dashboard** (em andamento), **009-briefin
 
 | Fonte | Uso | Onde |
 |---|---|---|
-| **Brapi** | Quotes, históricos, listings, indicadores BR, busca | [services/market.ts](web/src/lib/services/market.ts) |
+| **Brapi** | Quotes, históricos, listings, indicadores BR, busca | Ingerido pelo FastAPI ([market_ingest.py](api/app/services/market_ingest.py)) p/ o Postgres; o Next lê via [services/market.ts](web/src/lib/services/market.ts) |
 | **Yahoo Finance** (via yfinance no Python) | Fallback para índices internacionais quando Brapi falha | [api/app/services/yfinance_market.py](api/app/services/yfinance_market.py) |
 | **OpenAI gpt-4o** | Análises e conversas via Agno | [api/app/agent/](api/app/agent/) |
 | **Resend** | Email transacional (planejado Sprint 2) | a configurar |
@@ -421,7 +421,7 @@ Novas specs do MVP B2B: **008-terminal-dashboard** (em andamento), **009-briefin
 - Mensagens podem ser pt-BR ou en, mas consistentes dentro do mesmo PR.
 - Branch por feature: `008-comparador`, `009-briefing-diario`, etc.
 - Não commitar `.env.local`, `node_modules`, `__pycache__`.
-- **Não commitar** `OpenFinancePortfolio.tsx` (untracked) sem decisão explícita (§13).
+- **Não commitar** `OpenFinancePortfolio.tsx` — está no `.gitignore`; mantido só localmente, fora do MVP (§13).
 
 ### 9.5 Pull requests
 
@@ -534,7 +534,7 @@ docker compose up               # Postgres + API
 
 - [ ] Reescrever copy de `/` (landing), `/auth/sign-in`, `/auth/sign-up`, `/home` hero para falar com CFP/influencer
 - [ ] Ocultar `DividendCalculator` e `SavingsSimulator` do nav (manter código em `terminal/`)
-- [ ] Decidir destino de `OpenFinancePortfolio.tsx` (recomendação: stash, não commitar — pós-MVP)
+- [x] Decidir destino de `OpenFinancePortfolio.tsx` — removido do tracking e adicionado ao `.gitignore`; arquivo mantido localmente, fora do MVP
 - [ ] Criar specs `008-comparador`, `009-briefing-diario`, `010-export-pdf` via `/speckit-specify`
 - [ ] Setup conta Resend e validar domínio de envio
 - [ ] Validar build/deploy de Puppeteer no Vercel (POC — pode ser pesado)
