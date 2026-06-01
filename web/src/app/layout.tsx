@@ -3,7 +3,6 @@ import { Inter, Playfair_Display } from 'next/font/google'
 import { NavigationProgress } from '@/components/navigation/NavigationProgress'
 import { PWARegister } from '@/components/PWARegister'
 import { RootProvider } from 'fumadocs-ui/provider/next'
-import { ReactPolyfill } from '@/components/ReactPolyfill'
 import './globals.css'
 
 const inter = Inter({
@@ -38,7 +37,6 @@ export default function RootLayout({
   return (
     <html lang="pt-BR" className="dark" suppressHydrationWarning>
       <body className={`${inter.variable} ${playfair.variable} ${inter.className}`}>
-        <ReactPolyfill />
         <NavigationProgress />
         <PWARegister />
         <RootProvider
