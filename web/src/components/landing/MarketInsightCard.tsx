@@ -23,27 +23,27 @@ interface VolatilityStyle {
 const VOLATILITY_STYLES: Record<VolatilityLevel, VolatilityStyle> = {
   fear: {
     icon: Flame,
-    borderClass: 'border-[#E05A5A]/30',
-    bgClass: 'bg-[#E05A5A]/15',
-    glowShadow: 'shadow-[0_0_15px_rgba(224,90,90,0.2)]',
-    iconColor: 'text-[#E05A5A]',
-    textColor: 'text-[#FFDADA]/90',
+    borderClass: 'border-[#C98C9A]/25',
+    bgClass: 'bg-[#C98C9A]/10',
+    glowShadow: 'shadow-none',
+    iconColor: 'text-[#C98C9A]',
+    textColor: 'text-[#E7A1B0]',
   },
   mixed: {
     icon: AlertCircle,
     borderClass: 'border-white/10',
     bgClass: 'bg-white/5',
     glowShadow: 'shadow-none',
-    iconColor: 'text-[#F4F0FF]/60',
-    textColor: 'text-[#F4F0FF]/60',
+    iconColor: 'text-starlight/60',
+    textColor: 'text-starlight/60',
   },
   calm: {
     icon: ShieldCheck,
-    borderClass: 'border-[#8B5CF6]/30',
-    bgClass: 'bg-[#8B5CF6]/15',
-    glowShadow: 'shadow-[0_0_15px_rgba(139,92,246,0.2)]',
-    iconColor: 'text-[#8B5CF6]',
-    textColor: 'text-[#E9DFFF]/90',
+    borderClass: 'border-[#7FB59A]/25',
+    bgClass: 'bg-[#7FB59A]/10',
+    glowShadow: 'shadow-none',
+    iconColor: 'text-[#7FB59A]',
+    textColor: 'text-[#9FCEB4]',
   },
 }
 
@@ -56,18 +56,13 @@ export default function MarketInsightCard({
   const VolatilityIcon = style.icon
 
   return (
-    <div className="group relative flex h-full w-full flex-col items-center justify-center overflow-hidden rounded-[2rem] border border-white/10 bg-[#1A1625]/40 p-10 text-center shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),inset_0_-2px_6px_rgba(0,0,0,0.6),0_10px_20px_rgba(0,0,0,0.4)] backdrop-blur-2xl transition-all duration-700 hover:-translate-y-1.5 hover:shadow-[inset_0_2px_4px_rgba(255,255,255,0.2),inset_0_-1px_2px_rgba(0,0,0,0.8),0_15px_30px_rgba(0,0,0,0.5)]">
-      {/* Background glow effects */}
-      <div className="pointer-events-none absolute -bottom-10 -right-10 h-64 w-64 rounded-full bg-[#8B5CF6]/15 blur-[80px] transition-all duration-700 group-hover:bg-[#8B5CF6]/20" />
-      <div className="pointer-events-none absolute -left-10 -top-10 h-64 w-64 rounded-full bg-[#3B82F6]/10 blur-[80px] transition-all duration-700 group-hover:bg-[#3B82F6]/15" />
+    <div className="bull-card-calm group relative flex h-full w-full flex-col items-start justify-center p-8 text-left md:p-10">
+      <GlassHighlight widthPercent={75} className="opacity-45" />
 
-      <GlassHighlight widthPercent={75} />
-
-      <div className="relative z-10 flex w-full max-w-[95%] flex-col items-center sm:max-w-[85%] md:max-w-[80%]">
-        {/* Header Badges */}
-        <div className="mb-6 flex flex-wrap items-center justify-center gap-3">
-          <div className="flex items-center gap-2 rounded-full border border-[#8B5CF6]/30 bg-[#8B5CF6]/15 px-3 py-1.5 shadow-[0_0_15px_rgba(139,92,246,0.2)] backdrop-blur-md">
-            <span className="font-sans text-[10px] font-semibold uppercase tracking-widest text-[#F4F0FF]/90">
+      <div className="relative z-10 flex w-full flex-col">
+        <div className="mb-6 flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2 rounded-full border border-white/[0.07] bg-white/[0.025] px-3 py-1.5 backdrop-blur-md">
+            <span className="font-sans text-[10px] font-medium uppercase tracking-[0.16em] text-starlight/60">
               Leitura contextual
             </span>
           </div>
@@ -85,17 +80,13 @@ export default function MarketInsightCard({
           </div>
         </div>
 
-        {/* Content */}
-        <p className="font-sans text-base font-light leading-relaxed text-[#F4F0FF]/80 drop-shadow-md transition-colors duration-500 group-hover:text-[#F4F0FF]/95 sm:text-lg md:text-[1.15rem]">
-          &quot;{text}&quot;
+        <p className="font-serif text-xl font-medium leading-relaxed text-starlight/82 md:text-2xl">
+          {text}
         </p>
 
-        {/* Decorative elements below */}
-        <div className="mt-8 flex w-full scale-90 items-center justify-center gap-3 opacity-50 transition-all duration-500 group-hover:scale-100 group-hover:opacity-100">
-          <div className="h-[1px] w-12 bg-gradient-to-r from-transparent to-[#8B5CF6]/50" />
-          <div className="h-1.5 w-1.5 rounded-full bg-[#8B5CF6] shadow-[0_0_10px_rgba(139,92,246,0.8)]" />
-          <div className="h-[1px] w-12 bg-gradient-to-l from-transparent to-[#8B5CF6]/50" />
-        </div>
+        <p className="mt-5 max-w-2xl text-xs leading-5 text-starlight/38">
+          Análises contextuais e educacionais. Não constituem recomendação de investimento.
+        </p>
       </div>
     </div>
   )

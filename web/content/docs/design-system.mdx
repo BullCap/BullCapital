@@ -74,7 +74,7 @@ Utilitários prontos em `globals.css` (prefira-os a reescrever o estilo):
 
 ## Camada "calm" — minimalismo dentro do dark
 
-> Evolução em curso (branch `refactor/ui-minimalista`). Mantemos o tema dark e a marca, mas reduzimos ruído: menos glow, menos sombra projetada, mais respiro. Referência de linguagem: o padrão _hairline-frame_ do checkout do AbacatePay, traduzido para o nosso fundo escuro.
+> Evolução em curso (branch `refactor/ui-minimalista`). Mantemos o tema dark e a marca, mas reduzimos ruído: menos glow, menos sombra projetada, mais respiro. Referência de linguagem: o padrão _hairline-frame_ minimalista, traduzido para o nosso fundo escuro.
 
 A regra "flat é proibido" continua valendo no espírito — superfícies ainda têm profundidade —, mas a profundidade passa a vir de **borda fina (hairline) + hierarquia + espaço**, não de empilhamento de sombras e brilho. O acento amethyst entra com **parcimônia**: quase tudo é `starlight` em diferentes opacidades; cor de acento só em estado ativo e CTA.
 
@@ -132,7 +132,7 @@ A `/home` é a tela-âncora da direção calma. Mudanças aplicadas:
 
 - **Workspace principal** (`TerminalClient`) foi simplificado para duas entradas: **Gestão de carteira** e **Comparador**. Open Finance saiu da superfície do MVP para reduzir mistura conceitual.
 - **Gestão de carteira** ganhou subvisões internas: `Resumo`, `Alocação`, `Risco` e `Posições`. A tela deixa de empilhar todos os módulos de uma vez e passa a organizar por intenção de trabalho.
-- **KPIs** (`PortfolioKpiGrid`) seguem o padrão de resumo financeiro do AbacatePay: uma moldura única (`.bull-frame`) com divisores, em vez de oito cards concorrentes.
+- **KPIs** (`PortfolioKpiGrid`) seguem o padrão de resumo financeiro BullCapital: uma moldura única (`.bull-frame`) com divisores, em vez de oito cards concorrentes.
 - **Performance, IA, alocação, contribuição, risco, eventos e posições** foram normalizados para `.bull-frame`/`.bull-card-calm`, com botões e tabs usando `.bull-action` e `.bull-segmented`.
 - **Cores de status** (`portfolio-format`) foram dessaturadas: positivo `#7fb59a`, risco `#c98c9a`, atenção `#d0b982`, informativo `#82759F`.
 

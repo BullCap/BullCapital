@@ -79,7 +79,7 @@ function Stat({
 
 /**
  * "Agora" — pulso do mercado numa moldura unica (hairline), no lugar dos quatro
- * cards de vidro flutuantes. Traducao do padrao do AbacatePay para o tema dark:
+ * cards de vidro flutuantes. Traducao do padrao hairline-frame para o tema dark:
  * borda fina, divisores verticais, respiro generoso, zero glow.
  */
 export default function MarketPulseFrame({

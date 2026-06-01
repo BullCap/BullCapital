@@ -14,10 +14,9 @@ export function Logo({ className }: LogoProps) {
       aria-label="BullCapital home"
     >
       <span className="bull-brand-mark size-8 rounded-lg" />
-      <span className="flex items-baseline font-serif font-bold text-[#F4F0FF] text-[22px] tracking-wide">
-        BCAP
+      <span className="hidden items-baseline font-serif text-[20px] font-medium tracking-tight text-starlight sm:flex">
+        BullCapital
       </span>
     </Link>
   )
 }
-

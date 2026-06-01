@@ -26,8 +26,14 @@ function buildSummary(assets: MarketListingItem[]) {
 
 export default function TopAssetsSection({ assets }: TopAssetsSectionProps) {
   return (
-    <section className="flex w-full flex-col items-center justify-center gap-16">
-      {/* Grid de Ativos */}
+    <section className="flex w-full flex-col gap-8">
+      <div>
+        <p className="bull-eyebrow">Ativos líderes</p>
+        <h2 className="mt-2 font-serif text-3xl font-medium text-starlight md:text-4xl">
+          Preço e variação em cards calmos.
+        </h2>
+      </div>
+
       <div className="grid w-full grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
         {assets.length > 0 ? (
           assets.slice(0, 4).map((asset) => (
@@ -43,12 +49,11 @@ export default function TopAssetsSection({ assets }: TopAssetsSectionProps) {
             />
           ))
         ) : (
-          <div className="col-span-full rounded-[2rem] border border-white/10 bg-[#1A1625]/40 p-8 text-center text-sm text-[#F4F0FF]/45 shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),inset_0_-2px_6px_rgba(0,0,0,0.6),0_10px_20px_rgba(0,0,0,0.4)] backdrop-blur-2xl">
+          <div className="bull-card-calm col-span-full p-8 text-center text-sm text-starlight/45">
             Dados indisponíveis
           </div>
         )}
       </div>
-      {/* Leitura determinística a partir dos dados reais carregados */}
       <AISummary text={buildSummary(assets)} />
     </section>
   )

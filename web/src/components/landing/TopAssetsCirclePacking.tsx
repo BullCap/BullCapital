@@ -91,19 +91,17 @@ export default function TopAssetsCirclePacking({ assets }: TopAssetsCirclePackin
   }, [assets, groupBySector, assetCount])
 
   return (
-    <div className="group relative flex h-full w-full flex-col items-center gap-6 overflow-hidden rounded-[2.5rem] border border-white/10 bg-[#1A1625]/40 p-10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),inset_0_-2px_6px_rgba(0,0,0,0.6),0_10px_20px_rgba(0,0,0,0.4)] backdrop-blur-2xl transition-all duration-700">
-      {/* Glow */}
-      <div className="pointer-events-none absolute -top-10 h-64 w-64 rounded-full bg-[#8B5CF6]/15 blur-[100px] transition-all duration-700 group-hover:bg-[#8B5CF6]/20" />
-      <GlassHighlight widthPercent={80} />
+    <div className="bull-frame group relative flex h-full w-full flex-col items-center gap-6 p-6 md:p-10">
+      <GlassHighlight widthPercent={80} className="opacity-45" />
 
       {/* Header */}
       <div className="z-10 flex w-full items-start justify-between">
         <div className="w-9" /> {/* Spacer */}
         <div className="flex flex-col items-center gap-1">
-          <h2 className="text-balance text-center font-serif font-bold uppercase tracking-widest text-[#F4F0FF]">
+          <h2 className="text-balance text-center font-serif text-xl font-medium text-starlight">
             Top {assetCount} Ativos
           </h2>
-          <p className="text-center text-sm font-light tracking-wide text-[#F4F0FF]/50">
+          <p className="text-center text-sm text-starlight/48">
             por capitalização de mercado
           </p>
         </div>
@@ -112,46 +110,46 @@ export default function TopAssetsCirclePacking({ assets }: TopAssetsCirclePackin
             <Button
               variant="ghost"
               size="icon"
-              className="h-9 w-9 rounded-xl border border-white/5 bg-white/5 text-white/40 transition-all hover:bg-white/10 hover:text-white"
+              className="h-9 w-9 rounded-xl border border-white/[0.07] bg-white/[0.025] text-starlight/45 transition-colors hover:bg-white/[0.045] hover:text-starlight"
             >
               <Settings2 className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent
             align="end"
-            className="relative w-64 space-y-4 overflow-hidden rounded-[2rem] border border-white/10 bg-[#1A1625]/90 p-5 text-[#F4F0FF] shadow-[inset_0_2px_4px_rgba(255,255,255,0.2),inset_0_-1px_2px_rgba(0,0,0,0.8),0_15px_30px_rgba(0,0,0,0.5)] backdrop-blur-2xl transition-all duration-700"
+            className="relative w-64 space-y-4 overflow-hidden rounded-2xl border border-white/[0.07] bg-[#0C0F15]/95 p-5 text-starlight shadow-[inset_0_1px_1px_rgba(255,255,255,0.055),0_14px_36px_rgba(0,0,0,0.28)] backdrop-blur-2xl"
           >
             <GlassHighlight widthPercent={60} />
             <div className="relative z-10 space-y-3">
-              <DropdownMenuLabel className="px-0 py-0 text-[10px] font-medium uppercase tracking-widest text-white/40 drop-shadow-sm">
+              <DropdownMenuLabel className="bull-eyebrow px-0 py-0">
                 Agrupamento
               </DropdownMenuLabel>
-              <div className="flex rounded-xl border border-white/5 bg-black/40 p-1 shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)]">
+              <div className="flex rounded-xl border border-white/[0.06] bg-black/20 p-1">
                 <button
                   type="button"
                   onClick={() => setGroupBySector(false)}
-                  className={`flex-1 rounded-lg py-1.5 text-[10px] font-semibold transition-all duration-300 ${!groupBySector ? 'bg-[#1A1625] text-white shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),0_2px_4px_rgba(0,0,0,0.5)]' : 'text-white/40 hover:text-white/60 hover:shadow-[inset_0_-1px_2px_rgba(0,0,0,0.8)]'}`}
+                  className={`flex-1 rounded-lg py-1.5 text-[10px] font-medium transition-colors duration-300 ${!groupBySector ? 'bg-white/[0.065] text-starlight shadow-[inset_0_1px_1px_rgba(255,255,255,0.08)]' : 'text-starlight/42 hover:text-starlight/70'}`}
                 >
                   Todos
                 </button>
                 <button
                   type="button"
                   onClick={() => setGroupBySector(true)}
-                  className={`flex-1 rounded-lg py-1.5 text-[10px] font-semibold transition-all duration-300 ${groupBySector ? 'bg-[#1A1625] text-white shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),0_2px_4px_rgba(0,0,0,0.5)]' : 'text-white/40 hover:text-white/60 hover:shadow-[inset_0_-1px_2px_rgba(0,0,0,0.8)]'}`}
+                  className={`flex-1 rounded-lg py-1.5 text-[10px] font-medium transition-colors duration-300 ${groupBySector ? 'bg-white/[0.065] text-starlight shadow-[inset_0_1px_1px_rgba(255,255,255,0.08)]' : 'text-starlight/42 hover:text-starlight/70'}`}
                 >
                   Setor
                 </button>
               </div>
             </div>
 
-            <DropdownMenuSeparator className="relative z-10 bg-white/5 shadow-[0_1px_0_rgba(0,0,0,0.6)]" />
+            <DropdownMenuSeparator className="relative z-10 bg-white/[0.06]" />
 
             <div className="relative z-10 space-y-3">
               <div className="flex items-center justify-between">
-                <DropdownMenuLabel className="px-0 py-0 text-[10px] font-medium uppercase tracking-widest text-white/40 drop-shadow-sm">
+                <DropdownMenuLabel className="bull-eyebrow px-0 py-0">
                   Quantidade
                 </DropdownMenuLabel>
-                <span className="text-[11px] font-bold text-[#8B5CF6] drop-shadow-[0_0_8px_rgba(139,92,246,0.4)]">
+                <span className="text-[11px] font-medium text-starlight/70">
                   {assetCount}
                 </span>
               </div>
@@ -162,7 +160,7 @@ export default function TopAssetsCirclePacking({ assets }: TopAssetsCirclePackin
                   max="25"
                   value={assetCount}
                   onChange={(e) => setAssetCount(Number(e.target.value))}
-                  className="h-2 w-full appearance-none rounded-full bg-black/40 accent-[#8B5CF6] shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)] outline-none transition-all hover:bg-black/50"
+                  className="h-2 w-full appearance-none rounded-full bg-black/30 accent-[#82759F] outline-none transition-colors hover:bg-black/40"
                 />
               </div>
             </div>
@@ -173,7 +171,7 @@ export default function TopAssetsCirclePacking({ assets }: TopAssetsCirclePackin
       {/* Chart */}
       <div className="z-10 -my-3 aspect-square w-full max-w-[480px]">
         {(data.children?.length ?? 0) === 0 ? (
-          <div className="flex h-full items-center justify-center rounded-[2rem] border border-white/5 bg-black/15 text-sm text-[#F4F0FF]/40">
+          <div className="flex h-full items-center justify-center rounded-2xl border border-white/[0.055] bg-black/15 text-sm text-starlight/40">
             Dados indisponíveis
           </div>
         ) : (
@@ -194,18 +192,18 @@ export default function TopAssetsCirclePacking({ assets }: TopAssetsCirclePackin
             if (change > 0) {
               // Positive: Amethyst variations (current theme)
               const hues = [
-                'rgba(139, 92, 246, 0.35)',
+                'rgba(127, 181, 154, 0.26)',
               ]
               return hues[node.path.length % hues.length]
             } else if (change < 0) {
-              // Negative: Soft reddish tones (based on VariationBadge #F43F5E)
+              // Negative: muted rose tones from the calm design system.
               const hues = [
-                'rgba(244, 63, 94, 0.30)',
+                'rgba(201, 140, 154, 0.24)',
               ]
               return hues[node.path.length % hues.length]
             } else {
               // Neutral: Opaque/Muted
-              return 'rgba(244, 240, 255, 0.15)'
+              return 'rgba(226, 222, 240, 0.13)'
             }
           }}
           childColor={{ from: 'color', modifiers: [['brighter', 0.2]] }}
@@ -213,16 +211,16 @@ export default function TopAssetsCirclePacking({ assets }: TopAssetsCirclePackin
           borderColor={(node) => {
             const d = node.data as CirclePackingNode
             const change = d.change ?? 0
-            if (d.sector) return 'rgba(139, 92, 246, 0.2)'
-            if (!d.stock) return 'rgba(139, 92, 246, 0)'
-            if (change > 0) return 'rgba(139, 92, 246, 0.4)'
-            if (change < 0) return 'rgba(244, 63, 94, 0.4)'
-            return 'rgba(244, 240, 255, 0.2)'
+            if (d.sector) return 'rgba(226, 222, 240, 0.12)'
+            if (!d.stock) return 'rgba(226, 222, 240, 0)'
+            if (change > 0) return 'rgba(127, 181, 154, 0.38)'
+            if (change < 0) return 'rgba(201, 140, 154, 0.38)'
+            return 'rgba(226, 222, 240, 0.18)'
           }}
           enableLabels
           labelsFilter={(label) => !!(label.node.data as CirclePackingNode).stock}
           labelsSkipRadius={18}
-          labelTextColor="#F4F0FF"
+          labelTextColor="#e2def0"
           labelComponent={({ node, style }) => {
             const d = node.data as CirclePackingNode
             const change = d.change ?? 0
@@ -244,7 +242,7 @@ export default function TopAssetsCirclePacking({ assets }: TopAssetsCirclePackin
                     fontSize: tickerSize,
                     fontFamily: 'Inter, sans-serif',
                     fontWeight: 600,
-                    fill: '#F4F0FF',
+                    fill: '#e2def0',
                     filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.8))',
                   }}
                 >
@@ -261,10 +259,10 @@ export default function TopAssetsCirclePacking({ assets }: TopAssetsCirclePackin
                     fontFamily: 'Inter, sans-serif',
                     fontWeight: 500,
                     fill: isPositive
-                      ? '#A78BFA'
+                      ? '#7FB59A'
                       : isNegative
-                        ? '#FB7185'
-                        : 'rgba(244, 240, 255, 0.5)',
+                        ? '#C98C9A'
+                        : 'rgba(226, 222, 240, 0.5)',
                     filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.7))',
                   }}
                 >
@@ -278,33 +276,33 @@ export default function TopAssetsCirclePacking({ assets }: TopAssetsCirclePackin
             if (!d.stock) return <></>
             const isPositive = (d.change ?? 0) >= 0
             return (
-              <div className="flex min-w-[200px] flex-col gap-1.5 rounded-[1.5rem] border border-white/10 bg-[#1A1625]/90 px-6 py-5 shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),inset_0_-2px_6px_rgba(0,0,0,0.6),0_10px_20px_rgba(0,0,0,0.4)] backdrop-blur-2xl">
-                <GlassHighlight className="via-white/40" widthPercent={80} />
+              <div className="flex min-w-[200px] flex-col gap-1.5 rounded-2xl border border-white/[0.07] bg-[#0C0F15]/95 px-5 py-4 shadow-[inset_0_1px_1px_rgba(255,255,255,0.055),0_14px_36px_rgba(0,0,0,0.28)] backdrop-blur-2xl">
+                <GlassHighlight className="opacity-40" widthPercent={80} />
                 <div className="flex flex-col gap-0.5">
-                  <span className="font-serif text-[15px] font-bold leading-tight tracking-tight text-[#F4F0FF]">
+                  <span className="font-serif text-[15px] font-medium leading-tight tracking-tight text-starlight">
                     {d.stock}
                   </span>
-                  <span className="text-[11px] font-light tracking-wide text-[#F4F0FF]/50">
+                  <span className="text-[11px] tracking-wide text-starlight/50">
                     {d.name}
                   </span>
                 </div>
 
                 <div className="mt-1 flex items-baseline gap-2">
-                  <span className="text-sm font-medium text-[#F4F0FF]">
+                  <span className="text-sm font-medium text-starlight">
                     {formatBRL(d.close ?? 0)}
                   </span>
                   <span
-                    className={`text-[11px] font-semibold ${isPositive ? 'text-[#a78bfa]' : 'text-[#FB7185]'} flex items-center gap-0.5`}
+                    className={`text-[11px] font-medium ${isPositive ? 'text-[#7FB59A]' : 'text-[#C98C9A]'} flex items-center gap-0.5`}
                   >
                     {isPositive ? '▲' : '▼'} {Math.abs(d.change ?? 0).toFixed(2)}%
                   </span>
                 </div>
 
                 <div className="mt-2 flex flex-col gap-1 border-t border-white/5 pt-2">
-                  <span className="text-[10px] uppercase tracking-widest text-[#F4F0FF]/30">
-                    Market Cap: <span className="text-[#F4F0FF]/60">R$ {value?.toFixed(0)}B</span>
+                  <span className="text-[10px] uppercase tracking-widest text-starlight/30">
+                    Market Cap: <span className="text-starlight/60">R$ {value?.toFixed(0)}B</span>
                   </span>
-                  <span className="text-[10px] uppercase tracking-widest text-[#8B5CF6]/80">
+                  <span className="text-[10px] uppercase tracking-widest text-starlight/45">
                     {d.sector}
                   </span>
                 </div>

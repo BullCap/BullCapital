@@ -18,42 +18,31 @@ export function MarketTemperatureDial({ value, stateName }: MarketTemperatureDia
     <div className="flex flex-col items-center justify-center">
       <svg width="160" height="85" viewBox="0 0 160 85" className="overflow-visible">
         <defs>
-          <linearGradient id="neonGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#8B5CF6" />
-            <stop offset="100%" stopColor="#F43F5E" />
+          <linearGradient id="temperatureGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#7FB59A" />
+            <stop offset="100%" stopColor="#C98C9A" />
           </linearGradient>
-          <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
-            <feGaussianBlur stdDeviation="3" result="coloredBlur" />
-            <feMerge>
-              <feMergeNode in="coloredBlur" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
         </defs>
 
-        {/* Track Background */}
         <path
           d={`M ${cx - radius} ${cy} A ${radius} ${radius} 0 0 1 ${cx + radius} ${cy}`}
           fill="none"
-          stroke="rgba(255,255,255,0.05)"
+          stroke="rgba(226,222,240,0.08)"
           strokeWidth="8"
           strokeLinecap="round"
         />
 
-        {/* Value Track */}
         <path
           d={`M ${cx - radius} ${cy} A ${radius} ${radius} 0 0 1 ${cx + radius} ${cy}`}
           fill="none"
-          stroke="url(#neonGradient)"
+          stroke="url(#temperatureGradient)"
           strokeWidth="8"
           strokeLinecap="round"
           strokeDasharray={circumference}
           strokeDashoffset={offset}
-          filter="url(#glow)"
           className="transition-all duration-1000 ease-out"
         />
 
-        {/* Needle / Indicator */}
         <g
           style={{
             transform: `rotate(${180 * (value / 100)}deg)`,
@@ -63,18 +52,17 @@ export function MarketTemperatureDial({ value, stateName }: MarketTemperatureDia
         >
           <polygon
             points={`${cx},${cy - 4} ${cx},${cy + 4} ${cx - radius + 8},${cy}`}
-            fill="#F4F0FF"
-            className="drop-shadow-[0_0_5px_rgba(255,255,255,0.8)]"
+            fill="#e2def0"
           />
-          <circle cx={cx} cy={cy} r="5" fill="#1A1625" stroke="#F4F0FF" strokeWidth="2" />
+          <circle cx={cx} cy={cy} r="5" fill="#0C0F15" stroke="#e2def0" strokeWidth="2" />
         </g>
       </svg>
 
       <div className="mt-3 flex flex-col items-center text-center">
-        <span className="font-sans text-3xl font-medium leading-none tracking-tight text-[#F4F0FF]">
+        <span className="font-sans text-3xl font-medium leading-none tracking-tight text-starlight">
           {value}
         </span>
-        <span className="mt-1 font-serif text-[11px] uppercase tracking-widest text-[#F4F0FF]/60">
+        <span className="mt-1 text-[11px] font-medium uppercase tracking-[0.16em] text-starlight/52">
           {stateName}
         </span>
       </div>

@@ -30,11 +30,11 @@ export function Header({ user }: { user?: User }) {
 
   return (
     <header
-      className={`fixed left-0 right-0 z-50 mx-auto h-16 max-w-[90%] overflow-hidden rounded-full border border-white/10 bg-[#1A1625]/40 shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),inset_0_-2px_6px_rgba(0,0,0,0.6),0_10px_20px_rgba(0,0,0,0.4)] backdrop-blur-2xl transition-all duration-700 ease-in-out ${
-        shrinks ? 'top-4 w-[924px]' : 'top-8 w-[1280px]'
+      className={`fixed left-0 right-0 z-50 mx-auto h-16 max-w-[calc(100%-1.5rem)] overflow-hidden rounded-2xl border border-white/[0.07] bg-[#0C0F15]/75 shadow-[inset_0_1px_1px_rgba(255,255,255,0.055),0_14px_36px_rgba(0,0,0,0.25)] backdrop-blur-2xl transition-all duration-500 ease-out ${
+        shrinks ? 'top-4 w-[960px]' : 'top-6 w-[1320px]'
       }`}
     >
-      <GlassHighlight className="via-white/40" />
+      <GlassHighlight className="via-white/[0.18] opacity-50" />
       <div className="relative mx-auto flex h-full max-w-7xl items-center justify-between px-6">
         <Logo />
         <HeaderNav />

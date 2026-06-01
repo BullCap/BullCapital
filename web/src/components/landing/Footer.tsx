@@ -54,25 +54,18 @@ export function Footer() {
   const currentYear = new Date().getFullYear()
 
   return (
-    <footer className="relative mt-16 w-full px-4 pb-8">
-      {/* Main glass container */}
-      <div className="relative mx-auto max-w-7xl overflow-hidden rounded-[2rem] border border-white/10 bg-[#1A1625]/40 shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),inset_0_-2px_6px_rgba(0,0,0,0.6),0_10px_20px_rgba(0,0,0,0.4)] backdrop-blur-2xl">
-        <GlassHighlight widthPercent={70} />
+    <footer className="relative mt-12 w-full px-4 pb-8">
+      <div className="bull-frame relative mx-auto max-w-[1560px]">
+        <GlassHighlight widthPercent={70} className="opacity-40" />
 
-        {/* Ambient amethyst glow */}
-        <div className="pointer-events-none absolute -bottom-20 left-1/2 h-40 w-80 -translate-x-1/2 rounded-full bg-[#8B5CF6]/10 blur-3xl" />
-
-        {/* Top section: Logo + Nav */}
         <div className="grid grid-cols-1 gap-10 p-10 lg:grid-cols-5">
-          {/* Brand column */}
           <div className="flex flex-col gap-6 lg:col-span-2">
             <Logo />
-            <p className="font-sans text-sm leading-relaxed text-[#F4F0FF]/40">
+            <p className="font-sans text-sm leading-relaxed text-starlight/45">
               Uma sala de leitura financeira para profissionais que precisam explicar mercado com dados,
               contexto e responsabilidade editorial.
             </p>
 
-            {/* Social links */}
             <div className="flex items-center gap-2">
               {socialLinks.map((social) => (
                 <Link
@@ -81,7 +74,7 @@ export function Footer() {
                   aria-label={social.label}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group relative flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-white/5 text-[#F4F0FF]/40 transition-all duration-500 hover:border-[#8B5CF6]/30 hover:bg-[#8B5CF6]/10 hover:text-[#8B5CF6] hover:shadow-[0_0_12px_rgba(139,92,246,0.25),inset_0_1px_1px_rgba(255,255,255,0.1)]"
+                  className="group relative flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl border border-white/[0.07] bg-white/[0.025] text-starlight/38 transition-colors duration-300 hover:border-white/[0.12] hover:bg-white/[0.045] hover:text-starlight"
                 >
                   {social.icon}
                 </Link>
@@ -89,12 +82,10 @@ export function Footer() {
             </div>
           </div>
 
-          {/* Nav links */}
           <div className="grid grid-cols-2 gap-8 sm:grid-cols-3 lg:col-span-3">
             {Object.entries(footerLinks).map(([category, links]) => (
               <div key={category} className="flex flex-col gap-4">
-                {/* Category title */}
-                <span className="font-sans text-xs font-semibold uppercase tracking-[0.15em] text-[#8B5CF6]/70">
+                <span className="bull-eyebrow">
                   {category}
                 </span>
                 <ul className="flex flex-col gap-2.5">
@@ -102,7 +93,7 @@ export function Footer() {
                     <li key={link.label}>
                       <Link
                         href={link.href}
-                        className="font-sans text-sm text-[#F4F0FF]/40 transition-all duration-300 hover:text-[#F4F0FF] hover:drop-shadow-[0_0_8px_rgba(244,240,255,0.4)]"
+                        className="font-sans text-sm text-starlight/42 transition-colors duration-300 hover:text-starlight/78"
                       >
                         {link.label}
                       </Link>
@@ -114,18 +105,15 @@ export function Footer() {
           </div>
         </div>
 
-        {/* Divider */}
-        <div className="mx-10 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+        <div className="mx-10 h-px bg-gradient-to-r from-transparent via-white/[0.08] to-transparent" />
 
-        {/* Bottom bar */}
         <div className="flex flex-col items-center justify-between gap-4 px-10 py-6 sm:flex-row">
-          <p className="font-sans text-xs text-[#F4F0FF]/30">
+          <p className="font-sans text-xs text-starlight/32">
             © {currentYear} Bullcapital. Todos os direitos reservados.
           </p>
 
-          {/* Disclaimer pill */}
-          <div className="rounded-full border border-white/5 bg-white/5 px-4 py-1.5 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]">
-            <span className="font-sans text-[10px] text-[#F4F0FF]/25">
+          <div className="rounded-full border border-white/[0.055] bg-white/[0.02] px-4 py-1.5">
+            <span className="font-sans text-[10px] text-starlight/32">
               Análises contextuais e educacionais. Não constituem recomendação de investimento.
             </span>
           </div>

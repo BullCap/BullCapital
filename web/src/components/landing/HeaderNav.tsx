@@ -3,8 +3,8 @@
 import { NavLink } from './NavLink'
 
 const navItems = [
-  { href: '#', label: 'Início' },
-  { href: '#visao-geral', label: 'Mercado' },
+  { href: '#produto', label: 'Produto' },
+  { href: '#visao-geral', label: 'Dados' },
   { href: '#destaques', label: 'Destaques' },
 ]
 

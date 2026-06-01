@@ -18,15 +18,14 @@ export function NavLink({ href, children, className }: NavLinkProps) {
     <Link
       href={href}
       className={cn(
-        'relative px-3 py-1.5 text-sm font-medium transition-all duration-300 rounded-xl',
-        isActive ? 'text-[#F4F0FF]' : 'text-[#F4F0FF]/50 hover:text-[#F4F0FF]/80',
+        'relative rounded-xl px-3 py-1.5 text-sm font-medium transition-colors duration-300',
+        isActive ? 'text-starlight' : 'text-starlight/48 hover:text-starlight/78',
         className
       )}
     >
       {children}
-      {/* Active indicator glow */}
       {isActive && (
-        <span className="absolute inset-x-1 -bottom-px h-px bg-gradient-to-r from-transparent via-[#8B5CF6] to-transparent shadow-[0_0_8px_rgba(139,92,246,0.8)]" />
+        <span className="absolute inset-x-2 -bottom-px h-px bg-gradient-to-r from-transparent via-starlight/40 to-transparent" />
       )}
     </Link>
   )

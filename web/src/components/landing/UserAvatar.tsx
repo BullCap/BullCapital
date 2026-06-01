@@ -21,12 +21,12 @@ export function UserAvatar({ name, image, className }: UserAvatarProps) {
   return (
     <Avatar
       className={cn(
-        'h-8 w-8 border border-white/10 shadow-[0_0_8px_rgba(139,92,246,0.15)] transition-all duration-300 hover:shadow-[0_0_16px_rgba(139,92,246,0.3)] hover:border-[#8B5CF6]/30',
+        'h-8 w-8 border border-white/[0.08] transition-colors duration-300 hover:border-white/[0.14]',
         className
       )}
     >
       {image && <AvatarImage src={image} alt={name ?? 'User avatar'} />}
-      <AvatarFallback className="bg-[#8B5CF6]/15 text-[#8B5CF6] text-xs font-semibold">
+      <AvatarFallback className="bg-white/[0.055] text-xs font-medium text-starlight">
         {getInitials(name)}
       </AvatarFallback>
     </Avatar>

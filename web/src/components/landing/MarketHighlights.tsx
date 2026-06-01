@@ -34,19 +34,18 @@ export default function MarketHighlights({ gainers, losers, mostTraded }: Market
 
   return (
     <section id="destaques" className="flex w-full flex-col gap-10">
-      {/* Section heading + Asset type nav */}
       <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
         <div className="flex flex-col gap-2 text-left">
-          <h2 className="font-serif text-4xl font-bold tracking-tight text-[#F4F0FF] opacity-80">
-            Destaques com atualização frequente
+          <p className="bull-eyebrow">Destaques</p>
+          <h2 className="font-serif text-3xl font-medium tracking-tight text-starlight md:text-4xl">
+            Altas, quedas e liquidez do dia.
           </h2>
-          <p className="max-w-lg font-sans text-sm leading-relaxed text-[#F4F0FF]/40">
+          <p className="max-w-2xl font-sans text-sm leading-7 text-starlight/50">
             Panorama dos ativos em destaque hoje, sempre mediado pelo backend antes de chegar à interface.
           </p>
         </div>
       </div>
 
-      {/* Three cards grid */}
       <div className="grid w-full grid-cols-1 gap-5 md:grid-cols-3">
         <MarketHighlightList title="Maiores Altas" icon={ICONS.gainers} data={gainers} />
         <MarketHighlightList title="Maiores Quedas" icon={ICONS.losers} data={losers} />

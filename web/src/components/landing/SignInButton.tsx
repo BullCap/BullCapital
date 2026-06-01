@@ -13,12 +13,7 @@ export function SignInButton({ className }: SignInButtonProps) {
       asChild
       variant="ghost"
       className={cn(
-        'relative rounded-2xl px-5 py-2 h-auto text-sm font-medium',
-        'bg-[#8B5CF6]/10 text-[#8B5CF6] border border-[#8B5CF6]/20',
-        'hover:bg-[#8B5CF6]/20 hover:text-[#8B5CF6] hover:border-[#8B5CF6]/30',
-        'hover:shadow-[0_0_20px_rgba(139,92,246,0.25)]',
-        'active:shadow-[inset_0_2px_4px_rgba(0,0,0,0.3)]',
-        'transition-all duration-300',
+        'bull-action-primary h-10 rounded-xl px-4 text-sm',
         className
       )}
     >

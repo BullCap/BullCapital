@@ -18,17 +18,14 @@ export default function AISummary({
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: '-20%' }}
       transition={{ duration: 1, ease: 'easeOut' }}
-      className="flex w-full flex-col items-center gap-4 text-center"
+      className="bull-frame flex w-full flex-col gap-4 p-6 md:p-7"
     >
-      <div className="flex items-center gap-2 opacity-50">
-        <span className="h-[1px] w-8 bg-gradient-to-r from-transparent to-[#8B5CF6]" />
-        <span className="font-sans text-[10px] font-medium uppercase tracking-[0.3em] text-[#8B5CF6]">
-          {label}
-        </span>
-        <span className="h-[1px] w-8 bg-gradient-to-l from-transparent to-[#8B5CF6]" />
-      </div>
-      <p className="max-w-2xl font-serif text-lg italic leading-relaxed text-[#F4F0FF]/90 transition-colors duration-700 hover:text-[#F4F0FF] md:text-xl">
-        &quot;{text}&quot;
+      <p className="bull-eyebrow">{label}</p>
+      <p className="max-w-4xl font-serif text-xl font-medium leading-relaxed text-starlight/82 md:text-2xl">
+        {text}
+      </p>
+      <p className="text-xs leading-5 text-starlight/38">
+        Análise contextual e educacional. Não constitui recomendação de investimento.
       </p>
     </motion.div>
   )

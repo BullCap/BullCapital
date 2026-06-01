@@ -347,7 +347,7 @@ export default function OpenFinancePortfolio({ state, onChange }: OpenFinancePor
         </section>
       ) : (
         <>
-          {/* KPI Trio Grid (Estilo Horizontal do AbacatePay em Versão Glassmorphic) */}
+          {/* KPI Trio Grid (Estilo horizontal BullCapital em versão glassmorphic) */}
           <section className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-[#1A1625]/30 p-6 backdrop-blur-2xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.1),inset_0_-2px_6px_rgba(0,0,0,0.6)]">
             <div className="flex flex-col gap-6 md:flex-row md:items-stretch md:justify-between">
               

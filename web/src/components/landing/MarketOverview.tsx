@@ -18,19 +18,20 @@ export default function MarketOverview({
   assets,
 }: MarketOverviewProps) {
   return (
-    <section id="visao-geral" className="flex w-full flex-col items-start justify-center gap-16">
+    <section id="visao-geral" className="flex w-full flex-col items-start justify-center gap-8">
       <div className="flex flex-col gap-2">
-        <h2 className="font-serif text-4xl font-bold tracking-tight text-[#F4F0FF] opacity-80">
-          Visão Geral com Dados PRO
+        <p className="bull-eyebrow">Visão geral</p>
+        <h2 className="font-serif text-3xl font-medium tracking-tight text-starlight md:text-4xl">
+          Temperatura, radar e leitura contextual.
         </h2>
-        <p className="max-w-lg font-sans text-sm leading-relaxed text-[#F4F0FF]/40">
+        <p className="max-w-2xl font-sans text-sm leading-7 text-starlight/50">
           Acompanhe preço, liquidez, amplitude e contexto macro vindos do pipeline da Bull.
         </p>
       </div>
 
-      <div className="grid w-full grid-cols-1 gap-8 lg:grid-cols-2">
-        <div className="flex flex-col gap-8">
-          <div className="grid flex-1 grid-cols-1 gap-8 sm:grid-cols-2">
+      <div className="grid w-full grid-cols-1 gap-5 lg:grid-cols-2">
+        <div className="flex flex-col gap-5">
+          <div className="grid flex-1 grid-cols-1 gap-5 sm:grid-cols-2">
             <MarketTemperatureCard value={temperature?.value ?? null} label={temperature?.label ?? null} />
             <MarketRadarCard data={radarData} />
           </div>

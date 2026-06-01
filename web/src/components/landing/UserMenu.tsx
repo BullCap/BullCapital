@@ -28,10 +28,10 @@ export function UserMenu({ user }: UserMenuProps) {
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
-          className="relative flex items-center gap-2.5 rounded-2xl px-2 py-1.5 h-auto border border-white/5 bg-white/[0.03] hover:bg-white/[0.06] transition-all duration-300 focus-visible:ring-[#8B5CF6]/40"
+          className="relative flex h-auto items-center gap-2.5 rounded-xl border border-white/[0.07] bg-white/[0.025] px-2 py-1.5 transition-colors duration-300 hover:bg-white/[0.045] focus-visible:ring-amethyst/35"
         >
           <UserAvatar name={user.name} image={user.image} />
-          <span className="hidden sm:block text-sm font-medium text-[#F4F0FF]/90 max-w-[120px] truncate">
+          <span className="hidden max-w-[120px] truncate text-sm font-medium text-starlight/90 sm:block">
             {user.name ?? 'Usuário'}
           </span>
         </Button>
@@ -40,54 +40,51 @@ export function UserMenu({ user }: UserMenuProps) {
       <DropdownMenuContent
         align="end"
         sideOffset={12}
-        className="w-56 rounded-2xl border-white/10 bg-[#1A1625]/95 backdrop-blur-xl shadow-[0_16px_48px_rgba(0,0,0,0.5),inset_0_1px_0_0_rgba(255,255,255,0.05)] p-1.5"
+        className="w-56 rounded-2xl border-white/[0.07] bg-[#0C0F15]/95 p-1.5 shadow-[inset_0_1px_1px_rgba(255,255,255,0.055),0_14px_36px_rgba(0,0,0,0.28)] backdrop-blur-xl"
       >
-        {/* User info label */}
         <DropdownMenuLabel className="px-3 py-2.5 rounded-xl">
           <div className="flex flex-col gap-0.5">
-            <p className="text-sm font-semibold text-[#F4F0FF] truncate">
+            <p className="truncate text-sm font-medium text-starlight">
               {user.name ?? 'Usuário'}
             </p>
-            {user.email && <p className="text-xs text-[#F4F0FF]/40 truncate">{user.email}</p>}
+            {user.email && <p className="truncate text-xs text-starlight/40">{user.email}</p>}
           </div>
         </DropdownMenuLabel>
 
         <DropdownMenuSeparator className="bg-white/[0.06] mx-2" />
 
-        {/* Menu items */}
         <DropdownMenuItem
           asChild
-          className="rounded-xl px-3 py-2.5 cursor-pointer text-[#F4F0FF]/70 hover:text-[#F4F0FF] focus:text-[#F4F0FF] focus:bg-white/[0.06] transition-colors duration-200"
+          className="cursor-pointer rounded-xl px-3 py-2.5 text-starlight/70 transition-colors duration-200 hover:text-starlight focus:bg-white/[0.06] focus:text-starlight"
         >
           <Link href="/home">
-            <LayoutDashboard className="mr-2.5 h-4 w-4 text-[#8B5CF6]/60" />
+            <LayoutDashboard className="mr-2.5 h-4 w-4 text-starlight/45" />
             Plataforma
           </Link>
         </DropdownMenuItem>
 
         <DropdownMenuItem
           asChild
-          className="rounded-xl px-3 py-2.5 cursor-pointer text-[#F4F0FF]/70 hover:text-[#F4F0FF] focus:text-[#F4F0FF] focus:bg-white/[0.06] transition-colors duration-200"
+          className="cursor-pointer rounded-xl px-3 py-2.5 text-starlight/70 transition-colors duration-200 hover:text-starlight focus:bg-white/[0.06] focus:text-starlight"
         >
           <Link href="/home">
-            <Settings className="mr-2.5 h-4 w-4 text-[#8B5CF6]/60" />
+            <Settings className="mr-2.5 h-4 w-4 text-starlight/45" />
             Configurações
           </Link>
         </DropdownMenuItem>
 
         <DropdownMenuItem
           asChild
-          className="rounded-xl px-3 py-2.5 cursor-pointer text-[#F4F0FF]/70 hover:text-[#F4F0FF] focus:text-[#F4F0FF] focus:bg-white/[0.06] transition-colors duration-200"
+          className="cursor-pointer rounded-xl px-3 py-2.5 text-starlight/70 transition-colors duration-200 hover:text-starlight focus:bg-white/[0.06] focus:text-starlight"
         >
           <Link href="/home">
-            <User className="mr-2.5 h-4 w-4 text-[#8B5CF6]/60" />
+            <User className="mr-2.5 h-4 w-4 text-starlight/45" />
             Perfil
           </Link>
         </DropdownMenuItem>
 
         <DropdownMenuSeparator className="bg-white/[0.06] mx-2" />
 
-        {/* Sign out */}
         <DropdownMenuItem
           className="rounded-xl px-3 py-2.5 cursor-pointer text-red-400/80 hover:text-red-400 focus:text-red-400 focus:bg-red-500/[0.06] transition-colors duration-200"
           onSelect={async () => {
