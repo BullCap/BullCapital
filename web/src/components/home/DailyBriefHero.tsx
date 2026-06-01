@@ -86,7 +86,7 @@ function MiniTrend({ series, tone }: { series: number[]; tone: 'down' | 'neutral
   const sparkline = getSparklinePath(series)
 
   return (
-    <div className="mt-2 h-8 overflow-hidden rounded-lg border border-white/[0.04] bg-black/15 px-2 py-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+    <div className="mt-2 h-8 overflow-hidden">
       <svg viewBox="0 0 128 30" aria-hidden="true" className="h-full w-full overflow-visible">
         <path d={sparkline.area} fill={color} fillOpacity="0.08" />
         <path
