@@ -145,6 +145,96 @@ const getCachedMultipleQuotes = unstable_cache(
   { revalidate: QUOTE_REVALIDATE_SECONDS }
 )
 
+// ── Snapshot resilience ────────────────────────────────────────────────────────
+// Snapshot endpoints aggregate the whole DB cache and back the home/landing/terminal
+// screens. The backend's `_safe` wrapper can answer 200 + empty arrays when a query
+// transiently fails (e.g. cold Supabase pool right after a deploy). If that empty
+// body lands in Next's Data Cache it pins a blank screen for the full revalidate
+// window. To avoid it we fetch with `no-store`, validate the payload, and throw on
+// empty so nothing empty is ever cached — then serve the last good snapshot kept in
+// memory (survives across requests on the long-running Node server) instead of blank.
+const lastGoodSnapshot = new Map<string, unknown>()
+
+function rememberSnapshot<T>(key: string, data: T): T {
+  lastGoodSnapshot.set(key, data)
+  return data
+}
+
+function recallSnapshot<T>(key: string, fallback: T): T {
+  return (lastGoodSnapshot.get(key) as T | undefined) ?? fallback
+}
+
+async function marketGetFresh<T>(path: string, isValid: (data: T) => boolean): Promise<T> {
+  const response = await fetch(`${MARKET_API_URL}${path}`, {
+    headers: internalApiHeaders(),
+    cache: 'no-store',
+    signal: AbortSignal.timeout(MARKET_FETCH_TIMEOUT_MS),
+  })
+  if (!response.ok) {
+    throw new Error(`Market API returned ${response.status} for ${path}`)
+  }
+  const data = (await response.json()) as T
+  if (!isValid(data)) {
+    throw new Error(`Market API returned an empty snapshot for ${path}`)
+  }
+  return data
+}
+
+const getCachedPulseSnapshot = unstable_cache(
+  async (): Promise<MarketPulseSnapshot> => {
+    const data = await marketGetFresh<MarketPulseSnapshot>(
+      '/market/snapshot/pulse',
+      (d) => (d.quotes?.results?.length ?? 0) > 0 || (d.history?.results?.length ?? 0) > 0
+    )
+    return rememberSnapshot('pulse', data)
+  },
+  ['market-snapshot-pulse-v1'],
+  { revalidate: QUOTE_REVALIDATE_SECONDS }
+)
+
+const getCachedHomeHighlightsSnapshot = unstable_cache(
+  async (): Promise<HomeHighlightsSnapshot> => {
+    const data = await marketGetFresh<HomeHighlightsSnapshot>(
+      '/market/snapshot/home-highlights',
+      (d) =>
+        (d.gainers?.stocks?.length ?? 0) > 0 ||
+        (d.losers?.stocks?.length ?? 0) > 0 ||
+        (d.mostTraded?.stocks?.length ?? 0) > 0 ||
+        (d.treemapQuotes?.results?.length ?? 0) > 0
+    )
+    return rememberSnapshot('home-highlights', data)
+  },
+  ['market-snapshot-home-highlights-v1'],
+  { revalidate: QUOTE_REVALIDATE_SECONDS }
+)
+
+const getCachedLandingSnapshot = unstable_cache(
+  async (): Promise<LandingMarketSnapshot> => {
+    const data = await marketGetFresh<LandingMarketSnapshot>(
+      '/market/snapshot/landing',
+      (d) =>
+        (d.topAssets?.stocks?.length ?? 0) > 0 ||
+        (d.gainers?.stocks?.length ?? 0) > 0 ||
+        (d.quotes?.results?.length ?? 0) > 0
+    )
+    return rememberSnapshot('landing', data)
+  },
+  ['market-snapshot-landing-v1'],
+  { revalidate: QUOTE_REVALIDATE_SECONDS }
+)
+
+const getCachedTerminalSnapshot = unstable_cache(
+  async (): Promise<TerminalMarketSnapshot> => {
+    const data = await marketGetFresh<TerminalMarketSnapshot>(
+      '/market/snapshot/terminal',
+      (d) => (d.quotes?.results?.length ?? 0) > 0 || (d.marketStatus?.indices?.length ?? 0) > 0
+    )
+    return rememberSnapshot('terminal', data)
+  },
+  ['market-snapshot-terminal-v1'],
+  { revalidate: QUOTE_REVALIDATE_SECONDS }
+)
+
 export async function getMarketRadarData(
   ticker: string = 'PETR4'
 ): Promise<MarketRadarData | null> {
@@ -181,52 +271,48 @@ export async function getMarketListings(
 
 export async function getMarketPulseSnapshot(): Promise<MarketPulseSnapshot> {
   try {
-    return await marketGet<MarketPulseSnapshot>('/market/snapshot/pulse', undefined, QUOTE_REVALIDATE_SECONDS)
+    return await getCachedPulseSnapshot()
   } catch (error) {
     console.warn('Exception while fetching market pulse snapshot:', error)
-    return emptyPulseSnapshot()
+    return recallSnapshot('pulse', emptyPulseSnapshot())
   }
 }
 
 export async function getHomeHighlightsSnapshot(): Promise<HomeHighlightsSnapshot> {
   try {
-    return await marketGet<HomeHighlightsSnapshot>(
-      '/market/snapshot/home-highlights',
-      undefined,
-      QUOTE_REVALIDATE_SECONDS
-    )
+    return await getCachedHomeHighlightsSnapshot()
   } catch (error) {
     console.warn('Exception while fetching home highlights snapshot:', error)
-    return emptyHighlightsSnapshot()
+    return recallSnapshot('home-highlights', emptyHighlightsSnapshot())
   }
 }
 
 export async function getLandingMarketSnapshot(): Promise<LandingMarketSnapshot> {
   try {
-    return await marketGet<LandingMarketSnapshot>('/market/snapshot/landing', undefined, QUOTE_REVALIDATE_SECONDS)
+    return await getCachedLandingSnapshot()
   } catch (error) {
     console.warn('Exception while fetching landing market snapshot:', error)
-    return {
+    return recallSnapshot('landing', {
       topAssets: emptyListings(),
       gainers: emptyListings(),
       losers: emptyListings(),
       mostTraded: emptyListings(),
       quotes: { results: [] },
       currency: { currencies: [] },
-    }
+    })
   }
 }
 
 export async function getTerminalMarketSnapshot(): Promise<TerminalMarketSnapshot> {
   try {
-    return await marketGet<TerminalMarketSnapshot>('/market/snapshot/terminal', undefined, QUOTE_REVALIDATE_SECONDS)
+    return await getCachedTerminalSnapshot()
   } catch (error) {
     console.warn('Exception while fetching terminal market snapshot:', error)
-    return {
+    return recallSnapshot('terminal', {
       quotes: { results: [] },
       marketStatus: { indices: [] },
       currency: { currencies: [] },
-    }
+    })
   }
 }
 

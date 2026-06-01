@@ -6,7 +6,7 @@ from collections.abc import Awaitable
 from datetime import UTC, datetime
 from typing import TypeVar
 
-from fastapi import APIRouter, BackgroundTasks, Query, status
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Query, status
 from pydantic import BaseModel, Field, field_validator
 
 from app.services import bcb_sgs, market_db, market_ingest, news_ingest, yfinance_market
@@ -167,6 +167,29 @@ async def _safe(coro: Awaitable[T], fallback: T) -> T:
         return fallback
 
 
+SNAPSHOT_UNAVAILABLE = "Dados de mercado temporariamente indisponíveis."
+
+
+def _listings_empty(payload: object) -> bool:
+    return not (isinstance(payload, dict) and payload.get("stocks"))
+
+
+def _results_empty(payload: object) -> bool:
+    return not (isinstance(payload, dict) and payload.get("results"))
+
+
+def _require_snapshot(has_data: bool) -> None:
+    """Surface a transient full-cache miss as 503 so the BFF never caches an empty body.
+
+    `_safe` keeps a snapshot resilient to a single source failing, but when *every*
+    source comes back empty the cache is cold (e.g. just after a deploy). Returning
+    200 + empty would pin a blank screen for the BFF revalidate window; 503 lets the
+    caller retry and serve its last-known-good instead.
+    """
+    if not has_data:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=SNAPSHOT_UNAVAILABLE)
+
+
 @router.get("/snapshot/pulse")
 async def pulse_snapshot() -> dict[str, object]:
     """Aggregated market pulse for top-of-page cards and daily brief context."""
@@ -180,6 +203,7 @@ async def pulse_snapshot() -> dict[str, object]:
         indicators_task,
         currency_task,
     )
+    _require_snapshot(not (_results_empty(quotes) and _results_empty(history)))
     return {
         "quotes": quotes,
         "history": history,
@@ -214,6 +238,14 @@ async def home_highlights_snapshot() -> dict[str, object]:
         crypto_task,
         fixed_income_task,
         treemap_task,
+    )
+    _require_snapshot(
+        not (
+            _listings_empty(gainers)
+            and _listings_empty(losers)
+            and _listings_empty(most_traded)
+            and _results_empty(treemap_quotes)
+        )
     )
     return {
         "gainers": gainers,
@@ -255,6 +287,9 @@ async def landing_snapshot() -> dict[str, object]:
         pulse_task,
         currency_task,
     )
+    _require_snapshot(
+        not (_listings_empty(top_assets) and _listings_empty(gainers) and _results_empty(pulse_quotes))
+    )
     return {
         "topAssets": top_assets,
         "gainers": gainers,
@@ -273,6 +308,12 @@ async def terminal_snapshot() -> dict[str, object]:
     status_task = _safe(market_db.get_db_status(), {"indices": []})
     currency_task = _safe(market_db.get_db_currencies(["USD-BRL"]), {"currencies": []})
     quotes, market_status, currency = await asyncio.gather(quotes_task, status_task, currency_task)
+    _require_snapshot(
+        not (
+            _results_empty(quotes)
+            and not (isinstance(market_status, dict) and market_status.get("indices"))
+        )
+    )
     return {
         "quotes": quotes,
         "marketStatus": market_status,
