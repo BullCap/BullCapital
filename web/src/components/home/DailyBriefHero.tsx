@@ -6,10 +6,14 @@ export interface BriefPulseData {
   ibovChange: number | null
   ibovHistory: number[]
   sp500Change: number | null
+  sp500History: number[]
   vix: number | null
+  vixHistory: number[]
   selicValue: string | null
+  selicHistory: number[]
   usdBrlPrice: number | null
   usdBrlChange: number | null
+  usdBrlHistory: number[]
   marketOpen: boolean
 }
 
@@ -58,14 +62,56 @@ function formatVix(value: number | null): string {
   })
 }
 
+function getSparklinePath(values: number[], width = 128, height = 30) {
+  if (values.length < 2) return { line: '', area: '' }
+  const min = Math.min(...values)
+  const max = Math.max(...values)
+  const spread = Math.max(max - min, 1)
+  const points = values.map((value, index) => {
+    const x = (index / (values.length - 1)) * width
+    const y = height - ((value - min) / spread) * (height - 4) - 2
+    return `${x.toFixed(1)},${y.toFixed(1)}`
+  })
+
+  return {
+    area: `M0,${height} L${points.join(' L')} L${width},${height} Z`,
+    line: `M${points.join(' L')}`,
+  }
+}
+
+function MiniTrend({ series, tone }: { series: number[]; tone: 'down' | 'neutral' | 'up' }) {
+  if (series.length < 2) return null
+
+  const color = tone === 'up' ? '#7FB59A' : tone === 'down' ? '#E7A1B0' : '#9CA3AF'
+  const sparkline = getSparklinePath(series)
+
+  return (
+    <div className="mt-2 h-8 overflow-hidden rounded-lg border border-white/[0.04] bg-black/15 px-2 py-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+      <svg viewBox="0 0 128 30" aria-hidden="true" className="h-full w-full overflow-visible">
+        <path d={sparkline.area} fill={color} fillOpacity="0.08" />
+        <path
+          d={sparkline.line}
+          fill="none"
+          stroke={color}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="2"
+        />
+      </svg>
+    </div>
+  )
+}
+
 function BriefMetric({
   label,
   value,
   detail,
+  series = [],
   tone = 'neutral',
 }: {
   detail?: string
   label: string
+  series?: number[]
   tone?: 'down' | 'neutral' | 'up'
   value: string
 }) {
@@ -80,6 +126,7 @@ function BriefMetric({
           <p className={`shrink-0 text-sm font-medium tabular-nums ${toneClass}`}>{detail}</p>
         ) : null}
       </div>
+      <MiniTrend series={series} tone={tone} />
     </div>
   )
 }
@@ -157,29 +204,34 @@ export default function DailyBriefHero({
               label="Ibovespa"
               value={formatPoints(pulse.ibovPrice)}
               detail={formatPercent(pulse.ibovChange)}
+              series={pulse.ibovHistory}
               tone={ibovTone}
             />
             <BriefMetric
               label="S&P 500"
               value={formatPercent(pulse.sp500Change)}
               detail="exterior"
+              series={pulse.sp500History}
               tone={sp500Tone}
             />
             <BriefMetric
               label="USD/BRL"
               value={formatMoney(pulse.usdBrlPrice)}
               detail={formatPercent(pulse.usdBrlChange)}
+              series={pulse.usdBrlHistory}
               tone={usdTone}
             />
             <BriefMetric
               label="Selic"
               value={pulse.selicValue ?? EMPTY_VALUE}
               detail="juros"
+              series={pulse.selicHistory}
             />
             <BriefMetric
               label="VIX"
               value={formatVix(pulse.vix)}
               detail="volatilidade"
+              series={pulse.vixHistory}
             />
           </div>
         </aside>

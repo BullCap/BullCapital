@@ -209,7 +209,7 @@ export default function NewsRadarFeed({ hasWatchlist, items }: NewsRadarFeedProp
 
                   {/* News Image container if available */}
                   {item.imageUrl && (
-                    <div className="mt-3 overflow-hidden rounded-[1.25rem] border border-white/[0.08] bg-black/10 aspect-[16/10] max-h-[300px] md:max-h-[380px] relative group/img cursor-pointer shadow-[0_8px_24px_rgba(0,0,0,0.3)]">
+                    <div className="mt-3 overflow-hidden rounded-[1.25rem] border border-white/[0.08] bg-black/10 aspect-[4/3] max-h-[360px] md:max-h-[460px] relative group/img cursor-pointer shadow-[0_8px_24px_rgba(0,0,0,0.3)]">
                       <Link href={item.href} target="_blank" rel="noopener noreferrer">
                         <img
                           src={item.imageUrl}

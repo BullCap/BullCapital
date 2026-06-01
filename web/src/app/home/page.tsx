@@ -87,6 +87,23 @@ function formatMacroEntry(entry: PrimeRateEntry | undefined): { rate: string; da
   }
 }
 
+function historyCloses(snapshot: HomeMarketPulseSnapshotLike, symbol: string): number[] {
+  return snapshot.history.results
+    ?.find((result) => result.symbol === symbol)
+    ?.history
+    ?.map((point) => point.close)
+    .filter(Number.isFinite) ?? []
+}
+
+function macroSeries(entries: PrimeRateEntry[]): number[] {
+  return entries
+    .map((entry) => (typeof entry.value === 'number' ? entry.value : parseFloat(String(entry.value).replace(',', '.'))))
+    .filter(Number.isFinite)
+    .reverse()
+}
+
+type HomeMarketPulseSnapshotLike = Awaited<ReturnType<typeof getMarketPulseSnapshot>>
+
 const getCoreMarketPulse = cache(async (): Promise<CoreMarketPulse> => {
   const marketOpen = isMarketOpen()
   const snapshot = await getMarketPulseSnapshot()
@@ -104,10 +121,11 @@ const getCoreMarketPulse = cache(async (): Promise<CoreMarketPulse> => {
       : null
     : null
 
-  const ibovHistory = snapshot.history.results?.find((r) => r.symbol === '^BVSP')?.history ?? []
-  const sp500History = snapshot.history.results?.find((r) => r.symbol === '^GSPC')?.history ?? []
-  const ibovCloses = ibovHistory.map((h) => h.close).filter(Number.isFinite)
-  const sp500Closes = sp500History.map((h) => h.close).filter(Number.isFinite)
+  const ibovCloses = historyCloses(snapshot, '^BVSP')
+  const sp500Closes = historyCloses(snapshot, '^GSPC')
+  const vixCloses = historyCloses(snapshot, '^VIX')
+  const usdBrlCloses = historyCloses(snapshot, 'USD-BRL')
+  const selicHistory = macroSeries(snapshot.indicators.selic ?? [])
   const selicValue = selicData?.rate ?? null
   const contextLine = marketOpen ? 'pregão em andamento' : 'mercado fora do horário regular'
 
@@ -129,10 +147,14 @@ const getCoreMarketPulse = cache(async (): Promise<CoreMarketPulse> => {
       ibovChange: ibov?.changePercent ?? null,
       ibovHistory: ibovCloses,
       sp500Change: sp500?.changePercent ?? null,
+      sp500History: sp500Closes,
       vix,
+      vixHistory: vixCloses,
       selicValue,
+      selicHistory,
       usdBrlPrice: usdBrl?.bidPrice ?? null,
       usdBrlChange,
+      usdBrlHistory: usdBrlCloses,
       marketOpen,
     },
   }

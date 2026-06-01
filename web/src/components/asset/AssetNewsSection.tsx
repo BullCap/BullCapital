@@ -79,7 +79,7 @@ export default function AssetNewsSection({ news }: AssetNewsSectionProps) {
               className="group flex gap-4 py-4 first:pt-0 last:pb-0 transition hover:opacity-95"
             >
               {/* Thumbnail image block on the left */}
-              <div className="relative h-20 w-20 sm:h-20 sm:w-28 shrink-0 overflow-hidden rounded-xl border border-white/[0.08] bg-black/30 select-none">
+              <div className="relative h-24 w-24 sm:h-28 sm:w-36 shrink-0 overflow-hidden rounded-xl border border-white/[0.08] bg-black/30 select-none">
                 {item.imageUrl ? (
                   <img
                     src={item.imageUrl}

@@ -171,7 +171,7 @@ async def _safe(coro: Awaitable[T], fallback: T) -> T:
 async def pulse_snapshot() -> dict[str, object]:
     """Aggregated market pulse for top-of-page cards and daily brief context."""
     quotes_task = _safe(market_db.get_db_quotes(["^BVSP", "^GSPC", "^VIX"]), {"results": []})
-    history_task = _safe(market_db.get_db_history(["^BVSP", "^GSPC"], "1mo"), {"results": []})
+    history_task = _safe(market_db.get_db_history(["^BVSP", "^GSPC", "^VIX", "USD-BRL"], "1mo"), {"results": []})
     indicators_task = _safe(market_db.get_db_indicators(), {"selic": [], "inflation": []})
     currency_task = _safe(market_db.get_db_currencies(["USD-BRL"]), {"currencies": []})
     quotes, history, indicators, currency = await asyncio.gather(
