@@ -24,53 +24,165 @@ interface DailyBriefHeroProps {
   pulse: BriefPulseData
 }
 
+const EMPTY_VALUE = 'n/d'
+
+function formatPoints(value: number | null): string {
+  if (value === null) return EMPTY_VALUE
+  return value.toLocaleString('pt-BR', { maximumFractionDigits: 0 })
+}
+
+function formatMoney(value: number | null): string {
+  if (value === null) return EMPTY_VALUE
+  return value.toLocaleString('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })
+}
+
+function formatPercent(value: number | null): string {
+  if (value === null) return EMPTY_VALUE
+  const sign = value > 0 ? '+' : ''
+  return `${sign}${value.toLocaleString('pt-BR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}%`
+}
+
+function formatVix(value: number | null): string {
+  if (value === null) return EMPTY_VALUE
+  return value.toLocaleString('pt-BR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })
+}
+
+function BriefMetric({
+  label,
+  value,
+  detail,
+  tone = 'neutral',
+}: {
+  detail?: string
+  label: string
+  tone?: 'down' | 'neutral' | 'up'
+  value: string
+}) {
+  const toneClass = tone === 'up' ? 'bull-trend-up' : tone === 'down' ? 'bull-trend-down' : 'text-starlight/55'
+
+  return (
+    <div className="border-t border-white/[0.06] py-3 first:border-t-0 first:pt-0">
+      <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-starlight/35">{label}</p>
+      <div className="mt-1.5 flex items-end justify-between gap-3">
+        <p className="font-sans text-xl font-medium tabular-nums text-starlight">{value}</p>
+        {detail ? (
+          <p className={`shrink-0 text-sm font-medium tabular-nums ${toneClass}`}>{detail}</p>
+        ) : null}
+      </div>
+    </div>
+  )
+}
+
 export default function DailyBriefHero({
   aiGenerated,
   contextLine,
   dateLabel,
   focusPoints,
   headline,
+  pulse,
   storiesCount,
   summary,
 }: DailyBriefHeroProps) {
-  const radarLabel = `${storiesCount} ${storiesCount === 1 ? 'história' : 'histórias'} no radar`
+  const radarLabel = storiesCount > 0
+    ? `${storiesCount} ${storiesCount === 1 ? 'história' : 'histórias'} no radar · `
+    : ''
+  const ibovTone = (pulse.ibovChange ?? 0) >= 0 ? 'up' : 'down'
+  const sp500Tone = (pulse.sp500Change ?? 0) >= 0 ? 'up' : 'down'
+  const usdTone = (pulse.usdBrlChange ?? 0) >= 0 ? 'up' : 'down'
 
   return (
     <section className="bull-frame px-6 py-8 sm:px-10 sm:py-10">
-      <div className="flex max-w-3xl flex-col gap-6">
-        <p className="bull-eyebrow">
-          Briefing · {dateLabel}
-          {aiGenerated ? ' · IA' : ''}
-        </p>
+      <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_24rem] xl:items-start">
+        <div className="flex min-w-0 flex-col gap-6">
+          <p className="bull-eyebrow">
+            Briefing · {dateLabel}
+            {aiGenerated ? ' · IA' : ''}
+          </p>
 
-        <h2 className="font-serif text-[2rem] leading-[1.15] tracking-tight text-starlight md:text-[2.6rem]">
-          {headline}
-        </h2>
+          <h2 className="max-w-4xl font-serif text-[2.15rem] leading-[1.12] text-starlight md:text-[3rem]">
+            {headline}
+          </h2>
 
-        <p className="max-w-2xl text-[15px] leading-7 text-starlight/65">
-          {summary}
-        </p>
+          <p className="max-w-5xl text-base leading-8 text-starlight/65 md:text-[17px]">
+            {summary}
+          </p>
 
-        <ul className="grid gap-x-8 gap-y-3 text-sm text-starlight/55 sm:grid-cols-3">
-          {focusPoints.map((point) => (
-            <li key={point} className="border-t border-white/[0.06] pt-3 leading-5">
-              {point}
-            </li>
-          ))}
-        </ul>
+          <ul className="grid gap-x-8 gap-y-3 text-sm text-starlight/55 sm:grid-cols-3">
+            {focusPoints.map((point) => (
+              <li key={point} className="border-t border-white/[0.06] pt-3 leading-6">
+                {point}
+              </li>
+            ))}
+          </ul>
 
-        <div className="flex flex-wrap items-center gap-4 pt-1">
-          <Link
-            href="/analysis"
-            className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-white/[0.10] bg-white/[0.03] px-5 text-sm font-medium text-starlight transition-colors duration-300 hover:border-amethyst/40 hover:bg-amethyst/[0.08]"
-          >
-            <Sparkles size={15} />
-            Analisar
-          </Link>
-          <span className="text-[11px] uppercase tracking-[0.14em] text-starlight/30">
-            {radarLabel} · {contextLine}
-          </span>
+          <div className="flex flex-wrap items-center gap-4 pt-1">
+            <Link
+              href="/analysis"
+              className="bull-action-primary"
+            >
+              <Sparkles size={15} />
+              Analisar
+            </Link>
+            <span className="text-[11px] uppercase tracking-[0.14em] text-starlight/30">
+              {radarLabel}{contextLine}
+            </span>
+          </div>
         </div>
+
+        <aside className="bull-card-calm p-5">
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <div>
+              <p className="bull-eyebrow">Pulso</p>
+              <h3 className="mt-1 font-serif text-lg text-starlight">Mesa da manhã</h3>
+            </div>
+            <span
+              className={`h-2 w-2 rounded-full ${pulse.marketOpen ? 'bg-[#7fb59a]' : 'bg-starlight/25'}`}
+              aria-hidden="true"
+            />
+          </div>
+
+          <div>
+            <BriefMetric
+              label="Ibovespa"
+              value={formatPoints(pulse.ibovPrice)}
+              detail={formatPercent(pulse.ibovChange)}
+              tone={ibovTone}
+            />
+            <BriefMetric
+              label="S&P 500"
+              value={formatPercent(pulse.sp500Change)}
+              detail="exterior"
+              tone={sp500Tone}
+            />
+            <BriefMetric
+              label="USD/BRL"
+              value={formatMoney(pulse.usdBrlPrice)}
+              detail={formatPercent(pulse.usdBrlChange)}
+              tone={usdTone}
+            />
+            <BriefMetric
+              label="Selic"
+              value={pulse.selicValue ?? EMPTY_VALUE}
+              detail="juros"
+            />
+            <BriefMetric
+              label="VIX"
+              value={formatVix(pulse.vix)}
+              detail="volatilidade"
+            />
+          </div>
+        </aside>
       </div>
     </section>
   )

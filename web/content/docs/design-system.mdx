@@ -104,8 +104,9 @@ A regra "flat é proibido" continua valendo no espírito — superfícies ainda 
 
 A `/home` é a tela-âncora da direção calma. Mudanças aplicadas:
 
-- **`MarketPulseFrame`** (`web/src/components/home/MarketPulseFrame.tsx`) substitui os quatro cards de vidro do bloco **"Agora"** por uma única moldura hairline (Ibovespa · S&P 500 · Selic · VIX com divisores).
-- **Briefing** (`DailyBriefHero`) virou narrativa editorial full-width sobre `.bull-frame` — removido o painel de cotações da direita (`BriefMarketPulse`), que **duplicava** os indicadores da moldura "Agora".
+- **`MarketPulseFrame`** (`web/src/components/home/MarketPulseFrame.tsx`) fica como padrão auxiliar arquivado para molduras hairline de indicadores.
+- O bloco **"Mercado / Agora"** saiu da primeira dobra; o briefing absorve o pulso de mercado em um painel lateral interno, evitando duplicação visual.
+- **Briefing** (`DailyBriefHero`) virou narrativa editorial full-width sobre `.bull-frame`, com resumo mais completo e painel lateral compacto para Ibovespa, S&P 500, USD/BRL, Selic e VIX.
 - **Destaques** (`MarketHighlightsSection`): cards de vidro com glow roxo → `.bull-card-calm`; tabs e estados de hover neutralizados.
 - **Radar de histórias** e **Mapa por setor**: container `.bull-panel` → `.bull-frame`; removidos glows roxos decorativos.
 

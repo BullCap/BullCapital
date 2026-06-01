@@ -5,9 +5,12 @@ import { GlassHighlight } from '@/components/atoms/GlassHighlight'
 // ── Fallback templates (used when AI is unavailable) ──────────────────────────
 
 function fallbackHeadline(ibovChange: number | null, storiesCount: number): string {
+  const radarContext = storiesCount > 0 ? `, ${storiesCount} histórias no radar` : ''
   if (ibovChange === null) return 'Mercado sem direção clara.'
-  if (ibovChange >= 1) return `Pregão construtivo, ${storiesCount} histórias no radar.`
-  if (ibovChange <= -1) return `Pregão pressionado, ${storiesCount} pontos de atenção.`
+  if (ibovChange >= 1) return `Pregão construtivo${radarContext}.`
+  if (ibovChange <= -1) return storiesCount > 0
+    ? `Pregão pressionado, ${storiesCount} pontos de atenção.`
+    : 'Pregão pressionado.'
   return 'Pregão equilibrado.'
 }
 
@@ -19,7 +22,12 @@ function fallbackSummary(
   marketOpen: boolean,
 ): string {
   const fmt = (v: number | null) => v === null ? 'sem leitura' : `${v >= 0 ? '+' : ''}${v.toFixed(2)}%`
-  const status = marketOpen ? 'pregão em andamento' : 'fora do horário regular'
+  const readingFrame = marketOpen
+    ? 'Com o pregão em andamento, a leitura combina direção do índice, exterior e juros antes de virar narrativa para cliente.'
+    : 'Como o mercado está fora do horário regular, a leitura serve como preparação para a próxima conversa com cliente, sem sugerir ação imediata.'
+  const volatilityFrame = vix !== null && vix >= 20
+    ? 'A volatilidade mais alta pede atenção a ruídos externos, liquidez e nomes mais sensíveis ao ciclo.'
+    : 'Com volatilidade administrável, o foco fica em entender quais vetores sustentam ou pressionam o índice.'
 
   const ibovLine = ibovChange === null
     ? 'Ibovespa sem leitura confiável.'
@@ -37,7 +45,7 @@ function fallbackSummary(
     ? `SELIC em ${selicValue}.`
     : 'Juros seguem no centro da leitura.'
 
-  return `${ibovLine} ${extLine} ${vixLine} ${ratesLine} ${status}.`
+  return `${ibovLine} ${extLine} ${vixLine} ${ratesLine} ${readingFrame} ${volatilityFrame}`
 }
 
 function fallbackFocusPoints(
@@ -90,7 +98,7 @@ export async function DailyBriefContent({
 
 export function DailyBriefSkeleton({ dateLabel, storiesCount }: { dateLabel: string; storiesCount: number }) {
   return (
-    <section className="bull-panel-focus p-6 md:p-7" aria-hidden>
+    <section className="bull-frame p-6 md:p-7" aria-hidden>
       <GlassHighlight widthPercent={74} />
       <div className="flex flex-col gap-5">
         <div className="flex flex-wrap items-center gap-2">

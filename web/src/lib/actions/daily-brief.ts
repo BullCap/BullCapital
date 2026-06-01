@@ -63,7 +63,7 @@ Gere um briefing diário em português brasileiro para profissionais financeiros
 Retorne SOMENTE um objeto JSON válido, sem markdown, sem explicações, sem texto fora do JSON:
 {
   "headline": "Uma frase direta sobre o humor do mercado hoje (máximo 10 palavras)",
-  "summary": "Um parágrafo objetivo, com no máximo 45 palavras, conectando macro e manchetes sem recomendar compra ou venda.",
+  "summary": "Um parágrafo editorial com 70 a 95 palavras, conectando macro, exterior, volatilidade e manchetes sem recomendar compra ou venda.",
   "focusPoints": [
     "Primeiro ponto de atenção (máximo 12 palavras)",
     "Segundo ponto de atenção (máximo 12 palavras)",

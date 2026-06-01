@@ -3,7 +3,6 @@ import { Suspense, cache } from 'react'
 import { auth } from '@/lib/auth'
 import { getHomeHighlightsSnapshot, getMarketPulseSnapshot } from '@/lib/services/market'
 import { isMarketOpen } from '@/lib/market-utils'
-import MarketPulseFrame from '@/components/home/MarketPulseFrame'
 import { DailyBriefContent, DailyBriefSkeleton } from '@/components/home/DailyBriefContent'
 import type { BriefPulseData } from '@/components/home/DailyBriefHero'
 import MarketMapSection from '@/components/home/MarketMapSection'
@@ -176,45 +175,6 @@ const getMarketMapAssets = cache(async (): Promise<MarketListingItem[]> => {
   )
 })
 
-async function MarketNowSection() {
-  const { ibov, sp500, vix, selicData, ipcaData, marketOpen } = await getCoreMarketPulse()
-
-  return (
-    <section className="space-y-4">
-      <div className="px-1">
-        <p className="bull-eyebrow">Mercado</p>
-        <h2 className="mt-1 font-serif text-2xl tracking-tight text-[#F4F0FF]/80">Agora</h2>
-      </div>
-
-      <ScrollFocus>
-        <MarketPulseFrame
-          ibov={ibov}
-          sp500={sp500}
-          selic={selicData}
-          ipca={ipcaData}
-          vix={vix}
-          marketOpen={marketOpen}
-        />
-      </ScrollFocus>
-    </section>
-  )
-}
-
-function MarketNowFallback() {
-  const marketOpen = isMarketOpen()
-
-  return (
-    <section className="space-y-4">
-      <div className="px-1">
-        <p className="bull-eyebrow">Mercado</p>
-        <h2 className="mt-1 font-serif text-2xl tracking-tight text-[#F4F0FF]/80">Agora</h2>
-      </div>
-
-      <MarketPulseFrame ibov={null} sp500={null} selic={null} ipca={null} vix={null} marketOpen={marketOpen} />
-    </section>
-  )
-}
-
 async function DailyBriefPanel({ dateLabel }: { dateLabel: string }) {
   const { ibov, sp500, vix, selicValue, marketOpen, contextLine, briefPulse } = await getCoreMarketPulse()
 
@@ -291,10 +251,6 @@ export default async function HomePage() {
       </header>
 
       <div className="space-y-6">
-        <Suspense fallback={<MarketNowFallback />}>
-          <MarketNowSection />
-        </Suspense>
-
         <Suspense fallback={<DailyBriefSkeleton dateLabel={dateLabel} storiesCount={0} />}>
           <DailyBriefPanel dateLabel={dateLabel} />
         </Suspense>
