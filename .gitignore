@@ -49,3 +49,6 @@ npm-debug.log*
 
 # TypeScript
 *.tsbuildinfo
+
+# Untracked propositalmente — fora do MVP B2B (ver AGENTS.md §13.2)
+web/src/components/terminal/OpenFinancePortfolio.tsx
