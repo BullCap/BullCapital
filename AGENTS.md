@@ -2,6 +2,15 @@
 
 > **Este é o documento canônico de contexto para qualquer agente de código (Claude Code, Cursor, Codex, Aider, etc.) trabalhando neste repositório.** Leia até o fim antes de propor mudanças. Quando algo neste arquivo entrar em conflito com seu instinto, prefira o que está escrito aqui — foi decidido após discussão de produto.
 
+> ⚠️ **PIVÔ 2026-06-03 — produto migrou para gestão de carteira.** Após validação de mercado, a Bull
+> deixa de ser "munição de research/narrativa para CFP/influencer" e passa a **decision-support de
+> advisor-augmentation para firma de wealth/corretora** (importa carteiras de clientes + brigada
+> multiagent, com fronteira determinístico/gerado enforçada em código). O **core do MVP** é gestão de
+> carteira associada ao sistema multiagent. Em consequência, **§2 (personas), §13 (roadmap) e §14
+> (escopo) estão SUBSTITUÍDOS** — ver **[docs/arquitetura-alvo.md](docs/arquitetura-alvo.md)** para a
+> arquitetura revisada e o recorte de MVP travado (single-tenant · 1 carteira ponta-a-ponta · compute
+> mínimo). As seções abaixo permanecem como histórico até serem reescritas com a copy do novo produto.
+
 ---
 
 ## 1. TL;DR para agentes (leia primeiro, sempre)
@@ -10,7 +19,7 @@ A Bull é uma **plataforma de inteligência de mercado brasileiro para profissio
 
 - **Stack**: Next.js 15 (App Router + PWA) + FastAPI + Postgres+pgvector
 - **Idioma do produto**: pt-BR exclusivo em todo texto voltado ao usuário
-- **Estética**: glassmorphism + skeuomorphism 2.0 — flat design é proibido (ver [system-design.md](system-design.md))
+- **Estética**: flat-editorial — superfícies sólidas, borda 1px, tipografia serif, calma; material/glass é legado (ver [system-design.md](system-design.md))
 - **Modelo de uso**: híbrido — research na ferramenta + exportação de cards/PDFs para WhatsApp/Instagram do cliente do consultor
 - **Deadline MVP B2B**: 10 de julho de 2026 (ver §13 Roadmap)
 
@@ -18,11 +27,15 @@ A Bull é uma **plataforma de inteligência de mercado brasileiro para profissio
 1. A feature está no escopo do MVP (§13)? Se não, pause e pergunte ao usuário.
 2. O componente que você quer criar já existe? Veja §6 (inventário) — provavelmente sim.
 3. A copy está em pt-BR? Se há texto em inglês voltado ao usuário, é bug.
-4. A UI obedece o design system? Se tem `bg-color` sem `shadow` e `backdrop-blur`, é bug.
+4. A UI obedece o design system (flat-editorial)? Se tem `backdrop-blur` decorativo, glow ou stack de `inset-shadow`, é legado a remover.
 
 ---
 
 ## 2. Modelo de negócio e personas
+
+> ⚠️ **SUBSTITUÍDO pelo pivô de 2026-06-03** (ver banner no topo). As personas CFP/influencer/AAI abaixo
+> não são mais o alvo primário; o produto passou a advisor-augmentation para firma de wealth. Mantido
+> como histórico até reescrita. Direção atual: [docs/arquitetura-alvo.md §0](docs/arquitetura-alvo.md).
 
 ### 2.1 Pivô (decidido em 2026-05-24)
 
@@ -327,45 +340,43 @@ Novas specs do MVP B2B: **008-terminal-dashboard** (em andamento), **009-briefin
 
 ### 7.1 Filosofia
 
-**"The Financial Reading Room"** — calma, contemplação, materialidade digital. Vidro espesso + esqueleto físico. Sala de leitura financeira, não sala de pregão.
+**"The Financial Reading Room"** — calma, contemplação, clareza editorial. **Flat-editorial** (reescrito 01-jun-2026): a calma vem de restrição + respiro + tipografia, não de material. A linguagem material antiga (vidro/skeuomorphism) está aposentada — ver [system-design.md](system-design.md) para a spec completa.
 
-### 7.2 Cores (tokens, não improvisar)
+### 7.2 Cores (tokens do globals.css, não improvisar — `bg-[#...]` inline é dívida)
 
 | Token | Hex | Uso |
 |---|---|---|
-| Void | `#0D0B14` | Background base (infinito) |
-| Surface | `#1A1625` | Base sólida de cards |
-| Starlight | `#F4F0FF` | Texto primário |
-| Amethyst | `#8B5CF6` | Acento, estados ativos, positivo, glow |
-| Rose | `#F43F5E` | Negativo, alertas |
-| Glass Rim | `rgba(255,255,255,0.1-0.2)` | Bordas de vidro |
-| Shadow | `rgba(0,0,0,0.4-0.6)` | Sombras projetadas |
+| Void | `#050308` | Background base da página |
+| Surface | `#0D0A13` | Superfície sólida de cards |
+| Surface-2 | `#12161F` | Segundo nível de elevação (hover) |
+| Starlight | `#e2def0` | Texto primário |
+| Muted | `rgba(226,222,240,.55)` | Texto secundário, labels |
+| Amethyst | `#82759F` | Acento único (ação, estado ativo) — sem glow |
+| Border | `rgba(255,255,255,.06-.10)` | Separação entre superfícies |
 
 ### 7.3 Tipografia
 
-- **Playfair Display** (serif) — títulos, nomes de ativo, manchetes
+- **Playfair Display** (serif) — títulos, nomes de ativo, manchetes. **É a assinatura anti-genérico — não economize.**
 - **Inter** (sans) — corpo, dados numéricos, labels
 - Letter-spacing levemente reduzido em headings; números nunca em bold agressivo
 
-### 7.4 Anatomia de card de vidro (decora COM ESTAS classes)
+### 7.4 Anatomia de card (flat — decora COM ESTAS classes)
 
 ```tsx
-<section className="relative overflow-hidden rounded-[2.5rem] border border-white/10 bg-[#1A1625]/40 p-8 backdrop-blur-2xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),inset_0_-2px_6px_rgba(0,0,0,0.6),0_10px_20px_rgba(0,0,0,0.4)]">
-  <GlassHighlight widthPercent={60} />
-  {/* glow opcional */}
-  <div className="pointer-events-none absolute -left-10 top-0 h-40 w-40 rounded-full bg-[#8B5CF6]/15 blur-[100px]" />
+<section className="rounded-2xl border border-white/[0.06] bg-surface p-6">
+  {/* hierarquia por tipografia + espaço, não por sombra/glow */}
   {/* conteúdo */}
 </section>
 ```
 
 ### 7.5 Regras de ouro (proibições)
 
-1. **Flat design proibido.** Toda superfície tem profundidade.
-2. **Semáforo agressivo proibido.** Sem verde/vermelho puros — use Amethyst/Rose pastel sob vidro.
-3. **Cantos retos proibidos.** Mínimo `rounded-xl`, cards `rounded-[2.5rem]`.
-4. **Backdrop-blur obrigatório** em todo card translúcido.
-5. **Respiro editorial obrigatório**: 2.5rem de padding ao redor de texto IA.
-6. **Fuga de planilhas obrigatória**: se parecer Excel, refatorar para cards/cúpulas.
+1. **Material/glass proibido.** Superfícies sólidas, separação por borda 1px + tom. Sem `backdrop-blur` decorativo, glow ou stack de `inset-shadow`. Sombra só em overlays reais (dropdown/modal), sutil.
+2. **Semáforo agressivo proibido.** Sem verde/vermelho puros — use direção (seta) + tom suave.
+3. **Cantos contidos.** `rounded-xl`/`rounded-2xl`. Sem orgânico extremo (`rounded-[2.5rem]` é legado).
+4. **Um acento só:** Amethyst. Sem segunda cor de marca.
+5. **Respiro editorial obrigatório**: ≥ 2rem de padding ao redor de texto IA.
+6. **Baixa densidade obrigatória**: se parecer Excel/dashboard denso ou tem muitos cards/labels pequenos, corte conteúdo — não adicione caixas.
 7. **Sem skeleton loaders.** Usar Suspense com empty states elegantes.
 8. **Sem emoji em UI**, mesmo em microcopy.
 
@@ -514,6 +525,12 @@ docker compose up               # Postgres + API
 
 ## 13. Roadmap MVP B2B (até 10/jul/2026)
 
+> ⚠️ **SUBSTITUÍDO pelo pivô de 2026-06-03** (ver banner no topo). O roadmap abaixo (comparador, briefing
+> por email, export PDF para CFP/influencer) **não é mais o produto**. O novo core de MVP é gestão de
+> carteira + multiagent — recorte travado e ordem de build em
+> [docs/arquitetura-alvo.md §11](docs/arquitetura-alvo.md). A data 10/jul foi resetada pelo pivô. Mantido
+> abaixo como histórico.
+
 > **Hoje**: 2026-05-24. **Deadline**: 2026-07-10. **Janela**: 47 dias, ~6,5 sprints semanais.
 
 ### 13.1 Mapa geral
@@ -651,6 +668,12 @@ docker compose up               # Postgres + API
 
 ## 14. O que NÃO fazer
 
+> ⚠️ **PARCIALMENTE SUBSTITUÍDO pelo pivô de 2026-06-03.** As proibições de UI/código/workflow (§14.3,
+> §14.4) seguem válidas. Mas §14.1 (produto) mudou: gestão de carteira, suitability-adjacente e import de
+> book de cliente **passaram a estar no escopo**. As regras editoriais (nunca recomendar de forma não-
+> atribuída) continuam — agora enforçadas pelo Guardião em código, ver
+> [docs/arquitetura-alvo.md §5](docs/arquitetura-alvo.md).
+
 ### 14.1 Produto
 
 - ❌ Recomendar compra/venda/hold (direta ou indireta).
@@ -670,9 +693,9 @@ docker compose up               # Postgres + API
 
 ### 14.3 UI / código
 
-- ❌ Flat design (sem shadow + backdrop-blur).
-- ❌ Verde/vermelho puros (use Amethyst/Rose).
-- ❌ Cantos retos (mínimo `rounded-xl`).
+- ❌ Material/glass decorativo (`backdrop-blur`, glow, stack de `inset-shadow`) — é legado.
+- ❌ Verde/vermelho puros (use direção + tom suave).
+- ❌ Cantos orgânicos extremos (`rounded-xl`/`2xl`; `rounded-[2.5rem]` é legado).
 - ❌ Criar componente novo sem checar §6.
 - ❌ Reescrever um componente que já existe — estenda.
 - ❌ Adicionar libs grandes sem justificativa (Redux, axios, styled-components, date-fns, MUI).
