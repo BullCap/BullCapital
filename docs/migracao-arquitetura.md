@@ -20,8 +20,8 @@ desacopladas**, com infra definida:
 
 | Unidade | Infra |
 |---|---|
-| **Web App (Next.js)** — BFF + módulos de negócio + cron jobs | **Vercel** |
-| **AI Service (FastAPI)** — orquestrador + tools, repo separado | **Railway** |
+| **Web App (Next.js)** — front + back (BFF) + módulos de negócio + cron jobs | **Vercel** |
+| **AI Service (FastAPI)** — orquestrador + tools, **repo próprio (`bullcapital-ai`)** | deploy **decidido no repo próprio** (Railway é a hipótese de trabalho atual) |
 | **Postgres único** — schemas isolados | **Neon** |
 | **Redis utilitário** — rate-limit, locks, cache quente | **Upstash** |
 
@@ -136,7 +136,8 @@ Monorepo pnpm com dois deployables.
 + [services/market.ts](../web/src/lib/services/market.ts) (Brapi SDK direto) +
 [internal-api.ts](../web/src/lib/internal-api.ts) (chama FastAPI). Auth NextAuth + Prisma.
 
-**`api/` — FastAPI**, hoje com **duas responsabilidades misturadas**:
+**AI Service (FastAPI)** — extraído para o repo **`bullcapital-ai`** em 2026-06-10 (F7a); os caminhos
+`api/...` abaixo descrevem o estado herdado, agora no repo novo — com **duas responsabilidades misturadas**:
 
 - *Plano de IA*: [agent/](../api/app/agent/) (Agno + gpt-4o), rotas `analysis`/`conversation`/`comparator`,
   models `analysis`/`conversation` (pgvector).
@@ -178,7 +179,7 @@ Monorepo pnpm com dois deployables.
 | D3 | **yfinance removido**; resiliência via último snapshot bom rotulado | sem scraper não-licenciado; eixo de failover = staleness |
 | D4 | Redis = **Upstash, utilitário** (rate-limit, locks de cron, cache quente) | remove rate-limiter in-process do `main.py`; Redis não é "tier" arquitetural nem fonte de verdade |
 | D5 | Seams internos primeiro; extração do AI Service só depois dos seams | módulo com interface limpa hoje = extração barata amanhã |
-| D6 | Infra: **Vercel** (web+cron) · **Neon** (Postgres único) · **Upstash** (Redis) · **Railway** (AI Service) | sem Supabase; Railway Postgres descomissionado quando a migração de schema terminar |
+| D6 | Infra: **Vercel** (front + back/BFF + cron) · **Neon** (Postgres único) · **Upstash** (Redis); deploy do AI Service é **decisão do repo `bullcapital-ai`** (Railway como hipótese de trabalho) | sem Supabase; Railway Postgres descomissionado quando a migração de schema terminar; o monorepo só exige do AI Service o contrato de borda (F0) e a role D9 |
 | D7 | **Snapshot de mercado = tabela no Neon** com envelope `{source, ts, stale}` calculado na leitura | sem segundo banco; um Postgres separado só protegeria contra queda do próprio Neon — cenário em que auth/portfolio já caíram junto |
 | D8 | **Ingestão dirigida pelo universo das carteiras**, EOD-first | universo = `SELECT DISTINCT ticker` de carteiras+watchlists, **deduplicado e global** (nunca per-user) + baseline fixo (IBOV + FIIs líquidos); job principal 1×/dia pós-fechamento; intraday best-effort durante o pregão |
 | D9 | AI Service acessa o **mesmo Neon com role escopada** | write em `news`/`ai`; **read-only** em `market`/`portfolio`; sem read replica, sem segundo banco |
@@ -369,7 +370,7 @@ Cada fase é independente e deployável.
 | **F4 — Resiliência-lite** | Upstash (rate-limit, locks, cache) + envelope staleness na leitura; remover yfinance e rate-limiter in-process | F3 |
 | **F5 — Schema isolation no Neon** | desmembrar schema `ai` em `market`/`news`/`ai` + criar `portfolio`/`auth`; ownership de migrations; role escopada (D9) | F3 |
 | **F6 — FastAPI → scaffold** | apagar serviços/rotas/schedulers de dados; sobra orquestrador + tools + analysis/conv/comp | F3, F5 |
-| **F7 — Extrair AI Service p/ repo separado (Railway)** | mover `api/` para repo próprio; credencial escopada (D9); descomissionar Railway Postgres | F6 |
+| **F7 — Extrair AI Service p/ repo separado** | mover `api/` para repo próprio; credencial escopada (D9); descomissionar Railway Postgres | **antecipada em 2026-06-10**: repo `bullcapital-ai` criado antes de F5/F6; a redução a scaffold (F6) acontece no repo novo |
 | **F8 — Docs** | reescrever AGENTS.md §2/§4/§6/§13 alinhados ao produto de assessor e à topologia final | conforme fases fecham |
 
 **Depois da migração (via Spec Kit):** domínio portfolio (formato Bull, import A1, FGC A2, risco A3,
@@ -381,7 +382,7 @@ os seams (`modules/{portfolio,reports}`) e os contratos prontos.
 | Deployable | Trigger de build | Ordem de subida | Migrations | Rollback |
 |---|---|---|---|---|
 | **Web App (Vercel)** | mudanças em `web/**`, `docs/contracts/**`, `docs/migracao-arquitetura.md` quando contrato afeta BFF | depois de migrations Prisma quando houver mudança de schema; independente do AI quando não há mudança de contrato | `pnpm prisma migrate deploy` usando `DIRECT_URL`; release owner valida plano antes de produção | rollback de app no Vercel; migration só reverte por migration corretiva, nunca por `reset` |
-| **AI Service (Railway)** | até F7: mudanças em `api/**` e `docs/contracts/**`; depois F7: repo próprio | independente do Web App, exceto bump de contrato SSE/envelope que exige compatibilidade backward por uma versão | Alembic para schemas `news`/`ai` quando existir; roda antes do deploy do serviço | rollback Railway para versão anterior compatível; migration reversa só se for explicitamente segura |
+| **AI Service (repo `bullcapital-ai`)** | repo próprio desde F7a; consome `docs/contracts/**` do monorepo como contrato versionado | independente do Web App, exceto bump de contrato SSE/envelope que exige compatibilidade backward por uma versão | Alembic para schemas `news`/`ai` quando existir; roda antes do deploy do serviço | rollback para versão anterior compatível; migration reversa só se for explicitamente segura; detalhes finais são decisão do repo próprio |
 | **Neon Postgres** | migration revisada em PR | antes do app que depende da mudança | Prisma owns `market`/`portfolio`/`auth`; Alembic owns `news`/`ai`; grants D9 no mesmo release | restore/branch Neon apenas para incidente; caminho normal é migration forward |
 | **Upstash Redis** | alteração de infra/env | sem ordem quando usado como cache/lock; nunca pré-requisito para servir snapshot | não aplica | pode ser limpo/recriado sem perda de fonte da verdade |
 
@@ -414,9 +415,9 @@ ordem compatível (produtor novo emitindo campos opcionais antes de consumidor e
 | `MARKET_SCHEDULERS_ENABLED` | AI Service | `false` | Railway variables / `.env` | sim até F6 para desligar plano de dados |
 | `LOG_LEVEL` | AI Service | `INFO` | Railway variables / `.env` | opcional |
 
-Cada deployable mantém exatamente um exemplo versionado: [../web/.env.example](../web/.env.example) e
-[../api/.env.example](../api/.env.example). Qualquer nova env var só passa em PR se a tabela e o exemplo
-forem atualizados juntos.
+Cada deployable mantém exatamente um exemplo versionado: [../web/.env.example](../web/.env.example) no
+monorepo e `.env.example` no repo `bullcapital-ai`. Qualquer nova env var só passa em PR se a tabela e o
+exemplo forem atualizados juntos.
 
 ### 8.3 Setup local validável
 
@@ -509,7 +510,8 @@ read-only sobre Postgres.
 ### Marco D — Extração e documentação (F7 · F8)
 **Tema:** o AI Service vira repo próprio no Railway; docs refletem a realidade.
 
-- [ ] F7 — mover `api/` para repo separado; credencial escopada; descomissionar Railway Postgres
+- [x] F7a — `api/` extraído para o repo `bullcapital-ai` (2026-06-10, antecipado); `railway.toml` foi junto; docker-compose aponta para clone lado a lado
+- [ ] F7b — credencial escopada (D9) no Neon; descomissionar Railway Postgres; decisão de deploy do AI Service registrada no repo próprio
 - [ ] F8 — reescrever AGENTS.md §2/§4/§6/§13 alinhados ao novo desenho; fechar critérios §0.1
 
 **Pronto quando:** dois repos deployam independentemente, AGENTS.md descreve a topologia de 3 unidades,
