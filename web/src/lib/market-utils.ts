@@ -1,10 +1,6 @@
-import { getMarketIndicators } from '@/modules/market'
-import { ANALYSIS_API_URL, internalApiHeaders } from '@/lib/internal-api'
+import { getMarketIndicators, getMultipleQuotes } from '@/modules/market'
 
 export type TemperatureLevel = 'panico' | 'medo' | 'neutro' | 'ganancia' | 'euforia'
-
-const MARKET_FETCH_TIMEOUT_MS = 10000
-const MARKET_API_URL = ANALYSIS_API_URL
 
 export interface ComputedTemperature {
   value: number
@@ -107,18 +103,13 @@ export async function fetchIPCA(): Promise<{ rate: string; date: string } | null
   }
 }
 
-// Single-symbol fetch through the FastAPI market boundary backed by Brapi PRO.
+// Single-symbol fetch through the market module (DB-first, cron-fed).
 export async function fetchMarketQuote(
   symbol: string
 ): Promise<{ price: number; changePercent: number; name: string | null } | null> {
   try {
-    const res = await fetch(`${MARKET_API_URL}/market/quote/${encodeURIComponent(symbol)}`, {
-      headers: internalApiHeaders(),
-      next: { revalidate: 60 },
-      signal: AbortSignal.timeout(MARKET_FETCH_TIMEOUT_MS),
-    })
-    if (!res.ok) return null
-    const data = await res.json()
+    const { results } = await getMultipleQuotes([symbol])
+    const data = results[0]
     if (!data?.symbol) return null
     return {
       price: Number(data.regularMarketPrice ?? 0),
