@@ -74,8 +74,8 @@ via Spec Kit**, por cima dos seams criados aqui.
 
 | Unidade | Responsabilidade | Não faz |
 |---|---|---|
-| **Web App** | UI, BFF, Módulo market (ingestão Brapi/BCB via cron), Módulo portfolio (import, reconciliação, risco, snapshots), Módulo user | IA, ingestão de news |
-| **AI Service** | Orquestrador + tools + Guardião, ingestão de news, narrativa | servir UI, escrever em `market`/`portfolio`/`auth` |
+| **Web App** | UI, BFF, Módulo market (ingestão Brapi/BCB via cron), Módulo portfolio (import, reconciliação, risco, snapshots), Módulo reports (composição B2/B3 + export), Módulo user | IA, ingestão de news, gerar narrativa |
+| **AI Service** | Orquestrador + tools + Guardião, ingestão de news, narrativa (conversa + blocos narrativos de relatório) | servir UI, escrever em `market`/`portfolio`/`auth`, compor/exportar relatório |
 | **Neon** | persistência, 5 schemas isolados | — |
 | **Upstash** | rate-limit, locks de idempotência de cron, cache quente | fonte da verdade, "tier" arquitetural |
 
@@ -138,6 +138,8 @@ Monorepo pnpm com dois deployables.
 | D9 | AI Service acessa o **mesmo Neon com role escopada** | write em `news`/`ai`; **read-only** em `market`/`portfolio`; sem read replica, sem segundo banco |
 | D10 | **Snapshot de carteira é conceito de produto**: `portfolio.snapshots` append-only e imutável (a cada import + job EOD de valorização) | série temporal de drift, reprodutibilidade de relatórios e trilha de evidência (linha CVM "informa e evidencia"); entra via Spec Kit junto do domínio portfolio |
 | D11 | **Privacidade na ingestão**: pipeline de mercado recebe lista de tickers, nunca objetos/IDs de carteira | `ingest_runs` e logs sem identificadores de cliente; baseline (D8) impede que o universo espelhe uma carteira individual em base pequena; LGPD pesa no schema `portfolio` (CPF+patrimônio), não na ingestão |
+| D12 | **Análise = dois planos distintos.** Análise *determinística* (A3: exposição, concentração, FGC, drift) é código do Módulo portfolio (web); análise *narrada* (conversa, relatório macro B3) é do AI Service, sempre por cima de números do núcleo | nenhum cálculo de risco no AI Service; nenhuma chamada a LLM nos módulos do web; a fronteira é o contrato de envelope (F0) |
+| D13 | **Relatório é composto no web, narrado na IA.** Módulo reports (web) monta B2/B3 a partir de `portfolio.snapshots` + `market.*` e solicita ao AI Service apenas **blocos narrativos descritivos** (Guardião fail-closed); todo relatório referencia o `snapshot_id` que o originou | reprodutibilidade: re-render do relatório do dia X usa o snapshot do dia X (D10), nunca dado vivo; export PDF no web (`@react-pdf/renderer` serverless-friendly; Puppeteer só se a fidelidade exigir — validar na spec) |
 
 ### 4.1 Item aberto (decisão recomendada, confirmar)
 
@@ -170,6 +172,8 @@ web/src/
 │   │   └── index.ts              # interface pública do módulo
 │   ├── portfolio/                # import · reconciliação · risco/FGC · snapshots  (domínio via Spec Kit)
 │   │   └── index.ts              # seam criado na migração; conteúdo entra com as specs do MVP
+│   ├── reports/                  # composição B2/B3 + export PDF (D13; domínio via Spec Kit)
+│   │   └── index.ts              # seam; lê portfolio/market via interfaces públicas, narrativa via BFF↔AI
 │   └── user/                     # auth/perfil (NextAuth + Prisma, schema auth)
 └── lib/                          # utils compartilhados (market-utils, cn, etc.)
 ```
@@ -235,6 +239,24 @@ Brapi ──falha / rate-limit──► Upstash (cache TTL 1-5min) ──miss─
 - Entrega: série temporal de drift (A5), reprodutibilidade de relatórios, trilha de evidência (CVM).
 - Volume irrelevante no MVP; arquivamento frio (Vercel Blob) só se um dia pesar.
 
+### 6.5 Análise e relatórios (D12/D13 — entram via Spec Kit)
+
+```
+portfolio.snapshots + market.*  ──►  Módulo reports (web)  ──►  documento composto
+        (números, snapshot_id)         │            ▲                 │
+                                       ▼            │                 ▼
+                              AI Service: blocos narrativos      export PDF/imagem
+                              descritivos (Guardião, envelope)   (@react-pdf/renderer)
+```
+
+- **B2 (pacote p/ mesa):** 100% determinístico — posição completa + métricas + contexto; sem LLM.
+- **B3 (relatório macro):** esqueleto e números do web; narrativa descritiva solicitada ao AI Service
+  por bloco, com envelope de provenance; nenhum número entra no texto que não esteja no payload enviado.
+- **Persistência:** `portfolio.reports` (metadados: tipo, `snapshot_id`, hash do conteúdo, gerado_em);
+  artefatos gerados em Vercel Blob. Auditável: dá para provar o que cada relatório mostrou e quando.
+- **A3 (risco/exposição):** funções puras no Módulo portfolio; mesmas funções alimentam tela, snapshot
+  e relatório — um único caminho de cálculo, três superfícies.
+
 ---
 
 ## 7. AI Service (Deployable 2) — alvo de scaffold
@@ -255,6 +277,10 @@ mercado do [main.py](../api/app/main.py).
 (`source`, `snapshot_ts`, `stale`, `tenant`). **Invariante:** tools só emitem números presentes na
 saída do núcleo determinístico; Guardião fail-closed em toda resposta.
 
+**Superfície futura (D13):** endpoint de **bloco narrativo de relatório** — recebe payload
+determinístico (números + contexto do snapshot), devolve prosa descritiva validada pelo Guardião.
+Mesmo contrato de envelope da conversa; sem acesso a dado fora do payload + tools read-only.
+
 ---
 
 ## 8. Ordem de build (faseada)
@@ -274,7 +300,8 @@ Cada fase é independente e deployável.
 | **F8 — Docs** | reescrever AGENTS.md §2/§4/§6/§13 alinhados ao produto de assessor e à topologia final | conforme fases fecham |
 
 **Depois da migração (via Spec Kit):** domínio portfolio (formato Bull, import A1, FGC A2, risco A3,
-snapshots D10) e telas do produto de assessor. A migração só deixa o seam pronto.
+snapshots D10), relatórios (B2/B3 + export, D13) e telas do produto de assessor. A migração só deixa
+os seams (`modules/{portfolio,reports}`) e os contratos prontos.
 
 ---
 
