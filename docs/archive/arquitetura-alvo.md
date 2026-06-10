@@ -1,5 +1,10 @@
 # Bull — Arquitetura-alvo (pós-pivô de gestão de carteira)
 
+> ⚠️ **ARQUIVADO em 2026-06-09 — substituído por [../migracao-arquitetura.md](../migracao-arquitetura.md).**
+> A direção de gestão de carteira (brigada de 5 agentes · Guardião · import de Excel) **não é mais o
+> produto**. O produto retornou a **inteligência de mercado** (Assets · contexto · narrativa de IA) com
+> separação limpa de deployables. Mantido apenas como histórico. Não usar como referência de build.
+
 > **Status**: proposta / target-state. **Não** é o que existe hoje (hoje é um monolito monorepo de
 > munição-de-narrativa). Este documento é o destino a construir, com o corte de MVP travado em §11.
 > **Pivô em 2026-06-03**: após validação de mercado, o produto migra de "munição de research/narrativa
