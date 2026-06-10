@@ -2,14 +2,14 @@
 
 > **Este é o documento canônico de contexto para qualquer agente de código (Claude Code, Cursor, Codex, Aider, etc.) trabalhando neste repositório.** Leia até o fim antes de propor mudanças. Quando algo neste arquivo entrar em conflito com seu instinto, prefira o que está escrito aqui — foi decidido após discussão de produto.
 
-> ⚠️ **PIVÔ 2026-06-03 — produto migrou para gestão de carteira.** Após validação de mercado, a Bull
-> deixa de ser "munição de research/narrativa para CFP/influencer" e passa a **decision-support de
-> advisor-augmentation para firma de wealth/corretora** (importa carteiras de clientes + brigada
-> multiagent, com fronteira determinístico/gerado enforçada em código). O **core do MVP** é gestão de
-> carteira associada ao sistema multiagent. Em consequência, **§2 (personas), §13 (roadmap) e §14
-> (escopo) estão SUBSTITUÍDOS** — ver **[docs/arquitetura-alvo.md](docs/arquitetura-alvo.md)** para a
-> arquitetura revisada e o recorte de MVP travado (single-tenant · 1 carteira ponta-a-ponta · compute
-> mínimo). As seções abaixo permanecem como histórico até serem reescritas com a copy do novo produto.
+> ⚠️ **DIREÇÃO ATUAL (2026-06-10) — gestão de carteiras + inteligência de mercado para assessores
+> financeiros.** O núcleo determinístico de carteira (agregação, FGC, risco, rebalanceamento,
+> vencimentos) é o produto; a inteligência de mercado e a narrativa de IA são a camada que o serve.
+> Em consequência, **§2 (personas), §13 (roadmap) e §14 (escopo) estão SUBSTITUÍDOS** — a arquitetura
+> e a ordem de build estão em **[docs/migracao-arquitetura.md](docs/migracao-arquitetura.md)**
+> (infra: Vercel · Neon · Upstash · Railway). O doc do pivô anterior de 2026-06-03 foi arquivado em
+> [docs/archive/arquitetura-alvo.md](docs/archive/arquitetura-alvo.md). As seções abaixo permanecem
+> como histórico até serem reescritas (F8 do plano de migração).
 
 ---
 
@@ -33,9 +33,9 @@ A Bull é uma **plataforma de inteligência de mercado brasileiro para profissio
 
 ## 2. Modelo de negócio e personas
 
-> ⚠️ **SUBSTITUÍDO pelo pivô de 2026-06-03** (ver banner no topo). As personas CFP/influencer/AAI abaixo
-> não são mais o alvo primário; o produto passou a advisor-augmentation para firma de wealth. Mantido
-> como histórico até reescrita. Direção atual: [docs/arquitetura-alvo.md §0](docs/arquitetura-alvo.md).
+> ⚠️ **SUBSTITUÍDO** (ver banner no topo). As personas CFP/influencer/AAI abaixo não são mais o alvo
+> primário; o produto é advisor-augmentation (assessor financeiro / firma de wealth). Mantido como
+> histórico até reescrita. Direção atual: [docs/migracao-arquitetura.md](docs/migracao-arquitetura.md).
 
 ### 2.1 Pivô (decidido em 2026-05-24)
 
@@ -525,11 +525,11 @@ docker compose up               # Postgres + API
 
 ## 13. Roadmap MVP B2B (até 10/jul/2026)
 
-> ⚠️ **SUBSTITUÍDO pelo pivô de 2026-06-03** (ver banner no topo). O roadmap abaixo (comparador, briefing
-> por email, export PDF para CFP/influencer) **não é mais o produto**. O novo core de MVP é gestão de
-> carteira + multiagent — recorte travado e ordem de build em
-> [docs/arquitetura-alvo.md §11](docs/arquitetura-alvo.md). A data 10/jul foi resetada pelo pivô. Mantido
-> abaixo como histórico.
+> ⚠️ **SUBSTITUÍDO** (ver banner no topo). O roadmap abaixo (comparador, briefing por email, export PDF
+> para CFP/influencer) **não é mais o produto**. O core do MVP é gestão de carteiras para assessores —
+> ordem de build da migração em [docs/migracao-arquitetura.md §12](docs/migracao-arquitetura.md); o
+> domínio de carteira entra depois via Spec Kit. A data 10/jul foi resetada. Mantido abaixo como
+> histórico.
 
 > **Hoje**: 2026-05-24. **Deadline**: 2026-07-10. **Janela**: 47 dias, ~6,5 sprints semanais.
 
@@ -668,11 +668,12 @@ docker compose up               # Postgres + API
 
 ## 14. O que NÃO fazer
 
-> ⚠️ **PARCIALMENTE SUBSTITUÍDO pelo pivô de 2026-06-03.** As proibições de UI/código/workflow (§14.3,
-> §14.4) seguem válidas. Mas §14.1 (produto) mudou: gestão de carteira, suitability-adjacente e import de
-> book de cliente **passaram a estar no escopo**. As regras editoriais (nunca recomendar de forma não-
-> atribuída) continuam — agora enforçadas pelo Guardião em código, ver
-> [docs/arquitetura-alvo.md §5](docs/arquitetura-alvo.md).
+> ⚠️ **PARCIALMENTE SUBSTITUÍDO** (ver banner no topo). As proibições de UI/código/workflow (§14.3,
+> §14.4) seguem válidas. Mas §14.1 (produto) mudou: gestão de carteira, risco/FGC e import de book de
+> cliente **passaram a estar no escopo**. §14.2 também mudou parcialmente: Redis (Upstash, utilitário)
+> e schemas isolados no Neon estão no plano — ver decisões D4–D11 em
+> [docs/migracao-arquitetura.md §4](docs/migracao-arquitetura.md). As regras editoriais (nunca
+> recomendar de forma não-atribuída) continuam — enforçadas pelo Guardião, fail-closed.
 
 ### 14.1 Produto
 
