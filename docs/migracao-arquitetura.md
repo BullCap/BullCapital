@@ -321,9 +321,10 @@ A sequência respeita as dependências; F2 corre em paralelo a qualquer momento.
 ### Marco A — Fundação e seams (F0 · F1 · F2)
 **Tema:** fixar contratos e formalizar os módulos do web sem mover lógica de dados ainda.
 
-- [ ] F0 — contrato do dado lido pelas tools (snapshot + envelope de provenance) e contrato BFF↔AI (SSE)
-- [ ] F1 — `web/src/modules/{market,portfolio,user}/`; `services/market.ts` → Módulo market
-- [ ] F2 — remover front de news (`/news`, `components/news`); ingestão segue na IA; digest fica (§4.1)
+- [x] F0 — contratos versionados em [contracts/data-envelope.md](contracts/data-envelope.md) e
+      [contracts/bff-ai-sse.md](contracts/bff-ai-sse.md); tipos em `modules/market/types.ts`
+- [x] F1 — `web/src/modules/{market,portfolio,user}/`; `services/market.ts` → Módulo market
+- [x] F2 — remover front de news (`/news`, `components/news`); ingestão segue na IA; digest fica (§4.1)
 
 **Pronto quando:** módulos têm `index.ts` público, BFF roteia por eles, front de news removido,
 contratos de borda revisados e versionados.

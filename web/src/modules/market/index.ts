@@ -2,3 +2,4 @@
 // Consumers import from '@/modules/market' only — never from internal files.
 // Seam rules: docs/migracao-arquitetura.md §5.
 export * from './data/market'
+export * from './types'
