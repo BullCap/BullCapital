@@ -7,35 +7,16 @@ import { Prisma } from '@/generated/prisma/client'
 import type { BrapiQuote, HistoryRecord } from '../ingest/brapi'
 import { toFloat } from '../ingest/brapi'
 
-const SCHEMA = 'ai' // becomes 'market' in F5
+import { MARKET_DDL } from './schema-sql'
 
 let bootstrapped: Promise<void> | null = null
 
-/** Creates ingest bookkeeping tables once per runtime instance (idempotent). */
+/** Creates/upgrades the module-owned market tables once per runtime (idempotent). */
 export function ensureIngestTables(): Promise<void> {
   bootstrapped ??= (async () => {
-    await prisma.$executeRawUnsafe(`
-      CREATE TABLE IF NOT EXISTS ${SCHEMA}.ingest_runs (
-        id text PRIMARY KEY DEFAULT gen_random_uuid()::text,
-        job text NOT NULL,
-        source text NOT NULL,
-        started_at timestamptz NOT NULL,
-        finished_at timestamptz NOT NULL DEFAULT now(),
-        ok_count integer NOT NULL DEFAULT 0,
-        fail_count integer NOT NULL DEFAULT 0
-      )`)
-    await prisma.$executeRawUnsafe(`
-      CREATE INDEX IF NOT EXISTS ix_ingest_runs_job_finished
-        ON ${SCHEMA}.ingest_runs (job, finished_at DESC)`)
-    await prisma.$executeRawUnsafe(`
-      CREATE TABLE IF NOT EXISTS ${SCHEMA}.ingest_locks (
-        job text PRIMARY KEY,
-        locked_until timestamptz NOT NULL
-      )`)
-    // Column previously added by the FastAPI lifespan; the module owns it now (F3).
-    await prisma.$executeRawUnsafe(`
-      ALTER TABLE IF EXISTS ${SCHEMA}.macro_indicators
-        ADD COLUMN IF NOT EXISTS updated_at timestamptz DEFAULT CURRENT_TIMESTAMP`)
+    for (const statement of MARKET_DDL) {
+      await prisma.$executeRawUnsafe(statement)
+    }
   })()
   return bootstrapped
 }
