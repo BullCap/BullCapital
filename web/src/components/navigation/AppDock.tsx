@@ -1,8 +1,8 @@
 import Link from 'next/link'
-import { BarChart3, Newspaper, Search, Sparkles, Terminal } from 'lucide-react'
+import { BarChart3, Search, Sparkles, Terminal } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-export type AppDockSection = 'market' | 'news' | 'search' | 'analysis' | 'terminal'
+export type AppDockSection = 'market' | 'search' | 'analysis' | 'terminal'
 
 interface AppDockProps {
   active: AppDockSection
@@ -10,7 +10,6 @@ interface AppDockProps {
 
 const DOCK_ITEMS = [
   { key: 'market', href: '/home', label: 'Mercado', icon: BarChart3 },
-  { key: 'news', href: '/news', label: 'Notícias', icon: Newspaper },
   { key: 'search', href: '/search', label: 'Buscar', icon: Search },
   { key: 'terminal', href: '/terminal', label: 'Terminal', icon: Terminal },
   { key: 'analysis', href: '/analysis', label: 'Análises', icon: Sparkles },
@@ -21,7 +20,7 @@ export default function AppDock({ active }: AppDockProps) {
     <aside className="pointer-events-none fixed inset-x-0 bottom-0 z-30 px-3 pb-[max(env(safe-area-inset-bottom),0.75rem)] lg:hidden">
       <div className="bull-dock-shell pointer-events-auto mx-auto flex max-w-sm flex-col gap-2 p-2 lg:max-w-none">
         <nav
-          className="grid grid-cols-5 gap-1 rounded-[1.45rem] border border-white/[0.08] bg-black/35 p-1 lg:grid-cols-1"
+          className="grid grid-cols-4 gap-1 rounded-[1.45rem] border border-white/[0.08] bg-black/35 p-1 lg:grid-cols-1"
           aria-label="Navegação principal"
         >
           {DOCK_ITEMS.map((item) => {

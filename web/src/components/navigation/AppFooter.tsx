@@ -5,7 +5,6 @@ const footerLinks = {
   Plataforma: [
     { label: 'Mercado', href: '/home' },
     { label: 'Buscar ativos', href: '/search' },
-    { label: 'Notícias', href: '/news' },
     { label: 'Carteira de trabalho', href: '/terminal' },
   ],
   Recursos: [

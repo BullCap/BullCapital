@@ -35,7 +35,6 @@ export async function followTicker(ticker: string): Promise<void> {
     update: {},
   })
   revalidatePath('/home')
-  revalidatePath('/news')
   revalidatePath(`/asset/${normalized}`)
 }
 
@@ -45,7 +44,6 @@ export async function unfollowTicker(ticker: string): Promise<void> {
   const userId = await requireUserId()
   await prisma.watchlistItem.deleteMany({ where: { userId, ticker: normalized } })
   revalidatePath('/home')
-  revalidatePath('/news')
   revalidatePath(`/asset/${normalized}`)
 }
 
