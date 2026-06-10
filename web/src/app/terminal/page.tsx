@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import { Suspense, cache } from 'react'
 import { auth } from '@/lib/auth'
-import { getTerminalMarketSnapshot } from '@/lib/services/market'
+import { getTerminalMarketSnapshot } from '@/modules/market'
 import TerminalClient from '@/components/terminal/TerminalClient'
 import AppShell from '@/components/navigation/AppShell'
 import { GlassHighlight } from '@/components/atoms/GlassHighlight'

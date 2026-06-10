@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
-import { searchAssets } from '@/lib/services/market'
+import { searchAssets } from '@/modules/market'
 
 export async function GET(req: NextRequest) {
   const session = await auth()

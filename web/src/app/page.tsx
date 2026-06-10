@@ -11,7 +11,7 @@ import TopAssetsSection from '@/components/landing/TopAssetsSection'
 import MarketOverview from '@/components/landing/MarketOverview'
 import MarketHighlights from '@/components/landing/MarketHighlights'
 import Footer from '@/components/landing/Footer'
-import { getLandingMarketSnapshot } from '@/lib/services/market'
+import { getLandingMarketSnapshot } from '@/modules/market'
 import { computeTemperature } from '@/lib/market-utils'
 import type { AssetQuote, LandingMarketSnapshot, MarketListingItem } from '@/types/market'
 

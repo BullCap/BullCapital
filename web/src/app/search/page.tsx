@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import { Suspense, cache } from 'react'
 import { auth } from '@/lib/auth'
-import { getAssetNews } from '@/lib/services/market'
+import { getAssetNews } from '@/modules/market'
 import SearchClient, { RecentNewsWidget } from '@/components/search/SearchClient'
 import AppShell from '@/components/navigation/AppShell'
 import ScrollFocus from '@/components/ui/ScrollFocus'

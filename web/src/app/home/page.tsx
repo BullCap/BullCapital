@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import { Suspense, cache } from 'react'
 import { auth } from '@/lib/auth'
-import { getHomeHighlightsSnapshot, getMarketPulseSnapshot } from '@/lib/services/market'
+import { getHomeHighlightsSnapshot, getMarketPulseSnapshot } from '@/modules/market'
 import { isMarketOpen } from '@/lib/market-utils'
 import { DailyBriefContent, DailyBriefSkeleton } from '@/components/home/DailyBriefContent'
 import type { BriefPulseData } from '@/components/home/DailyBriefHero'

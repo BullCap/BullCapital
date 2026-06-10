@@ -1,4 +1,4 @@
-import { getMarketIndicators } from '@/lib/services/market'
+import { getMarketIndicators } from '@/modules/market'
 import { ANALYSIS_API_URL, internalApiHeaders } from '@/lib/internal-api'
 
 export type TemperatureLevel = 'panico' | 'medo' | 'neutro' | 'ganancia' | 'euforia'

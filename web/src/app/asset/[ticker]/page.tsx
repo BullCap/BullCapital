@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import { Suspense, cache } from 'react'
 import { auth } from '@/lib/auth'
-import { getMarketRadarData, getAssetHistory, getAssetNews } from '@/lib/services/market'
+import { getMarketRadarData, getAssetHistory, getAssetNews } from '@/modules/market'
 import { fetchMarketQuote, isMarketOpen } from '@/lib/market-utils'
 import { normalizeTicker } from '@/lib/market-routing'
 import AssetHeader, { AssetHeaderSkeleton } from '@/components/asset/AssetHeader'

@@ -1,6 +1,6 @@
 'use server'
 
-import { getMarketRadarData, getMarketStatus, getAssetNews, getCurrencyRates } from '@/lib/services/market'
+import { getMarketRadarData, getMarketStatus, getAssetNews, getCurrencyRates } from '@/modules/market'
 import { ANALYSIS_API_URL, internalApiHeaders } from '@/lib/internal-api'
 import { fetchSELIC } from '@/lib/market-utils'
 import { normalizeTicker } from '@/lib/market-routing'

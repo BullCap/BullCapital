@@ -2,7 +2,7 @@
 
 import { auth } from '@/lib/auth'
 import { normalizeTicker } from '@/lib/market-routing'
-import { getAssetHistory, getMultipleQuotes } from '@/lib/services/market'
+import { getAssetHistory, getMultipleQuotes } from '@/modules/market'
 import type { AssetHistoryResult, AssetQuote } from '@/types/market'
 
 export async function fetchTerminalQuotes(tickers: string[]): Promise<AssetQuote[]> {

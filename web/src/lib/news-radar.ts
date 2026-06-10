@@ -1,5 +1,5 @@
 import { buildAssetHref } from '@/lib/market-routing'
-import { getAssetNews, getLatestNews } from '@/lib/services/market'
+import { getAssetNews, getLatestNews } from '@/modules/market'
 import type { AssetNewsItem } from '@/types/market'
 
 export const MARKET_NEWS_TICKERS = ['^BVSP', 'PETR4', 'VALE3', 'ITUB4'] as const

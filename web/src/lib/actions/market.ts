@@ -1,6 +1,6 @@
 'use server'
 
-import { getAssetHistory } from '@/lib/services/market'
+import { getAssetHistory } from '@/modules/market'
 import type { AssetHistoryData } from '@/types/market'
 
 export async function fetchAssetHistory(
