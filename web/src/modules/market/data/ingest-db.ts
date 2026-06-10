@@ -32,6 +32,10 @@ export function ensureIngestTables(): Promise<void> {
         job text PRIMARY KEY,
         locked_until timestamptz NOT NULL
       )`)
+    // Column previously added by the FastAPI lifespan; the module owns it now (F3).
+    await prisma.$executeRawUnsafe(`
+      ALTER TABLE IF EXISTS ${SCHEMA}.macro_indicators
+        ADD COLUMN IF NOT EXISTS updated_at timestamptz DEFAULT CURRENT_TIMESTAMP`)
   })()
   return bootstrapped
 }
@@ -160,7 +164,7 @@ export async function upsertHistory(ticker: string, records: HistoryRecord[]): P
   const tickerUpper = ticker.trim().toUpperCase()
   try {
     const values = records.map(
-      (r) => Prisma.sql`(gen_random_uuid()::text, ${tickerUpper}, ${r.date}::date,
+      (r) => Prisma.sql`(gen_random_uuid(), ${tickerUpper}, ${r.date}::date,
         ${r.open}, ${r.high}, ${r.low}, ${r.close}, ${r.volume}, now())`
     )
     await prisma.$executeRaw`
@@ -189,8 +193,10 @@ export interface MacroRecord {
 export async function upsertMacroRecords(records: MacroRecord[]): Promise<boolean> {
   if (records.length === 0) return false
   try {
+    // Reads can trigger this outside a cron lease; make sure updated_at exists.
+    await ensureIngestTables()
     const values = records.map(
-      (r) => Prisma.sql`(gen_random_uuid()::text, ${r.seriesId}, ${r.name}, ${r.date}::date, ${r.value}, now(), now())`
+      (r) => Prisma.sql`(gen_random_uuid(), ${r.seriesId}, ${r.name}, ${r.date}::date, ${r.value}, now(), now())`
     )
     await prisma.$executeRaw`
       INSERT INTO "ai"."macro_indicators" (id, series_id, name, date, value, created_at, updated_at)
