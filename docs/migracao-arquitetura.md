@@ -411,6 +411,8 @@ ordem compatível (produtor novo emitindo campos opcionais antes de consumidor e
 | `OPENROUTER_API_KEY` | Web | `sk-or-...` | Vercel env / `.env.local` | opcional; legado do daily/story brief até mover narrativa para AI Service |
 | `UPSTASH_REDIS_REST_URL` | Web | `https://x.upstash.io` | Vercel env | F4+ |
 | `UPSTASH_REDIS_REST_TOKEN` | Web | `AX...` | Vercel env | F4+ |
+| `SUPABASE_TRANSACTION_POOLER` | Web | `postgresql://...pooler.supabase.com:6543/postgres` | Vercel env / `.env.local` | F4+ (leitura de fallback do snapshot — ADR 0006) |
+| `SUPABASE_DIRECT_CONNECTION` | Web | `postgresql://...supabase.co:5432/postgres` | Vercel env / `.env.local` | F4+ (job de sync do snapshot — escrita só via cron) |
 | `DATABASE_URL` | AI Service | `postgresql+asyncpg://user:pass@host/db?ssl=require` | Railway variables / `.env` | sim |
 | `DATABASE_SSL` | AI Service | `true` | Railway variables / `.env` | sim em produção |
 | `DATABASE_CA_CERT` | AI Service | caminho ou PEM | Railway variables | opcional |

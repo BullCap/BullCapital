@@ -143,8 +143,10 @@ BullCapital/
 
 - Node.js >= 20
 - pnpm >= 9 (`npm install -g pnpm`)
-- Docker Desktop com Compose v2
-- Python 3.11+
+- Docker com Compose v2
+
+> Este repo é **front + back (Next.js)**. O AI Service (FastAPI) vive no repo `bullcapital-ai` e só é
+> necessário para conversa IA e news — o setup abaixo funciona sem ele.
 
 ### 1. Clone e instale
 
@@ -158,19 +160,20 @@ cd web && pnpm install && cd ..
 ### 2. Configure as variáveis de ambiente
 
 ```bash
-# Web
-cp web/.env.local.example web/.env.local
-# Preencha: NEXTAUTH_SECRET, NEXTAUTH_URL, DATABASE_URL, ANALYSIS_API_URL
-
-# API
-cp api/.env.example api/.env
-# Preencha: DATABASE_URL, BRAPI_KEY, OPENAI_API_KEY, CORS_ORIGINS
+cp web/.env.example web/.env.local
 ```
 
-Gere o `NEXTAUTH_SECRET`:
+Para dev local, basta preencher:
+
 ```bash
-openssl rand -base64 32
+NEXTAUTH_SECRET=        # openssl rand -base64 32
+NEXTAUTH_URL=http://localhost:3000
+DATABASE_URL=postgresql://bullcapital:bullcapital@localhost:5432/bullcapital
+DIRECT_URL=postgresql://bullcapital:bullcapital@localhost:5432/bullcapital
+CRON_SECRET=dev-cron-secret
 ```
+
+`BRAPI_KEY` é opcional (o seed cobre as telas); `ANALYSIS_API_URL` só importa com o AI Service rodando.
 
 ### 3. Suba o banco de dados
 
@@ -179,36 +182,51 @@ docker compose up -d db
 docker compose ps   # confirme que está healthy
 ```
 
-### 4. Rode as migrations
+### 4. Migrations + seed
 
 ```bash
 cd web
-pnpm prisma migrate dev
+pnpm db:migrate
+pnpm db:seed     # usuário dev + tabelas de mercado + dados sintéticos
 ```
+
+O seed cria `dev@bullcapital.app` / `senha123456` e dados de mercado suficientes para as telas
+renderizarem **sem nenhuma API key**.
 
 ### 5. Inicie a aplicação web
 
 ```bash
-cd web && pnpm dev
+pnpm dev
 # → http://localhost:3000
 ```
 
-### 6. Inicie a API (necessário para análises com IA)
+### 6. (Opcional) Dados reais de mercado
+
+Com `BRAPI_KEY` preenchida, dispare o cron de ingestão manualmente:
 
 ```bash
-cd api
-python -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
-uvicorn app.main:app --reload --port 8001
-# → http://localhost:8001
+curl -H "Authorization: Bearer dev-cron-secret" http://localhost:3000/api/cron/eod
+# verifique: SELECT * FROM ai.ingest_runs ORDER BY finished_at DESC LIMIT 1;
+```
+
+### 7. (Opcional) AI Service — conversa IA e news
+
+```bash
+git clone <bullcapital-ai> ../bullcapital-ai   # lado a lado com este repo
+docker compose up -d api                        # builda de ../bullcapital-ai
+# → http://localhost:8001 (ou rode uvicorn dentro do repo da IA)
 ```
 
 ### Verificação
 
-1. `http://localhost:3000` → landing page com fundo escuro
+1. `http://localhost:3000` → landing com dados de mercado (PETR4, VALE3, Ibovespa)
 2. `http://localhost:3000/home` → redireciona para sign-in
-3. `http://localhost:3000/auth/sign-up` → formulário de cadastro
-4. Crie uma conta, faça login → redireciona para `/home`
+3. Login com `dev@bullcapital.app` / `senha123456` → `/home` com indicadores
+4. `http://localhost:3000/terminal` → watchlist com quotes do seed
+5. `curl` sem o header de auth em `/api/cron/eod` → `401`
+
+> **Validação do critério §0.1:** outra pessoa, em máquina limpa, deve cronometrar do `git clone` até o
+> passo 5 acima (meta: ≤ 30 min). Toda dúvida que surgir vira patch neste README antes de fechar.
 
 ---
 
@@ -270,18 +288,19 @@ specs/<número>-<nome-da-feature>/
 
 ## Design System
 
-Filosofia: **"The Financial Reading Room"** — calmo, contextual, sério mas acessível. Não é um terminal de trading.
+Filosofia: **"The Financial Reading Room"** — calmo, contextual, sério mas acessível. **Flat-editorial** (reescrito 01-jun-2026): clareza por tipografia e respiro, não por material. Ver [system-design.md](system-design.md) para a spec completa.
 
 ### Tokens de cor
 
 | Token | Hex | Uso |
 |---|---|---|
-| Void | `#0D0B14` | Background mais profundo |
-| Surface | `#1A1625` | Background de cards |
-| Starlight | `#F4F0FF` | Texto primário |
-| Amethyst | `#8B5CF6` | Acento, positivo, destaques |
-| Rose | `#F43F5E` | Negativo, alertas |
-| Glass | `rgba(255,255,255,0.05–0.15)` | Camadas de vidro |
+| Void | `#050308` | Background da página |
+| Surface | `#0D0A13` | Superfície sólida de cards |
+| Surface-2 | `#12161F` | Elevação (hover) |
+| Starlight | `#e2def0` | Texto primário |
+| Muted | `rgba(226,222,240,.55)` | Texto secundário |
+| Amethyst | `#82759F` | Acento único — sem glow |
+| Border | `rgba(255,255,255,.06–.10)` | Separação entre superfícies |
 
 ### Tipografia
 
@@ -291,8 +310,8 @@ Filosofia: **"The Financial Reading Room"** — calmo, contextual, sério mas ac
 ### Anatomia de cards
 
 ```tsx
-<div className="rounded-[2.5rem] border border-white/10 bg-[#1A1625]/40 backdrop-blur-2xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.15)]">
-  <GlassHighlight widthPercent={60} />
+<div className="rounded-2xl border border-white/[0.06] bg-surface p-6">
+  {/* hierarquia por tipografia + espaço, não por sombra/glow */}
   {/* conteúdo */}
 </div>
 ```
@@ -301,16 +320,14 @@ Filosofia: **"The Financial Reading Room"** — calmo, contextual, sério mas ac
 
 | Componente | Onde usar |
 |---|---|
-| `GlassHighlight` | Topo de todo card/painel |
 | `VariationBadge` | Qualquer variação percentual de ativo |
-| `MarketTemperatureDial` | Gauge de temperatura de mercado |
 
 ### Regras invioláveis
 
-1. Nenhum design plano — toda superfície tem profundidade (sombra, blur, highlight)
-2. Nenhuma cor fora da paleta acima
-3. Todos os cantos arredondados — mínimo `rounded-xl`, cards `rounded-[2.5rem]`
-4. Glassmorphism em todo card — `backdrop-blur`, `bg-.../40`, `border-white/10`
+1. Flat obrigatório — superfícies sólidas, separação por borda 1px + tom. Sem `backdrop-blur`, glow ou stack de `inset-shadow`
+2. Nenhuma cor fora da paleta acima; um acento só (Amethyst)
+3. Cantos contidos — `rounded-xl`/`rounded-2xl` (`rounded-[2.5rem]` é legado)
+4. Baixa densidade — corte conteúdo antes de adicionar caixas
 5. Todo texto para o usuário em **português brasileiro (pt-BR)**
 6. Sem skeleton loaders — use Suspense com estados vazios elegantes
 
@@ -401,7 +418,7 @@ docker compose logs -f api      # Logs do serviço API
 - Modificar `web/prisma/schema.prisma` — schema de auth, está completo
 - Adicionar OAuth ou login social — fora do escopo MVP
 - Usar texto em inglês na interface — tudo pt-BR
-- Usar design plano — sempre aplique glassmorphism
+- Usar material/glass decorativo (`backdrop-blur`, glow) — o design é flat-editorial
 - Adicionar rastreamento de portfólio, Open Finance, ou alertas — fora do MVP
 - Criar um chat de IA genérico — análises sempre partem de um ativo ou evento concreto
 - Dividir em dois bancos de dados — um PostgreSQL para tudo no MVP
