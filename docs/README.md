@@ -57,6 +57,80 @@ flowchart TB
   market -.->|"fallback de leitura, sempre rotulado"| supabase
 ```
 
+## Fluxo de deploy e variáveis de ambiente
+
+Fonte editável versionada: [diagrams/deploy-e-envs.mmd](diagrams/deploy-e-envs.mmd). Tabelas normativas:
+[§8.1 e §8.2 do plano](migracao-arquitetura.md#81-fluxo-de-deploy-por-deployable).
+
+```mermaid
+flowchart TB
+  pr["PR aprovado e mergeado"]
+
+  pr -->|"mudanca em web/** ou docs/contracts/**"| w1
+  pr -->|"mudanca no repo bullcapital-ai"| a1
+
+  subgraph web_pipe["Pipeline Web App - Vercel"]
+    direction TB
+    w1["1. prisma migrate deploy - usa DIRECT_URL, roda antes do app"]
+    w2["2. next build + deploy"]
+    w3["3. Vercel Cron ativo: /api/cron/quotes em pregao e /api/cron/eod 21:45 UTC"]
+    w4["rollback: build anterior no Vercel; schema so avanca - migration corretiva, nunca reset"]
+    w1 --> w2 --> w3
+    w2 -. "falha" .-> w4
+  end
+
+  subgraph ai_pipe["Pipeline AI Service - repo bullcapital-ai"]
+    direction TB
+    a1["1. Alembic - schemas news/ai, quando existir"]
+    a2["2. build Dockerfile + deploy - Railway como hipotese de trabalho"]
+    a3["rollback: versao anterior compativel com o contrato SSE"]
+    a1 --> a2
+    a2 -. "falha" .-> a3
+  end
+
+  contract["Bump de contrato BFF-AI (SSE/envelope):\nversao nova, fixtures dos dois lados,\nprodutor emite campos opcionais ANTES\nde consumidor exigir obrigatorios"]
+  web_pipe -.-> contract
+  ai_pipe -.-> contract
+
+  subgraph vercel_env["Env vars - Vercel (Web)"]
+    direction TB
+    ev1["DATABASE_URL - Neon pooled (runtime)"]
+    ev2["DIRECT_URL - Neon direto (so migrations)"]
+    ev3["NEXTAUTH_SECRET + NEXTAUTH_URL"]
+    ev4["ANALYSIS_API_URL + API_SHARED_SECRET"]
+    ev5["BRAPI_KEY (ingestao) + CRON_SECRET (protege /api/cron/*)"]
+    ev6["F4+: UPSTASH_REDIS_REST_URL / TOKEN"]
+    ev7["F4+: SUPABASE_TRANSACTION_POOLER (leitura fallback)\nSUPABASE_DIRECT_CONNECTION (job de sync)"]
+  end
+
+  subgraph ai_env["Env vars - host da IA"]
+    direction TB
+    ea1["DATABASE_URL - role escopada D9:\nwrite news/ai - read-only market/portfolio"]
+    ea2["OPENAI_API_KEY / OPENROUTER_API_KEY / OPENROUTER_MODEL"]
+    ea3["API_SHARED_SECRET - mesmo valor do web"]
+    ea4["CORS_ORIGINS + DATABASE_SSL + LOG_LEVEL"]
+    ea5["MARKET_SCHEDULERS_ENABLED=false apos handoff F3"]
+  end
+
+  web_pipe --- vercel_env
+  ai_pipe --- ai_env
+
+  neon[("Neon - banco real")]
+  supabase[("Supabase - Snapshot DB")]
+  upstash[("Upstash - Redis")]
+
+  ev1 --> neon
+  ev2 --> neon
+  ea1 --> neon
+  ev7 --> supabase
+  ev6 --> upstash
+  ev4 -. "server-to-server autenticado" .- ea3
+```
+
+Regras que o diagrama resume: cada deployable mantém exatamente um `.env.example` versionado que bate
+com a tabela §8.2; nova env var só passa em PR se tabela e exemplo mudarem juntos; o Upstash nunca é
+pré-requisito para servir snapshot; escrita no Supabase só pelo job de sync, nunca no caminho de request.
+
 ## Documentos normativos
 
 - [Plano de migração](migracao-arquitetura.md) - destino, ordem de build e critérios de aceite.
