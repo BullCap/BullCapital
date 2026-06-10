@@ -84,15 +84,13 @@ async def macro_news_scheduler_loop():
                         from app.services.bcb_sgs import ingest_macro_indicators, ingest_ptax_dollar
                         from app.services.news_ingest import ingest_brazilian_news
 
-                        results = await asyncio.gather(
-                            ingest_macro_indicators(),
-                            ingest_ptax_dollar(),
-                            ingest_brazilian_news(),
-                            return_exceptions=True,
-                        )
-                        for result in results:
-                            if isinstance(result, Exception):
-                                logger.warning("Scheduler child ingestion failed: %s", result)
+                        jobs: list[Awaitable[object]] = [ingest_brazilian_news()]
+                        if settings.market_schedulers_enabled:
+                            jobs += [ingest_macro_indicators(), ingest_ptax_dollar()]
+                        results = await asyncio.gather(*jobs, return_exceptions=True)
+                        for outcome in results:
+                            if isinstance(outcome, Exception):
+                                logger.warning("Scheduler child ingestion failed: %s", outcome)
                     finally:
                         await conn.execute(text("SELECT pg_advisory_unlock(1002)"))
                 else:
@@ -180,23 +178,27 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
                 from app.services.market_ingest import ingest_all_quotes
                 from app.services.news_ingest import ingest_brazilian_news
 
-                await asyncio.gather(
-                    ingest_all_quotes(),
-                    ingest_macro_indicators(),
-                    ingest_ptax_dollar(),
-                    ingest_brazilian_news(),
-                    return_exceptions=True,
-                )
+                jobs: list[Awaitable[object]] = [ingest_brazilian_news()]
+                if settings.market_schedulers_enabled:
+                    jobs += [
+                        ingest_all_quotes(),
+                        ingest_macro_indicators(),
+                        ingest_ptax_dollar(),
+                    ]
+                await asyncio.gather(*jobs, return_exceptions=True)
                 logger.info("Cold-start ingestion complete")
         except Exception as e:
             logger.error("Cold-start ingestion failed: %s", e, exc_info=True)
 
-    # Start background scheduler loops
+    # Start background scheduler loops. Quotes loop only runs while this service
+    # still owns market ingestion (pre-F3); macro/news loop always runs but skips
+    # the market jobs when the Vercel Cron handlers take over.
     scheduler_tasks = [
         asyncio.create_task(cold_start_ingest()),
-        asyncio.create_task(quotes_scheduler_loop()),
         asyncio.create_task(macro_news_scheduler_loop()),
     ]
+    if settings.market_schedulers_enabled:
+        scheduler_tasks.append(asyncio.create_task(quotes_scheduler_loop()))
     yield
     # Shutdown: Cancel background scheduler tasks
     for task in scheduler_tasks:

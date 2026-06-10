@@ -38,6 +38,13 @@ class Settings(BaseSettings):
     # Brapi
     brapi_key: str = ""
 
+    # Market schedulers (F3 of docs/migracao-arquitetura.md): set to false once
+    # the Vercel Cron handlers own market/macro ingestion. News ingestion is
+    # unaffected — it stays in this service (D2).
+    market_schedulers_enabled: bool = Field(
+        default=True, validation_alias="MARKET_SCHEDULERS_ENABLED"
+    )
+
     @field_validator("brapi_key", "openai_api_key", "openrouter_api_key", "api_shared_secret", mode="before")
     @classmethod
     def strip_whitespace(cls, v: str) -> str:
