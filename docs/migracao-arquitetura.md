@@ -22,11 +22,14 @@ desacopladas**, com infra definida:
 |---|---|
 | **Web App (Next.js)** — front + back (BFF) + módulos de negócio + cron jobs | **Vercel** |
 | **AI Service (FastAPI)** — orquestrador + tools, **repo próprio (`bullcapital-ai`)** | deploy **decidido no repo próprio** (Railway é a hipótese de trabalho atual) |
-| **Postgres único** — schemas isolados | **Neon** |
+| **Postgres real** — schemas isolados, fonte da verdade | **Neon** |
+| **Snapshot DB** — último snapshot bom, read-only no serving | **Supabase** |
 | **Redis utilitário** — rate-limit, locks, cache quente | **Upstash** |
 
-**Sem Supabase e sem segundo banco.** O conceito de "Snapshot DB Tier 2 em provider separado" foi
-descartado (ver D7): snapshot é tabela no próprio Neon, com staleness rotulada na leitura.
+**Decisão 2026-06-10 (D7 revisada):** o Tier 2 volta — **Supabase guarda o snapshot; Neon é o banco
+real**. O snapshot é escrito por job de sync (nunca pelo caminho de request) e lido apenas como
+fallback, sempre rotulado. *Ressalva operacional:* um fallback raramente lido não pode dormir —
+projeto Supabase em tier pago ou com keep-alive; monitorar idade do snapshot como métrica.
 
 **Princípio condutor:** *seams limpos antes de mover qualquer coisa.* A migração drena o plano de dados
 para fora da FastAPI (deixando-a AI puro), formaliza os módulos do web e só então extrai o AI Service
@@ -180,7 +183,7 @@ Monorepo pnpm com dois deployables.
 | D4 | Redis = **Upstash, utilitário** (rate-limit, locks de cron, cache quente) | remove rate-limiter in-process do `main.py`; Redis não é "tier" arquitetural nem fonte de verdade |
 | D5 | Seams internos primeiro; extração do AI Service só depois dos seams | módulo com interface limpa hoje = extração barata amanhã |
 | D6 | Infra: **Vercel** (front + back/BFF + cron) · **Neon** (Postgres único) · **Upstash** (Redis); deploy do AI Service é **decisão do repo `bullcapital-ai`** (Railway como hipótese de trabalho) | sem Supabase; Railway Postgres descomissionado quando a migração de schema terminar; o monorepo só exige do AI Service o contrato de borda (F0) e a role D9 |
-| D7 | **Snapshot de mercado = tabela no Neon** com envelope `{source, ts, stale}` calculado na leitura | sem segundo banco; um Postgres separado só protegeria contra queda do próprio Neon — cenário em que auth/portfolio já caíram junto |
+| D7 | **(revisada 2026-06-10)** Neon = banco real (fonte da verdade); **Supabase = Snapshot DB Tier 2** — último snapshot bom de mercado, sincronizado por job (cron) e **read-only no serving** | envelope `{source, ts, stale}` em toda leitura; app nunca escreve no Supabase no caminho de request; exige tier pago/keep-alive (free tier pausa por inatividade) e monitoramento da idade do snapshot |
 | D8 | **Ingestão dirigida pelo universo das carteiras**, EOD-first | universo = `SELECT DISTINCT ticker` de carteiras+watchlists, **deduplicado e global** (nunca per-user) + baseline fixo (IBOV + FIIs líquidos); job principal 1×/dia pós-fechamento; intraday best-effort durante o pregão |
 | D9 | AI Service acessa o **mesmo Neon com role escopada** | write em `news`/`ai`; **read-only** em `market`/`portfolio`; sem read replica, sem segundo banco |
 | D10 | **Snapshot de carteira existe dentro da janela de retenção** (revisado por D14): imutável enquanto vive, gravado no import e na valorização EOD, expira junto com a carteira | reprodutibilidade do relatório **dentro da sessão de análise**; o artefato durável é o relatório exportado (com hash + snapshot_ts impressos), não o banco; série temporal longa de drift fica **fora desta fase** |
@@ -273,12 +276,16 @@ universo = DISTINCT tickers (carteiras + watchlists) ∪ baseline (IBOV + FIIs l
 ### 6.3 Resiliência de leitura (sem segundo banco)
 
 ```
-Brapi ──timeout / 5xx / rate-limit──► Upstash (cache TTL 1-5min) ──miss/stale/unavailable──► Neon market.*
-                                                                                                  │
-                                                                        último bom read-only para consumidores
-                                                                                                  │
-                                                                    envelope {source, ts, stale}
+Brapi ──timeout / 5xx / rate-limit──► Upstash (cache TTL 1-5min) ──miss──► Neon market.* (banco real)
+                                                                               │ indisponível
+                                                                               ▼
+                                                                   Supabase (Snapshot DB, read-only)
+                                                                               │
+                                                                   envelope {source, ts, stale}
 ```
+
+- **Sync do snapshot:** job de cron copia o "último bom" de `market.*` (Neon) para o Supabase após
+  cada run EOD (e opcionalmente após runs intraday). O caminho de request nunca escreve no Supabase.
 
 - **Degradação visível**: nunca cai em silêncio; nunca fabrica número.
 - O "último snapshot bom" **é** a tabela `market.asset_quotes` com `updated_at` no Neon. Não há provider
