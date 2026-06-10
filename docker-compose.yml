@@ -16,9 +16,11 @@ services:
       timeout: 5s
       retries: 5
 
+  # AI Service extraído para repo próprio (F7) — clone lado a lado:
+  #   git clone <bullcapital-ai> ../bullcapital-ai
   api:
     build:
-      context: ./api
+      context: ../bullcapital-ai
     restart: unless-stopped
     ports:
       - '8001:8001'
