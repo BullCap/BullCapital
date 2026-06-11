@@ -2,8 +2,10 @@
 
 ## Status
 
-Aceita em 2026-06-10. **Substitui o ADR [0005](0005-fallback-em-dois-tiers.md)** na parte do snapshot
-(o cache quente Upstash e o envelope de staleness do 0005 permanecem válidos).
+**Revertida em 2026-06-11 pelo ADR [0007](0007-banco-unificado-neon-schema-como-contrato.md)** — o
+Supabase sai inteiro; snapshot vira schema próprio no Neon com PITR + export EOD opcional para Vercel
+Blob. Mantido como histórico. (Texto original: aceita em 2026-06-10, substituindo o ADR
+[0005](0005-fallback-em-dois-tiers.md) na parte do snapshot.)
 
 ## Contexto
 

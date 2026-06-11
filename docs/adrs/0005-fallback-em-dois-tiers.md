@@ -2,10 +2,10 @@
 
 ## Status
 
-Aceita em 2026-06-10. **Parcialmente substituída no mesmo dia pelo ADR
-[0006](0006-supabase-como-snapshot-db-tier-2.md)**: o snapshot passa a viver no Supabase (Tier 2 em
-provider separado). O cache quente Upstash, o envelope `{source, ts, stale}` e a semântica de
-degradação visível abaixo permanecem válidos.
+Aceita em 2026-06-10. Foi parcialmente substituída pelo ADR 0006 (Supabase como Tier 2) e
+**reafirmada em 2026-06-11 pelo ADR [0007](0007-banco-unificado-neon-schema-como-contrato.md)**, que
+reverte o 0006: snapshot fica no Neon, agora em **schema próprio (`snapshots`) com `snapshot_id`**.
+Cache quente Upstash, envelope `{source, ts, stale}` e degradação visível seguem válidos.
 
 ## Contexto
 

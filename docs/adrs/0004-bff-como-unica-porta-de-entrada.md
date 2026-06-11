@@ -2,7 +2,10 @@
 
 ## Status
 
-Aceita em 2026-06-10.
+Aceita em 2026-06-10. **Emendada em 2026-06-11 pelo ADR
+[0008](0008-sse-direto-com-token-curto-emitido-pelo-bff.md)**: o stream SSE passa a ir direto do
+cliente ao AI Service, autenticado por token curto emitido pela BFF — a BFF deixa de proxiar o stream e
+vira emissora de credencial. Todas as demais interações continuam passando exclusivamente pela BFF.
 
 ## Contexto
 
