@@ -14,16 +14,16 @@ flowchart TB
     w2 -. "falha" .-> w4
   end
 
-  subgraph ai_pipe["Pipeline AI Service - repo bullcapital-ai"]
+  subgraph ai_pipe["Pipeline AI Service - repo bullcapital-ai (host: escolha do time de IA)"]
     direction TB
     a1["1. Alembic - schemas news/ai, quando existir"]
-    a2["2. build Dockerfile + deploy - Railway como hipotese de trabalho"]
+    a2["2. build Dockerfile + deploy - qualquer host com FastAPI + SSE longo\n(Railway, Render, Fly...)"]
     a3["rollback: versao anterior compativel com o contrato SSE"]
     a1 --> a2
     a2 -. "falha" .-> a3
   end
 
-  contract["Bump de contrato BFF-AI (SSE/envelope):\nversao nova, fixtures dos dois lados,\nprodutor emite campos opcionais ANTES\nde consumidor exigir obrigatorios"]
+  contract["Contratos entre os times:\n1. schema do Neon (market/portfolio) - breaking change segue expand-contract\n2. eventos SSE/envelope - produtor emite campos opcionais ANTES\nde consumidor exigir obrigatorios"]
   web_pipe -.-> contract
   ai_pipe -.-> contract
 
@@ -32,31 +32,31 @@ flowchart TB
     ev1["DATABASE_URL - Neon pooled (runtime)"]
     ev2["DIRECT_URL - Neon direto (so migrations)"]
     ev3["NEXTAUTH_SECRET + NEXTAUTH_URL"]
-    ev4["ANALYSIS_API_URL + API_SHARED_SECRET"]
+    ev4["ANALYSIS_API_URL (server-to-server)\nNEXT_PUBLIC_ORCHESTRATOR_URL (SSE direto do browser)\nAPI_SHARED_SECRET (assina token curto de stream)"]
     ev5["BRAPI_KEY (ingestao) + CRON_SECRET (protege /api/cron/*)"]
     ev6["F4+: UPSTASH_REDIS_REST_URL / TOKEN"]
-    ev7["F4+: SUPABASE_TRANSACTION_POOLER (leitura fallback)\nSUPABASE_DIRECT_CONNECTION (job de sync)"]
+    ev7["opcional: BLOB_READ_WRITE_TOKEN (export EOD p/ Vercel Blob)"]
   end
 
   subgraph ai_env["Env vars - host da IA"]
     direction TB
-    ea1["DATABASE_URL - role escopada D9:\nwrite news/ai - read-only market/portfolio"]
+    ea1["DATABASE_URL - role escopada (ADR 0007):\nwrite news/ai - read-only market/portfolio"]
     ea2["OPENAI_API_KEY / OPENROUTER_API_KEY / OPENROUTER_MODEL"]
-    ea3["API_SHARED_SECRET - mesmo valor do web"]
-    ea4["CORS_ORIGINS + DATABASE_SSL + LOG_LEVEL"]
+    ea3["API_SHARED_SECRET - mesmo valor do web (valida token de stream)"]
+    ea4["CORS_ORIGINS (dominio do app - SSE direto) + DATABASE_SSL + LOG_LEVEL"]
     ea5["MARKET_SCHEDULERS_ENABLED=false apos handoff F3"]
   end
 
   web_pipe --- vercel_env
   ai_pipe --- ai_env
 
-  neon[("Neon - banco real")]
-  supabase[("Supabase - Snapshot DB")]
+  neon[("Neon - banco unico\n(market, portfolio, auth, news, ai, snapshots)")]
   upstash[("Upstash - Redis")]
+  blob[("Vercel Blob - export EOD opcional")]
 
   ev1 --> neon
   ev2 --> neon
   ea1 --> neon
-  ev7 --> supabase
   ev6 --> upstash
-  ev4 -. "server-to-server autenticado" .- ea3
+  ev7 --> blob
+  ev4 -. "token curto: BFF assina, IA valida" .- ea3

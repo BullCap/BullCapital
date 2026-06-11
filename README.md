@@ -23,36 +23,34 @@ Plataforma de inteligência de mercado brasileiro. Combina dados de mercado em t
 
 ## Arquitetura
 
-```
-Browser / Mobile (PWA)
-    └── Next.js 15 (App Router, Server Components, PWA)
-            ├── Auth: NextAuth v5 (email/password, JWT)
-            ├── Dados de mercado: Brapi SDK → renda variável, índices, câmbio
-            └── Análise por IA: FastAPI (api/) ← análises contextuais
-                    └── PostgreSQL 16 + pgVector
-                            ├── Usuários / sessões (Prisma)
-                            └── Análises / histórico de conversa + embeddings (SQLAlchemy async)
-```
+> Documento canônico: [docs/README.md](docs/README.md) (diagramas Mermaid versionados + ADRs).
+> Plano de migração: [docs/migracao-arquitetura.md](docs/migracao-arquitetura.md).
 
-**Fluxo de dados:**
+**Stack final:** Vercel (este repo: front + back) + host do time de IA (repo `bullcapital-ai` — qualquer
+um que rode FastAPI com SSE de longa duração) + **Neon** (banco único) + **Upstash** (Redis utilitário).
+Quatro peças, um banco, contrato explícito entre os times.
 
 ```
-Cliente → Next.js Server Action → FastAPI /api/v1/* → Agno + OpenAI gpt-4o
-                                           ↓
-                                     Brapi (dados de mercado)
-                                           ↓
-                              PostgreSQL + pgVector (persistência)
+Browser / PWA
+    ├── HTTPS → Next.js (Vercel) — BFF + módulos market/portfolio/reports/user + cron de ingestão
+    │               └── Neon Postgres (schemas: market, portfolio, auth, news, ai, snapshots)
+    └── SSE direto → AI Service (repo bullcapital-ai) — narração com Guardião estrutural
+                        └── lê o MESMO Neon com role escopada (write news/ai; read-only market/portfolio)
 ```
 
-**Decisões de arquitetura:**
+**Decisões de arquitetura (resumo — ADRs em [docs/adrs/](docs/adrs/)):**
 
 | Decisão | Motivo |
 |---|---|
-| PWA em vez de app nativo | Zero atrito de app store; mercado brasileiro é dominado por Android com excelente suporte a PWA Chrome |
-| FastAPI como backend único | Concentra chamadas Brapi + inferência de IA; um banco, um serviço |
-| Next.js como BFF | Gerencia auth, serve o PWA, chama o FastAPI para análise |
-| Sem Turborepo | Overhead desnecessário para equipe pequena |
-| NextAuth com Credentials | Sem OAuth para o MVP; email/senha com bcrypt |
+| Banco unificado no Neon; schema = contrato entre os times (ADR 0007) | roles do Postgres como enforcement; mudança em `market`/`portfolio` é breaking change (expand-contract); PITR cobre corrupção |
+| Snapshots em schema próprio com `snapshot_id` | staleness rotulada na leitura; export EOD p/ Vercel Blob é o pára-quedas opcional |
+| SSE direto do cliente p/ IA com token curto assinado pela BFF (ADR 0008) | elimina re-emitter, hop duplo e limite de duração de função na Vercel; BFF emite credencial, não proxia stream |
+| Sem circuit breaker no MVP | estado de breaker em memória serverless é teatro; timeout + retry com backoff; se importar um dia, estado vai pro Upstash |
+| Ingestão (cron Brapi/BCB) no web app | o módulo market é dono do schema dele; locks de idempotência no Upstash |
+| Guardião estrutural, não filtro pós-hoc | LLM preenche slots de template restrito; número só entra por referência ao payload determinístico |
+| IA v1 = um endpoint de narração | news/RSS, embeddings (pgvector no schema `ai`) e orquestração de tools são v2 |
+| PWA em vez de app nativo | zero atrito de app store; Android-first |
+| NextAuth com Credentials | sem OAuth no MVP; email/senha com bcrypt |
 
 ---
 
@@ -65,13 +63,11 @@ Cliente → Next.js Server Action → FastAPI /api/v1/* → Agno + OpenAI gpt-4o
 | Estilização | Tailwind CSS + shadcn/ui | latest |
 | Auth | NextAuth v5 | 5.x |
 | ORM (web) | Prisma + pg adapter | 7 |
-| Backend | FastAPI | latest |
-| ORM (api) | SQLAlchemy async | 2 |
-| Agente de IA | Agno + OpenAI gpt-4o | latest |
-| Vetores | pgVector | 0.8 |
-| Dados de mercado | Brapi SDK | latest |
-| Banco de dados | PostgreSQL | 16 |
-| Container | Docker Compose | v2 |
+| AI Service | FastAPI (repo `bullcapital-ai`) | latest |
+| Dados de mercado | Brapi + BCB SGS (ingestão no web) | latest |
+| Banco de dados | PostgreSQL 16 — Neon em produção | 16 |
+| Redis | Upstash (rate-limit, locks, cache) | F4+ |
+| Container (dev) | Docker Compose | v2 |
 
 ---
 
@@ -106,23 +102,6 @@ BullCapital/
 │   │   └── schema.prisma       # Schema de auth (User, Account, Session)
 │   └── public/                 # Assets PWA, ícones, manifest
 │
-├── api/                        # Serviço FastAPI (Python)
-│   ├── app/
-│   │   ├── agent/
-│   │   │   ├── base.py         # AbstractBaseAgent
-│   │   │   └── market_analysis.py  # MarketAnalysisAgent (Agno + gpt-4o)
-│   │   ├── api/routes/
-│   │   │   ├── analysis.py     # POST/GET /api/v1/analysis
-│   │   │   ├── conversation.py # POST /api/v1/conversation
-│   │   │   └── health.py       # GET /api/v1/health
-│   │   ├── core/
-│   │   │   ├── config.py       # Pydantic settings
-│   │   │   └── database.py     # SQLAlchemy async session
-│   │   └── models/
-│   │       └── conversation.py # Conversation + Message + embeddings
-│   ├── requirements.txt
-│   └── requirements-dev.txt
-│
 ├── specs/                      # Especificações de features (Spec Kit)
 │   ├── 001-mvp-bootstrap/
 │   ├── 002-auth-screens/
@@ -130,9 +109,12 @@ BullCapital/
 │   ├── 004-asset-detail/
 │   └── 005-ai-conversation/
 │
-├── docker-compose.yml          # PostgreSQL 16 + serviço API
+├── docs/                       # Arquitetura: plano, diagramas, ADRs, contratos
+├── docker-compose.yml          # Postgres 16 + AI Service (build de ../bullcapital-ai)
 ├── system-design.md            # Design system completo
 └── CLAUDE.md                   # Instruções para agentes de IA
+
+> O AI Service (FastAPI) vive no repo separado `bullcapital-ai`, clonado lado a lado.
 ```
 
 ---
@@ -266,8 +248,10 @@ specs/<número>-<nome-da-feature>/
 
 ### Server Actions vs. API Routes
 
-- **Tudo que acessa dados de mercado ou IA** → Server Action em `web/src/lib/actions/`
-- **Lógica de IA e análise pesada** → FastAPI em `api/`
+- **Dados de mercado** → módulo `web/src/modules/market` (lê o Postgres direto), exposto por Server
+  Actions em `web/src/lib/actions/`
+- **Narrativa de IA** → AI Service no repo `bullcapital-ai`; o stream SSE vai direto do cliente com
+  token curto emitido pela BFF (ADR 0008)
 - **Não há API routes Next.js** para lógica de negócio — use Server Actions
 
 ### Adicionando uma nova tela
@@ -277,12 +261,12 @@ specs/<número>-<nome-da-feature>/
 3. Use Server Components por padrão; Client Components (`"use client"`) só quando necessário (interatividade, hooks de estado)
 4. Importe tipos de mercado de `web/src/types/market.ts` — não redefina
 
-### Adicionando um novo endpoint na API
+### Adicionando um novo endpoint na API de IA
 
-1. Crie o arquivo de rota em `api/app/api/routes/<nome>.py`
-2. Registre o router em `api/app/api/__init__.py`
-3. Adicione o contrato no `plan.md` da feature correspondente
-4. Chame via Server Action no Next.js — nunca direto do cliente
+1. Endpoint vive no repo `bullcapital-ai` (FastAPI)
+2. Se muda eventos SSE/envelope, é bump de contrato: atualize `docs/contracts/` aqui e siga a regra
+   produtor-antes-do-consumidor (§8.1 do plano)
+3. Mudança nos schemas `market`/`portfolio` do Neon é breaking change para a IA — expand-contract
 
 ---
 
@@ -352,21 +336,16 @@ Filosofia: **"The Financial Reading Room"** — calmo, contextual, sério mas ac
 ```bash
 NEXTAUTH_SECRET=           # openssl rand -base64 32
 NEXTAUTH_URL=http://localhost:3000
-DATABASE_URL=postgresql://bullcapital:bullcapital@localhost:5432/bullcapital
-ANALYSIS_API_URL=http://localhost:8001/api/v1
-API_SHARED_SECRET=         # mesmo valor configurado na API, quando habilitado
+DATABASE_URL=postgresql://bullcapital:bullcapital@localhost:5432/bullcapital   # Neon pooled em prod
+DIRECT_URL=postgresql://bullcapital:bullcapital@localhost:5432/bullcapital    # Neon direto em prod (migrations)
+CRON_SECRET=               # protege /api/cron/*
+BRAPI_KEY=                 # opcional em dev (seed cobre as telas); ingestão real
+ANALYSIS_API_URL=http://localhost:8001/api/v1   # AI Service (repo bullcapital-ai)
+API_SHARED_SECRET=         # assina o token curto de stream; mesmo valor na IA
 ```
 
-### `api/.env`
-
-```bash
-DATABASE_URL=postgresql+asyncpg://bullcapital:bullcapital@localhost:5432/bullcapital
-DATABASE_SSL=false
-API_SHARED_SECRET=         # mesmo valor configurado no web, quando habilitado
-BRAPI_KEY=                 # brapi.dev — fica apenas no backend/API
-OPENAI_API_KEY=            # platform.openai.com
-CORS_ORIGINS=http://localhost:3000
-```
+Tabela normativa completa (incluindo Upstash/Blob e as vars do host da IA): [§8.2 do plano](docs/migracao-arquitetura.md).
+As env vars do AI Service vivem no repo `bullcapital-ai`.
 
 ---
 
@@ -380,12 +359,15 @@ pnpm build                      # Build de produção
 pnpm type-check                 # Checagem TypeScript (sem emit)
 pnpm lint                       # ESLint
 pnpm test                       # Vitest
-pnpm prisma migrate dev         # Aplicar novas migrations
+pnpm db:migrate                 # Aplicar novas migrations
+pnpm db:seed                    # Usuário dev + dados de mercado sintéticos
 pnpm prisma studio              # UI do banco em :5555
 
-# API
-cd api
-uvicorn app.main:app --reload --port 8001   # Dev server em :8001
+# Ingestão manual (com BRAPI_KEY)
+curl -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/cron/eod
+
+# AI Service (repo separado, clone lado a lado)
+docker compose up -d api        # builda de ../bullcapital-ai
 
 # Docker
 docker compose up -d db         # Apenas banco de dados
@@ -404,7 +386,8 @@ docker compose logs -f api      # Logs do serviço API
 → Execute `pnpm prisma generate`
 
 **Dados de mercado retornando null**
-→ Normal sem `BRAPI_KEY` na API. Defina no `api/.env` ou Railway, nunca no web/client
+→ Rode `pnpm db:seed` (dados de dev) ou defina `BRAPI_KEY` no `web/.env.local` e dispare
+`/api/cron/eod`. A chave nunca vai para o client.
 
 **Serviço `db` não sobe**
 → Porta 5432 em uso. Execute `lsof -i :5432` e pare o Postgres local
@@ -421,11 +404,11 @@ docker compose logs -f api      # Logs do serviço API
 - Usar material/glass decorativo (`backdrop-blur`, glow) — o design é flat-editorial
 - Adicionar rastreamento de portfólio, Open Finance, ou alertas — fora do MVP
 - Criar um chat de IA genérico — análises sempre partem de um ativo ou evento concreto
-- Dividir em dois bancos de dados — um PostgreSQL para tudo no MVP
+- Dividir em dois bancos de dados — um Postgres (Neon), schemas isolados, roles como fronteira (ADR 0007)
 
 **Sempre:**
 - Importar tipos de mercado de `web/src/types/market.ts`
-- Usar Server Actions para chamadas ao FastAPI (nunca do cliente)
+- Usar Server Actions/BFF para dados (única exceção: SSE de narração, direto com token — ADR 0008)
 - Formatar moeda com `toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })`
 - Adicionar `GlassHighlight` ao topo de todo card
 - Proteger novas rotas autenticadas no `middleware.ts`

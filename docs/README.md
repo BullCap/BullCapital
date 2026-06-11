@@ -3,6 +3,9 @@
 Este README é o ponto de entrada para a arquitetura alvo da migração. O plano normativo completo está em
 [migracao-arquitetura.md](migracao-arquitetura.md).
 
+**Stack final:** Vercel (web) + host do time de IA (escolha deles — qualquer um que rode FastAPI com SSE
+de longa duração) + Neon + Upstash. Quatro peças, um banco, contrato explícito entre os times.
+
 ## Diagrama canônico
 
 Fonte editável versionada: [diagrams/arquitetura-alvo.mmd](diagrams/arquitetura-alvo.mmd).
@@ -12,50 +15,60 @@ flowchart TB
   client["Client Browser/PWA"]
 
   subgraph web["Deployable 1: Web App - Next.js / Vercel"]
-    bff["BFF (/api): auth, routing, circuit breakers, SSE re-emitter"]
-    market["Modulo market / Assets: Brapi, BCB SGS, cron, snapshots"]
-    portfolio["Modulo portfolio: import, reconciliacao, risco, FGC, snapshots"]
+    bff["BFF (/api): auth, routing, emissao de token de stream"]
+    market["Modulo market / Assets: Brapi, BCB SGS, cron"]
+    portfolio["Modulo portfolio: import, reconciliacao, risco, FGC"]
     reports["Modulo reports: composicao B2/B3, export, snapshot_id"]
     user["Modulo user: auth, perfil, sessao"]
   end
 
-  subgraph ai["Deployable 2: AI Service - FastAPI / Railway"]
-    orchestrator["Orquestrador: dispara tools em paralelo e consolida"]
-    guardian["Guardiao: valida provenance e bloqueia recomendacao"]
-    tools["Tools read-only: portfolio, market/assets, contexto"]
-    news["Modulo news: RSS, contexto e escrita em news"]
+  subgraph ai["Deployable 2: AI Service - FastAPI / host do time de IA (SSE longo)"]
+    narrator["v1: endpoint de narracao - recebe payload computado,\npreenche slots de template restrito e streama"]
+    guardian["Guardiao ESTRUTURAL: numeros so por referencia\nao payload deterministico; valida proveniencia de campos"]
+    v2["v2: news/RSS, embeddings (pgvector em ai),\norquestracao paralela de tools"]
   end
 
-  neon[("Neon Postgres - banco real\nschemas: market, portfolio, auth, news, ai")]
-  redis[("Upstash Redis\nrate-limit, locks, cache quente")]
-  supabase[("Supabase - Snapshot DB Tier 2\nultimo snapshot bom, read-only no serving")]
+  neon[("Neon Postgres - banco unico e CONTRATO entre os times\nschemas: market, portfolio, auth, news, ai, snapshots\nroles: IA write news/ai - read-only market/portfolio\nmudanca em market/portfolio = breaking change (expand-contract)\nPITR cobre corrupcao")]
+  redis[("Upstash Redis\nrate-limit, locks de cron, cache quente")]
+  blob[("Vercel Blob (opcional)\nexport EOD do ultimo snapshot bom - paraquedas de outage")]
 
-  client <-->|"HTTPS / SSE"| bff
-  bff <-->|"SSE normalizado"| orchestrator
+  client <-->|"HTTPS"| bff
+  client <-->|"SSE direto, token curto assinado pela BFF"| narrator
+  bff -->|"emite token curto (usuario + escopo + expiracao)"| client
 
   bff --> market
   bff --> portfolio
   bff --> reports
   bff --> user
 
-  reports -->|"blocos narrativos"| bff
-  orchestrator --> tools
-  orchestrator --> guardian
-  news -->|"usa interface publica de Assets\npara universo/identidade"| tools
+  narrator --> guardian
+  reports -->|"payload computado p/ blocos narrativos"| bff
 
-  market -->|"write market"| neon
+  market -->|"write market + snapshots"| neon
   portfolio -->|"write portfolio"| neon
   user -->|"write auth"| neon
-  news -->|"write news"| neon
-  orchestrator -->|"write ai"| neon
-  tools -->|"read-only market/portfolio"| neon
+  ai -->|"write news/ai - read-only market/portfolio (role)"| neon
 
   market <-->|"cache quente / locks"| redis
   bff -->|"rate-limit"| redis
-
-  market -->|"sync pos-EOD (cron)"| supabase
-  market -.->|"fallback de leitura, sempre rotulado"| supabase
+  market -.->|"export EOD (cron)"| blob
 ```
+
+Pontos que o diagrama assume conscientemente (ADRs [0007](adrs/0007-banco-unificado-neon-schema-como-contrato.md)
+e [0008](adrs/0008-sse-direto-com-token-curto-emitido-pelo-bff.md)):
+
+- **O schema do Neon é o contrato formal entre o time web e o time de IA.** Roles do Postgres são o
+  enforcement (IA: write `news`/`ai`, read-only `market`/`portfolio`); mudança em `market`/`portfolio`
+  é breaking change e segue expand-contract.
+- **SSE vai direto do cliente ao AI Service** com token curto assinado pela BFF — a BFF emite credencial,
+  não proxia stream. Sem circuit breaker no MVP: timeout + retry com backoff; estado de breaker, se um
+  dia importar, vai para o Upstash.
+- **Guardião é estrutural, não filtro pós-hoc**: o LLM preenche slots de template restrito e todo número
+  entra por referência ao payload determinístico; o Guardião valida proveniência de campos.
+- **Escopo v1 da IA: um endpoint de narração.** News/RSS, embeddings (pgvector no schema `ai`) e
+  orquestração de tools são v2.
+- **Snapshots têm schema próprio** com `snapshot_id` e staleness rotulada na leitura. PITR cobre
+  corrupção; export EOD para Vercel Blob é o pára-quedas opcional contra outage.
 
 ## Fluxo de deploy e variáveis de ambiente
 
@@ -79,16 +92,16 @@ flowchart TB
     w2 -. "falha" .-> w4
   end
 
-  subgraph ai_pipe["Pipeline AI Service - repo bullcapital-ai"]
+  subgraph ai_pipe["Pipeline AI Service - repo bullcapital-ai (host: escolha do time de IA)"]
     direction TB
     a1["1. Alembic - schemas news/ai, quando existir"]
-    a2["2. build Dockerfile + deploy - Railway como hipotese de trabalho"]
+    a2["2. build Dockerfile + deploy - qualquer host com FastAPI + SSE longo\n(Railway, Render, Fly...)"]
     a3["rollback: versao anterior compativel com o contrato SSE"]
     a1 --> a2
     a2 -. "falha" .-> a3
   end
 
-  contract["Bump de contrato BFF-AI (SSE/envelope):\nversao nova, fixtures dos dois lados,\nprodutor emite campos opcionais ANTES\nde consumidor exigir obrigatorios"]
+  contract["Contratos entre os times:\n1. schema do Neon (market/portfolio) - breaking change segue expand-contract\n2. eventos SSE/envelope - produtor emite campos opcionais ANTES\nde consumidor exigir obrigatorios"]
   web_pipe -.-> contract
   ai_pipe -.-> contract
 
@@ -97,39 +110,41 @@ flowchart TB
     ev1["DATABASE_URL - Neon pooled (runtime)"]
     ev2["DIRECT_URL - Neon direto (so migrations)"]
     ev3["NEXTAUTH_SECRET + NEXTAUTH_URL"]
-    ev4["ANALYSIS_API_URL + API_SHARED_SECRET"]
+    ev4["ANALYSIS_API_URL (server-to-server)\nNEXT_PUBLIC_ORCHESTRATOR_URL (SSE direto do browser)\nAPI_SHARED_SECRET (assina token curto de stream)"]
     ev5["BRAPI_KEY (ingestao) + CRON_SECRET (protege /api/cron/*)"]
     ev6["F4+: UPSTASH_REDIS_REST_URL / TOKEN"]
-    ev7["F4+: SUPABASE_TRANSACTION_POOLER (leitura fallback)\nSUPABASE_DIRECT_CONNECTION (job de sync)"]
+    ev7["opcional: BLOB_READ_WRITE_TOKEN (export EOD p/ Vercel Blob)"]
   end
 
   subgraph ai_env["Env vars - host da IA"]
     direction TB
-    ea1["DATABASE_URL - role escopada D9:\nwrite news/ai - read-only market/portfolio"]
+    ea1["DATABASE_URL - role escopada (ADR 0007):\nwrite news/ai - read-only market/portfolio"]
     ea2["OPENAI_API_KEY / OPENROUTER_API_KEY / OPENROUTER_MODEL"]
-    ea3["API_SHARED_SECRET - mesmo valor do web"]
-    ea4["CORS_ORIGINS + DATABASE_SSL + LOG_LEVEL"]
+    ea3["API_SHARED_SECRET - mesmo valor do web (valida token de stream)"]
+    ea4["CORS_ORIGINS (dominio do app - SSE direto) + DATABASE_SSL + LOG_LEVEL"]
     ea5["MARKET_SCHEDULERS_ENABLED=false apos handoff F3"]
   end
 
   web_pipe --- vercel_env
   ai_pipe --- ai_env
 
-  neon[("Neon - banco real")]
-  supabase[("Supabase - Snapshot DB")]
+  neon[("Neon - banco unico\n(market, portfolio, auth, news, ai, snapshots)")]
   upstash[("Upstash - Redis")]
+  blob[("Vercel Blob - export EOD opcional")]
 
   ev1 --> neon
   ev2 --> neon
   ea1 --> neon
-  ev7 --> supabase
   ev6 --> upstash
-  ev4 -. "server-to-server autenticado" .- ea3
+  ev7 --> blob
+  ev4 -. "token curto: BFF assina, IA valida" .- ea3
 ```
 
 Regras que o diagrama resume: cada deployable mantém exatamente um `.env.example` versionado que bate
 com a tabela §8.2; nova env var só passa em PR se tabela e exemplo mudarem juntos; o Upstash nunca é
-pré-requisito para servir snapshot; escrita no Supabase só pelo job de sync, nunca no caminho de request.
+pré-requisito para servir snapshot; migrate antes do app via `DIRECT_URL`, expand-contract, rollback de
+build sem rollback de schema — com dois times num banco só, essa disciplina é o que impede um time de
+quebrar o outro.
 
 ## Documentos normativos
 

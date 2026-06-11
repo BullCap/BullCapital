@@ -22,14 +22,14 @@ desacopladas**, com infra definida:
 |---|---|
 | **Web App (Next.js)** — front + back (BFF) + módulos de negócio + cron jobs | **Vercel** |
 | **AI Service (FastAPI)** — orquestrador + tools, **repo próprio (`bullcapital-ai`)** | deploy **decidido no repo próprio** (Railway é a hipótese de trabalho atual) |
-| **Postgres real** — schemas isolados, fonte da verdade | **Neon** |
-| **Snapshot DB** — último snapshot bom, read-only no serving | **Supabase** |
+| **Postgres único** — schemas `market·portfolio·auth·news·ai·snapshots`, fonte da verdade | **Neon** |
 | **Redis utilitário** — rate-limit, locks, cache quente | **Upstash** |
 
-**Decisão 2026-06-10 (D7 revisada):** o Tier 2 volta — **Supabase guarda o snapshot; Neon é o banco
-real**. O snapshot é escrito por job de sync (nunca pelo caminho de request) e lido apenas como
-fallback, sempre rotulado. *Ressalva operacional:* um fallback raramente lido não pode dormir —
-projeto Supabase em tier pago ou com keep-alive; monitorar idade do snapshot como métrica.
+**Decisão 2026-06-11 (D7 final — ADR 0007):** **Supabase sai inteiro.** Banco unificado no Neon;
+snapshots viram **schema próprio** com `snapshot_id` e staleness rotulada na leitura. PITR cobre
+corrupção; pára-quedas opcional contra outage = export EOD do último snapshot bom para **Vercel Blob**.
+O **schema do Neon é o contrato formal entre o time web e o time de IA** (roles como enforcement;
+mudança em `market`/`portfolio` é breaking change, expand-contract).
 
 **Princípio condutor:** *seams limpos antes de mover qualquer coisa.* A migração drena o plano de dados
 para fora da FastAPI (deixando-a AI puro), formaliza os módulos do web e só então extrai o AI Service
@@ -61,44 +61,15 @@ checklist de "docs prontas" é parcial.
 Diagrama canônico editável: [diagrams/arquitetura-alvo.mmd](diagrams/arquitetura-alvo.mmd). O render
 Mermaid vive no [README de arquitetura](README.md).
 
-```
-                          Client (Browser) — SSE / HTTP
-                                     │
-        ┌────────────────────────────┴───────────────────────┐
-        ▼                                                     ▼
-┌─────────────────────────────────────────┐      ┌──────────────────────────────┐
-│ DEPLOYABLE 1 — Web App (Next.js)         │      │ DEPLOYABLE 2 — AI Service     │
-│ VERCEL · BFF + módulos + cron            │      │ RAILWAY · FastAPI · repo      │
-│                                          │      │ separado                      │
-│  Camada BFF — auth · routing · circuit   │◀────▶│  Orquestrador (dispara·       │
-│  breakers   (/api)                       │ SSE  │  consolida) + Guardião        │
-│        │           │           │         │      │     │      │       │          │
-│        ▼           ▼           ▼         │      │     ▼      ▼       ▼          │
-│  ┌──────────┐ ┌──────────┐ ┌──────────┐  │      │  Carteira Notíc.  Contexto    │
-│  │ Módulo   │ │ Módulo   │ │ Módulo   │  │      │  (tools read-only sobre       │
-│  │ market   │ │ portfolio│ │ user     │  │      │   Postgres, role escopada)    │
-│  │ Brapi +  │ │ import · │ │ auth/    │  │      │  + ingestão de news (RSS)     │
-│  │ BCB SGS  │ │ risco ·  │ │ perfil   │  │      └──────────────────────────────┘
-│  │ + cron   │ │ snapshots│ │          │  │
-│  └────┬─────┘ └────┬─────┘ └────┬─────┘  │
-└───────┼────────────┼────────────┼────────┘
-        ▼            ▼            ▼
-┌──────────────────────────────────────────────────────────────────┐
-│ NEON — PostgreSQL · schema isolation (banco único)                 │
-│   market · portfolio · auth · news · ai (pgvector)                 │
-└──────────────────────────────────────────────────────────────────┘
-        ▲
-┌────────────────────────┐
-│ UPSTASH — Redis         │  rate-limit · locks de cron · cache quente de quotes
-└────────────────────────┘
-```
+O render canônico (com SSE direto, token de stream, schema `snapshots` e Vercel Blob) está no
+[README de arquitetura](README.md); o ASCII anterior foi removido para não divergir.
 
 ### 1.1 Responsabilidade de cada unidade
 
 | Unidade | Responsabilidade | Não faz | Por que existe separada |
 |---|---|---|---|
 | **Web App** | UI, BFF, Módulo market/Assets (ingestão Brapi/BCB via cron), Módulo portfolio (import, reconciliação, risco, snapshots), Módulo reports (composição B2/B3 + export), Módulo user | IA, ingestão de news, gerar narrativa, acessar `news`/`ai` diretamente | fica perto de auth, sessão, cron Vercel, composição determinística e experiência do assessor; é o único deployable que conversa com browser |
-| **AI Service** | Orquestrador + tools + Guardião, ingestão de news, narrativa (conversa + blocos narrativos de relatório) | servir UI, escrever em `market`/`portfolio`/`auth`, compor/exportar relatório, calcular risco/FGC/drift | isola custo/latência/falhas de LLM em processo Railway long-running e permite escalar narrativas sem acoplar o app transacional |
+| **AI Service** | **v1**: endpoint de narração (payload computado → slots de template → stream) + **Guardião estrutural**; **v2**: news/RSS, embeddings (pgvector em `ai`), orquestração de tools | servir UI, escrever em `market`/`portfolio`/`auth`, compor/exportar relatório, calcular risco/FGC/drift | isola custo/latência/falhas de LLM em processo long-running (host do time de IA) e permite escalar narrativas sem acoplar o app transacional |
 | **Neon** | persistência, 5 schemas isolados, snapshots de mercado e carteira | orquestração, cache quente, fila de trabalho | banco único reduz custo e complexidade operacional; schemas e roles mantêm fronteira lógica sem criar consistência distribuída |
 | **Upstash** | rate-limit, locks de idempotência de cron, cache quente de quotes | fonte da verdade, snapshot read-only, ledger, fila durável | Redis é utilitário e descartável; melhora latência e protege custo, mas todo dado reconstruível precisa existir no Neon |
 
@@ -183,7 +154,7 @@ Monorepo pnpm com dois deployables.
 | D4 | Redis = **Upstash, utilitário** (rate-limit, locks de cron, cache quente) | remove rate-limiter in-process do `main.py`; Redis não é "tier" arquitetural nem fonte de verdade |
 | D5 | Seams internos primeiro; extração do AI Service só depois dos seams | módulo com interface limpa hoje = extração barata amanhã |
 | D6 | Infra: **Vercel** (front + back/BFF + cron) · **Neon** (Postgres único) · **Upstash** (Redis); deploy do AI Service é **decisão do repo `bullcapital-ai`** (Railway como hipótese de trabalho) | sem Supabase; Railway Postgres descomissionado quando a migração de schema terminar; o monorepo só exige do AI Service o contrato de borda (F0) e a role D9 |
-| D7 | **(revisada 2026-06-10)** Neon = banco real (fonte da verdade); **Supabase = Snapshot DB Tier 2** — último snapshot bom de mercado, sincronizado por job (cron) e **read-only no serving** | envelope `{source, ts, stale}` em toda leitura; app nunca escreve no Supabase no caminho de request; exige tier pago/keep-alive (free tier pausa por inatividade) e monitoramento da idade do snapshot |
+| D7 | **(final 2026-06-11 — ADR 0007)** Banco unificado no Neon; snapshots em **schema próprio** (`snapshot_id`, staleness na leitura); **Supabase sai inteiro**; PITR cobre corrupção; export EOD opcional p/ Vercel Blob | sem segundo banco; schema do Neon = contrato entre times (roles: IA write `news`/`ai`, read-only `market`/`portfolio`; mudança em `market`/`portfolio` = breaking change, expand-contract) |
 | D8 | **Ingestão dirigida pelo universo das carteiras**, EOD-first | universo = `SELECT DISTINCT ticker` de carteiras+watchlists, **deduplicado e global** (nunca per-user) + baseline fixo (IBOV + FIIs líquidos); job principal 1×/dia pós-fechamento; intraday best-effort durante o pregão |
 | D9 | AI Service acessa o **mesmo Neon com role escopada** | write em `news`/`ai`; **read-only** em `market`/`portfolio`; sem read replica, sem segundo banco |
 | D10 | **Snapshot de carteira existe dentro da janela de retenção** (revisado por D14): imutável enquanto vive, gravado no import e na valorização EOD, expira junto com a carteira | reprodutibilidade do relatório **dentro da sessão de análise**; o artefato durável é o relatório exportado (com hash + snapshot_ts impressos), não o banco; série temporal longa de drift fica **fora desta fase** |
@@ -192,6 +163,9 @@ Monorepo pnpm com dois deployables.
 | D13 | **Relatório é composto no web, narrado na IA.** Módulo reports (web) monta B2/B3 a partir de `portfolio.snapshots` + `market.*` e solicita ao AI Service apenas **blocos narrativos descritivos** (Guardião fail-closed); todo relatório referencia o `snapshot_id` que o originou | reprodutibilidade: re-render do relatório do dia X usa o snapshot do dia X (D10), nunca dado vivo; export PDF no web (`@react-pdf/renderer` serverless-friendly; Puppeteer só se a fidelidade exigir — validar na spec) |
 | D14 | **Carteira é efêmera** (2026-06-10): schema `portfolio` é workspace de análise com **retenção de 1–5 dias** (TTL configurável, default 5); expurgo diário via cron; nada de carteira sobrevive à janela | sem persistência longa de CPF/patrimônio → superfície LGPD encolhe drasticamente; o assessor re-importa quando quiser nova análise; o que ele guarda é o **relatório exportado**; universo de ingestão (D8) encolhe automaticamente quando carteiras expiram (baseline mantém o aquecimento) |
 | D15 | **Front: minimalismo "old Apple" + família de componentes de auditabilidade** — componentes reutilizáveis que tornam verificável o que a IA gerou: chip de provenance (`source`/`ts`/`stale` do envelope F0), referência de snapshot, distinção visual número-determinístico vs prosa-narrada, disclaimer não-dismissível | todo número exibido é rastreável ao envelope; nenhuma narrativa aparece sem moldura de procedência; especificação visual vive no [system-design.md](../system-design.md); os componentes entram via Spec Kit junto das telas |
+| D16 | **SSE direto do cliente para a IA com token curto assinado pela BFF** (ADR 0008); BFF emite credencial, não proxia stream; **circuit breaker fora do MVP** — timeout + retry com backoff (estado, se importar, vai pro Upstash) | elimina re-emitter, hop duplo e limite de duração de função na Vercel; IA valida o token com o `API_SHARED_SECRET`; CORS restrito ao domínio do app |
+| D17 | **Guardião estrutural, não filtro pós-hoc**: LLM preenche slots de template restrito; todo número entra **por referência ao payload determinístico**; Guardião valida proveniência de campos | validar prosa livre depois de gerada é peneira furada; esta é a peça que sustenta a linha CVM — a que menos pode vazar |
+| D18 | **Escopo v1 do AI Service = um endpoint de narração** (recebe payload computado — FGC, composição, rebalanceamento —, narra, Guardião, streama); news/embeddings/orquestração de tools = v2, com pgvector no schema `ai` do mesmo Neon | vector DB dedicado só se o índice HNSW virar gargalo mensurável |
 
 ### 4.1 Item aberto (decisão recomendada, confirmar)
 
@@ -276,16 +250,15 @@ universo = DISTINCT tickers (carteiras + watchlists) ∪ baseline (IBOV + FIIs l
 ### 6.3 Resiliência de leitura (sem segundo banco)
 
 ```
-Brapi ──timeout / 5xx / rate-limit──► Upstash (cache TTL 1-5min) ──miss──► Neon market.* (banco real)
-                                                                               │ indisponível
-                                                                               ▼
-                                                                   Supabase (Snapshot DB, read-only)
+Brapi ──timeout / 5xx / rate-limit──► Upstash (cache TTL 1-5min) ──miss──► Neon (schema snapshots,
+                                                                            snapshot_id + staleness)
                                                                                │
                                                                    envelope {source, ts, stale}
 ```
 
-- **Sync do snapshot:** job de cron copia o "último bom" de `market.*` (Neon) para o Supabase após
-  cada run EOD (e opcionalmente após runs intraday). O caminho de request nunca escreve no Supabase.
+- **Pára-quedas opcional (ADR 0007):** job EOD exporta o último snapshot bom para Vercel Blob (objeto
+  frio). PITR do Neon cobre corrupção. Sem circuit breaker no MVP: timeout + retry com backoff
+  (estado de breaker, se um dia importar, vai para o Upstash).
 
 - **Degradação visível**: nunca cai em silêncio; nunca fabrica número.
 - O "último snapshot bom" **é** a tabela `market.asset_quotes` com `updated_at` no Neon. Não há provider
@@ -411,8 +384,8 @@ ordem compatível (produtor novo emitindo campos opcionais antes de consumidor e
 | `OPENROUTER_API_KEY` | Web | `sk-or-...` | Vercel env / `.env.local` | opcional; legado do daily/story brief até mover narrativa para AI Service |
 | `UPSTASH_REDIS_REST_URL` | Web | `https://x.upstash.io` | Vercel env | F4+ |
 | `UPSTASH_REDIS_REST_TOKEN` | Web | `AX...` | Vercel env | F4+ |
-| `SUPABASE_TRANSACTION_POOLER` | Web | `postgresql://...pooler.supabase.com:6543/postgres` | Vercel env / `.env.local` | F4+ (leitura de fallback do snapshot — ADR 0006) |
-| `SUPABASE_DIRECT_CONNECTION` | Web | `postgresql://...supabase.co:5432/postgres` | Vercel env / `.env.local` | F4+ (job de sync do snapshot — escrita só via cron) |
+| `NEXT_PUBLIC_ORCHESTRATOR_URL` | Web | `https://ai.exemplo.com` | Vercel env / `.env.local` | SSE direto do browser (ADR 0008) |
+| `BLOB_READ_WRITE_TOKEN` | Web | token Vercel Blob | Vercel env | opcional (export EOD do snapshot — ADR 0007) |
 | `DATABASE_URL` | AI Service | `postgresql+asyncpg://user:pass@host/db?ssl=require` | Railway variables / `.env` | sim |
 | `DATABASE_SSL` | AI Service | `true` | Railway variables / `.env` | sim em produção |
 | `DATABASE_CA_CERT` | AI Service | caminho ou PEM | Railway variables | opcional |

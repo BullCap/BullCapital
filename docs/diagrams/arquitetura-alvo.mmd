@@ -2,46 +2,40 @@ flowchart TB
   client["Client Browser/PWA"]
 
   subgraph web["Deployable 1: Web App - Next.js / Vercel"]
-    bff["BFF (/api): auth, routing, circuit breakers, SSE re-emitter"]
-    market["Modulo market / Assets: Brapi, BCB SGS, cron, snapshots"]
-    portfolio["Modulo portfolio: import, reconciliacao, risco, FGC, snapshots"]
+    bff["BFF (/api): auth, routing, emissao de token de stream"]
+    market["Modulo market / Assets: Brapi, BCB SGS, cron"]
+    portfolio["Modulo portfolio: import, reconciliacao, risco, FGC"]
     reports["Modulo reports: composicao B2/B3, export, snapshot_id"]
     user["Modulo user: auth, perfil, sessao"]
   end
 
-  subgraph ai["Deployable 2: AI Service - FastAPI / Railway"]
-    orchestrator["Orquestrador: dispara tools em paralelo e consolida"]
-    guardian["Guardiao: valida provenance e bloqueia recomendacao"]
-    tools["Tools read-only: portfolio, market/assets, contexto"]
-    news["Modulo news: RSS, contexto e escrita em news"]
+  subgraph ai["Deployable 2: AI Service - FastAPI / host do time de IA (SSE longo)"]
+    narrator["v1: endpoint de narracao - recebe payload computado,\npreenche slots de template restrito e streama"]
+    guardian["Guardiao ESTRUTURAL: numeros so por referencia\nao payload deterministico; valida proveniencia de campos"]
+    v2["v2: news/RSS, embeddings (pgvector em ai),\norquestracao paralela de tools"]
   end
 
-  neon[("Neon Postgres - banco real\nschemas: market, portfolio, auth, news, ai")]
-  redis[("Upstash Redis\nrate-limit, locks, cache quente")]
-  supabase[("Supabase - Snapshot DB Tier 2\nultimo snapshot bom, read-only no serving")]
+  neon[("Neon Postgres - banco unico e CONTRATO entre os times\nschemas: market, portfolio, auth, news, ai, snapshots\nroles: IA write news/ai - read-only market/portfolio\nmudanca em market/portfolio = breaking change (expand-contract)\nPITR cobre corrupcao")]
+  redis[("Upstash Redis\nrate-limit, locks de cron, cache quente")]
+  blob[("Vercel Blob (opcional)\nexport EOD do ultimo snapshot bom - paraquedas de outage")]
 
-  client <-->|"HTTPS / SSE"| bff
-  bff <-->|"SSE normalizado"| orchestrator
+  client <-->|"HTTPS"| bff
+  client <-->|"SSE direto, token curto assinado pela BFF"| narrator
+  bff -->|"emite token curto (usuario + escopo + expiracao)"| client
 
   bff --> market
   bff --> portfolio
   bff --> reports
   bff --> user
 
-  reports -->|"blocos narrativos"| bff
-  orchestrator --> tools
-  orchestrator --> guardian
-  news -->|"usa interface publica de Assets\npara universo/identidade"| tools
+  narrator --> guardian
+  reports -->|"payload computado p/ blocos narrativos"| bff
 
-  market -->|"write market"| neon
+  market -->|"write market + snapshots"| neon
   portfolio -->|"write portfolio"| neon
   user -->|"write auth"| neon
-  news -->|"write news"| neon
-  orchestrator -->|"write ai"| neon
-  tools -->|"read-only market/portfolio"| neon
+  ai -->|"write news/ai - read-only market/portfolio (role)"| neon
 
   market <-->|"cache quente / locks"| redis
   bff -->|"rate-limit"| redis
-
-  market -->|"sync pos-EOD (cron)"| supabase
-  market -.->|"fallback de leitura, sempre rotulado"| supabase
+  market -.->|"export EOD (cron)"| blob
