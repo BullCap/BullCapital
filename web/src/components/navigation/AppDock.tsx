@@ -1,8 +1,8 @@
 import Link from 'next/link'
-import { BarChart3, Search, Sparkles, Terminal } from 'lucide-react'
+import { BarChart3, Search, Sparkles, Terminal, Users } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-export type AppDockSection = 'market' | 'search' | 'analysis' | 'terminal'
+export type AppDockSection = 'market' | 'search' | 'analysis' | 'terminal' | 'clients'
 
 interface AppDockProps {
   active: AppDockSection
@@ -10,6 +10,7 @@ interface AppDockProps {
 
 const DOCK_ITEMS = [
   { key: 'market', href: '/home', label: 'Mercado', icon: BarChart3 },
+  { key: 'clients', href: '/clients', label: 'Clientes', icon: Users },
   { key: 'search', href: '/search', label: 'Buscar', icon: Search },
   { key: 'terminal', href: '/terminal', label: 'Terminal', icon: Terminal },
   { key: 'analysis', href: '/analysis', label: 'Análises', icon: Sparkles },

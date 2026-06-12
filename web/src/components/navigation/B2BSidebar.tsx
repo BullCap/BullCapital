@@ -12,13 +12,16 @@ import {
   PanelLeftOpen,
   Send,
   Bell,
-  MessageSquare
+  MessageSquare,
+  Users,
+  Settings
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { GlassHighlight } from '@/components/atoms/GlassHighlight'
 
 const NAV_ITEMS = [
   { label: 'Mercado', href: '/home', icon: BarChart3 },
+  { label: 'Clientes', href: '/clients', icon: Users },
   { label: 'Buscar', href: '/search', icon: Search },
   { label: 'Terminal', href: '/terminal', icon: Terminal },
   { label: 'Análises', href: '/analysis', icon: Sparkles },
@@ -284,6 +287,13 @@ export default function B2BSidebar({
               >
                 <Bell size={14} />
               </button>
+              <Link
+                href="/settings"
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-[#94a3b8]/50 hover:bg-white/5 hover:text-white"
+                aria-label="Configurações do workspace"
+              >
+                <Settings size={14} />
+              </Link>
             </div>
           )}
         </div>
