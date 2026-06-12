@@ -52,11 +52,19 @@ export async function register(
   const passwordHash = await hash(password, 12)
 
   try {
+    // Tenancy: every advisor signs up as OWNER of their own workspace (one
+    // atomic create); scope resolution depends on this membership existing.
     await prisma.user.create({
       data: {
         email,
         passwordHash,
         name: name || null,
+        memberships: {
+          create: {
+            role: 'OWNER',
+            workspace: { create: { name: name || email.split('@')[0] } },
+          },
+        },
       },
     })
   } catch (error) {
