@@ -133,7 +133,7 @@ async function selectQuoteRows(tickers: string[]): Promise<Map<string, QuoteRow>
     SELECT ticker, name, price, change_percent, volume, market_cap, high_52w, low_52w,
            pe_ratio, dividend_yield, ev_ebitda, roe, roic, p_vp,
            sector, industry, business_summary, updated_at
-    FROM "ai"."asset_quotes"
+    FROM "market"."asset_quotes"
     WHERE ticker IN (${Prisma.join(tickers)})`
   return new Map(rows.map((r) => [r.ticker, r]))
 }
@@ -200,7 +200,7 @@ interface HistoryRow {
 async function selectHistoryRows(ticker: string, limit: number): Promise<HistoryRow[]> {
   const rows = await prisma.$queryRaw<HistoryRow[]>`
     SELECT date, open, high, low, close, volume
-    FROM "ai"."asset_historical_prices"
+    FROM "market"."asset_historical_prices"
     WHERE ticker = ${ticker}
     ORDER BY date DESC
     LIMIT ${limit}`
@@ -257,7 +257,7 @@ export async function getDbCurrencies(pairs: string[]): Promise<CurrencyData> {
   const select = async (): Promise<Map<string, CurrencyRow>> => {
     const rows = await prisma.$queryRaw<CurrencyRow[]>`
       SELECT pair, bid, ask, high, low, updated_at
-      FROM "ai"."currency_quotes"
+      FROM "market"."currency_quotes"
       WHERE pair IN (${Prisma.join(cleanPairs)})`
     return new Map(rows.map((r) => [r.pair, r]))
   }
@@ -297,7 +297,7 @@ export async function getDbIndicators(): Promise<
   }
   const selectSeries = (name: string): Promise<MacroRow[]> => prisma.$queryRaw<MacroRow[]>`
     SELECT date, value, updated_at
-    FROM "ai"."macro_indicators"
+    FROM "market"."macro_indicators"
     WHERE name = ${name}
     ORDER BY date DESC
     LIMIT 10`
@@ -370,7 +370,7 @@ export async function getDbListings(params: ListingsParams = {}): Promise<Market
   const orderSql = sortOrder === 'desc' ? Prisma.sql`${sortCol} DESC` : Prisma.sql`${sortCol} ASC`
 
   const countRows = await prisma.$queryRaw<{ count: bigint }[]>`
-    SELECT COUNT(*)::bigint AS count FROM "ai"."asset_quotes" WHERE ${whereSql}`
+    SELECT COUNT(*)::bigint AS count FROM "market"."asset_quotes" WHERE ${whereSql}`
   const totalCount = Number(countRows[0]?.count ?? 0)
 
   const pageSize = Math.max(1, Math.min(limit, 100))
@@ -389,7 +389,7 @@ export async function getDbListings(params: ListingsParams = {}): Promise<Market
   }
   const rows = await prisma.$queryRaw<ListingRow[]>`
     SELECT ticker, name, price, change_percent, volume, market_cap, sector
-    FROM "ai"."asset_quotes"
+    FROM "market"."asset_quotes"
     WHERE ${whereSql}
     ORDER BY ${orderSql}
     OFFSET ${offset} LIMIT ${pageSize}`

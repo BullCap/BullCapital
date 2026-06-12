@@ -1,5 +1,6 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
+// Prisma owns the DDL of the web-side schemas (auth/market/portfolio) — plan
+// §6.1. The AI Service owns news/ai via Alembic; those schemas never appear
+// here. Schema layout is the contract between the two deployables (ADR 0007).
 
 generator client {
   provider = "prisma-client"
@@ -8,10 +9,11 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  schemas  = ["auth", "market", "portfolio", "public"]
 }
 
 // ============================================
-// User & Authentication Models
+// auth — identity & tenancy (workspace → assessor → cliente)
 // ============================================
 
 model User {
@@ -26,10 +28,11 @@ model User {
   accounts       Account[]
   sessions       Session[]
   watchlistItems WatchlistItem[]
+  memberships    WorkspaceMember[]
 
   @@map("users")
+  @@schema("auth")
 }
-
 
 model Account {
   id                String  @id @default(cuid())
@@ -49,6 +52,7 @@ model Account {
 
   @@unique([provider, providerAccountId])
   @@map("accounts")
+  @@schema("auth")
 }
 
 model Session {
@@ -60,6 +64,7 @@ model Session {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("sessions")
+  @@schema("auth")
 }
 
 model VerificationToken {
@@ -69,10 +74,186 @@ model VerificationToken {
 
   @@unique([identifier, token])
   @@map("verification_tokens")
+  @@schema("auth")
+}
+
+/// Tenant root. Every domain row hangs off a workspace; scope is resolved
+/// server-side (modules/user/scope.ts) before any query touches data.
+model Workspace {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  members WorkspaceMember[]
+  clients Client[]
+
+  @@map("workspaces")
+  @@schema("auth")
+}
+
+enum WorkspaceRole {
+  OWNER
+  ADVISOR
+
+  @@schema("auth")
+}
+
+/// O assessor dentro de um workspace. OWNER administra; ADVISOR atende clientes.
+model WorkspaceMember {
+  id          String        @id @default(cuid())
+  workspaceId String        @map("workspace_id")
+  userId      String        @map("user_id")
+  role        WorkspaceRole @default(ADVISOR)
+  createdAt   DateTime      @default(now()) @map("created_at")
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  clients   Client[]
+
+  @@unique([workspaceId, userId])
+  @@index([userId])
+  @@map("workspace_members")
+  @@schema("auth")
 }
 
 // ============================================
-// Watchlist
+// portfolio — domínio de carteira (entra via Spec Kit; aqui só a âncora de tenancy)
+// ============================================
+
+enum ClientStatus {
+  ACTIVE
+  ARCHIVED
+
+  @@schema("portfolio")
+}
+
+/// Cliente final do assessor. CPF normalizado (11 dígitos) — chave do FGC por
+/// CPF×instituição quando o domínio portfolio chegar.
+model Client {
+  id          String       @id @default(cuid())
+  workspaceId String       @map("workspace_id")
+  advisorId   String       @map("advisor_id")
+  name        String
+  cpf         String?      @db.VarChar(11)
+  email       String?
+  status      ClientStatus @default(ACTIVE)
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+
+  workspace Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  advisor   WorkspaceMember @relation(fields: [advisorId], references: [id])
+
+  @@unique([workspaceId, cpf])
+  @@index([workspaceId])
+  @@index([advisorId])
+  @@map("clients")
+  @@schema("portfolio")
+}
+
+// ============================================
+// market — dados de mercado (dono: Módulo market; ingest via cron)
+// Colunas espelham o DDL herdado da FastAPI (schema "ai" → "market" em F5).
+// ============================================
+
+model AssetQuote {
+  ticker          String   @id @db.VarChar(20)
+  name            String
+  price           Float
+  changePercent   Float    @map("change_percent")
+  volume          Float
+  marketCap       Float?   @map("market_cap")
+  high52w         Float?   @map("high_52w")
+  low52w          Float?   @map("low_52w")
+  peRatio         Float?   @map("pe_ratio")
+  dividendYield   Float?   @map("dividend_yield")
+  evEbitda        Float?   @map("ev_ebitda")
+  roe             Float?
+  roic            Float?
+  pVp             Float?   @map("p_vp")
+  sector          String?
+  industry        String?
+  businessSummary String?  @map("business_summary")
+  updatedAt       DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  @@index([updatedAt(sort: Desc)], map: "idx_asset_quotes_updated_at")
+  @@index([changePercent], map: "idx_asset_quotes_change")
+  @@index([volume], map: "idx_asset_quotes_volume")
+  @@index([marketCap], map: "idx_asset_quotes_market_cap")
+  @@index([name], map: "idx_asset_quotes_name")
+  @@map("asset_quotes")
+  @@schema("market")
+}
+
+model AssetHistoricalPrice {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ticker    String   @db.VarChar(20)
+  date      DateTime @db.Date
+  open      Float?
+  high      Float?
+  low       Float?
+  close     Float
+  volume    Float?
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@unique([ticker, date], map: "uq_ticker_date")
+  @@index([ticker, date(sort: Desc)], map: "idx_history_ticker_date")
+  @@map("asset_historical_prices")
+  @@schema("market")
+}
+
+model MacroIndicator {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  seriesId  Int       @map("series_id")
+  name      String    @db.VarChar(50)
+  date      DateTime  @db.Date
+  value     Float
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime? @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  @@unique([seriesId, date], map: "uq_series_date")
+  @@index([name, date(sort: Desc)], map: "idx_macro_name_date")
+  @@map("macro_indicators")
+  @@schema("market")
+}
+
+model CurrencyQuote {
+  pair      String   @id @db.VarChar(20)
+  name      String   @db.VarChar(50)
+  bid       Float
+  ask       Float
+  high      Float
+  low       Float
+  updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  @@map("currency_quotes")
+  @@schema("market")
+}
+
+model IngestRun {
+  id         String   @id @default(dbgenerated("(gen_random_uuid())::text"))
+  job        String
+  source     String
+  startedAt  DateTime @map("started_at") @db.Timestamptz(6)
+  finishedAt DateTime @default(now()) @map("finished_at") @db.Timestamptz(6)
+  okCount    Int      @default(0) @map("ok_count")
+  failCount  Int      @default(0) @map("fail_count")
+
+  @@index([job, finishedAt(sort: Desc)], map: "ix_ingest_runs_job_finished")
+  @@map("ingest_runs")
+  @@schema("market")
+}
+
+model IngestLock {
+  job         String   @id
+  lockedUntil DateTime @map("locked_until") @db.Timestamptz(6)
+
+  @@map("ingest_locks")
+  @@schema("market")
+}
+
+// ============================================
+// Watchlist — pré-tenancy; domínio definitivo (workspace-level) via Spec Kit
 // ============================================
 
 model WatchlistItem {
@@ -85,5 +266,5 @@ model WatchlistItem {
 
   @@unique([userId, ticker])
   @@map("watchlist_items")
+  @@schema("public")
 }
-

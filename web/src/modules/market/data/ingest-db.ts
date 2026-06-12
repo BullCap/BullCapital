@@ -1,25 +1,11 @@
-// Write path of the market module: raw SQL upserts against the tables the
-// FastAPI created in schema "ai" (moved to schema "market" in F5). Raw SQL keeps
-// the ON CONFLICT ... COALESCE semantics of market_ingest.py/bcb_sgs.py and
-// avoids Prisma schema surgery before F5 settles migration ownership.
+// Write path of the market module: raw SQL upserts against the tables in
+// schema "market" (owned by this module; DDL lives in Prisma migrations since
+// F5). Raw SQL keeps the ON CONFLICT ... COALESCE semantics of
+// market_ingest.py/bcb_sgs.py.
 import { prisma } from '@/lib/db'
 import { Prisma } from '@/generated/prisma/client'
 import type { BrapiQuote, HistoryRecord } from '../ingest/brapi'
 import { toFloat } from '../ingest/brapi'
-
-import { MARKET_DDL } from './schema-sql'
-
-let bootstrapped: Promise<void> | null = null
-
-/** Creates/upgrades the module-owned market tables once per runtime (idempotent). */
-export function ensureIngestTables(): Promise<void> {
-  bootstrapped ??= (async () => {
-    for (const statement of MARKET_DDL) {
-      await prisma.$executeRawUnsafe(statement)
-    }
-  })()
-  return bootstrapped
-}
 
 /**
  * Lease-based job lock (pool-safe replacement for the pg_advisory_lock pattern
@@ -27,9 +13,8 @@ export function ensureIngestTables(): Promise<void> {
  * does not guarantee across the HTTP fetches a run performs).
  */
 export async function acquireJobLease(job: string, leaseSeconds: number): Promise<boolean> {
-  await ensureIngestTables()
   const rows = await prisma.$queryRaw<{ job: string }[]>`
-    INSERT INTO "ai"."ingest_locks" (job, locked_until)
+    INSERT INTO "market"."ingest_locks" (job, locked_until)
     VALUES (${job}, now() + make_interval(secs => ${leaseSeconds}))
     ON CONFLICT (job) DO UPDATE
       SET locked_until = now() + make_interval(secs => ${leaseSeconds})
@@ -40,7 +25,7 @@ export async function acquireJobLease(job: string, leaseSeconds: number): Promis
 
 export async function releaseJobLease(job: string): Promise<void> {
   await prisma.$executeRaw`
-    UPDATE "ai"."ingest_locks" SET locked_until = now() WHERE job = ${job}`
+    UPDATE "market"."ingest_locks" SET locked_until = now() WHERE job = ${job}`
 }
 
 /** Cheap observability (plan §6.2): every run leaves a row; feeds staleness labels. */
@@ -51,9 +36,8 @@ export async function recordIngestRun(run: {
   okCount: number
   failCount: number
 }): Promise<void> {
-  await ensureIngestTables()
   await prisma.$executeRaw`
-    INSERT INTO "ai"."ingest_runs" (job, source, started_at, ok_count, fail_count)
+    INSERT INTO "market"."ingest_runs" (job, source, started_at, ok_count, fail_count)
     VALUES (${run.job}, ${run.source}, ${run.startedAt}, ${run.okCount}, ${run.failCount})`
 }
 
@@ -105,7 +89,7 @@ export async function upsertQuoteRecord(quote: BrapiQuote, ticker: string): Prom
     )
 
     await prisma.$executeRaw`
-      INSERT INTO "ai"."asset_quotes" (
+      INSERT INTO "market"."asset_quotes" (
         ticker, name, price, change_percent, volume, market_cap, high_52w, low_52w,
         pe_ratio, dividend_yield, ev_ebitda, roe, roic, p_vp,
         sector, industry, business_summary, updated_at
@@ -149,9 +133,9 @@ export async function upsertHistory(ticker: string, records: HistoryRecord[]): P
         ${r.open}, ${r.high}, ${r.low}, ${r.close}, ${r.volume}, now())`
     )
     await prisma.$executeRaw`
-      INSERT INTO "ai"."asset_historical_prices" (id, ticker, date, open, high, low, close, volume, created_at)
+      INSERT INTO "market"."asset_historical_prices" (id, ticker, date, open, high, low, close, volume, created_at)
       VALUES ${Prisma.join(values)}
-      ON CONFLICT ON CONSTRAINT uq_ticker_date DO UPDATE SET
+      ON CONFLICT (ticker, date) DO UPDATE SET
         open = COALESCE(excluded.open, "asset_historical_prices".open),
         high = COALESCE(excluded.high, "asset_historical_prices".high),
         low = COALESCE(excluded.low, "asset_historical_prices".low),
@@ -174,15 +158,13 @@ export interface MacroRecord {
 export async function upsertMacroRecords(records: MacroRecord[]): Promise<boolean> {
   if (records.length === 0) return false
   try {
-    // Reads can trigger this outside a cron lease; make sure updated_at exists.
-    await ensureIngestTables()
     const values = records.map(
       (r) => Prisma.sql`(gen_random_uuid(), ${r.seriesId}, ${r.name}, ${r.date}::date, ${r.value}, now(), now())`
     )
     await prisma.$executeRaw`
-      INSERT INTO "ai"."macro_indicators" (id, series_id, name, date, value, created_at, updated_at)
+      INSERT INTO "market"."macro_indicators" (id, series_id, name, date, value, created_at, updated_at)
       VALUES ${Prisma.join(values)}
-      ON CONFLICT ON CONSTRAINT uq_series_date DO UPDATE SET
+      ON CONFLICT (series_id, date) DO UPDATE SET
         value = excluded.value,
         updated_at = now()`
     return true
@@ -203,7 +185,7 @@ export async function upsertCurrencyQuote(input: {
 }): Promise<boolean> {
   try {
     await prisma.$executeRaw`
-      INSERT INTO "ai"."currency_quotes" (pair, name, bid, ask, high, low, updated_at)
+      INSERT INTO "market"."currency_quotes" (pair, name, bid, ask, high, low, updated_at)
       VALUES (${input.pair}, ${input.name}, ${input.bid}, ${input.ask}, ${input.high}, ${input.low}, ${input.updatedAt})
       ON CONFLICT (pair) DO UPDATE SET
         bid = excluded.bid,

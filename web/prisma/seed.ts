@@ -4,7 +4,6 @@ import { PrismaClient } from '../src/generated/prisma/client'
 import { PrismaPg } from '@prisma/adapter-pg'
 import { Pool } from 'pg'
 import { hash } from 'bcryptjs'
-import { MARKET_DDL, MARKET_SCHEMA } from '../src/modules/market/data/schema-sql'
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL })
 const adapter = new PrismaPg(pool)
@@ -28,14 +27,11 @@ const SEED_QUOTES: Array<
   ['^VIX', 'VIX', 14.8, -1.1, 0, 0, null],
 ]
 
+// DDL is owned by Prisma migrations (F5) — run `pnpm db:migrate` before seeding.
 async function seedMarket() {
-  for (const statement of MARKET_DDL) {
-    await pool.query(statement)
-  }
-
   for (const [ticker, name, price, change, volume, marketCap, sector] of SEED_QUOTES) {
     await pool.query(
-      `INSERT INTO ${MARKET_SCHEMA}.asset_quotes (ticker, name, price, change_percent, volume, market_cap, sector, updated_at)
+      `INSERT INTO market.asset_quotes (ticker, name, price, change_percent, volume, market_cap, sector, updated_at)
        VALUES ($1, $2, $3, $4, $5, $6, $7, now())
        ON CONFLICT (ticker) DO NOTHING`,
       [ticker, name, price, change, volume, marketCap || null, sector]
@@ -46,21 +42,21 @@ async function seedMarket() {
       const drift = Math.sin(i / 4) * 0.02 * price
       const close = Number((price - drift).toFixed(2))
       await pool.query(
-        `INSERT INTO ${MARKET_SCHEMA}.asset_historical_prices (ticker, date, open, high, low, close, volume)
+        `INSERT INTO market.asset_historical_prices (ticker, date, open, high, low, close, volume)
          VALUES ($1, current_date - $2::int, $3, $4, $5, $6, $7)
-         ON CONFLICT ON CONSTRAINT uq_ticker_date DO NOTHING`,
+         ON CONFLICT (ticker, date) DO NOTHING`,
         [ticker, i, close * 0.995, close * 1.01, close * 0.99, close, volume || null]
       )
     }
   }
 
   await pool.query(
-    `INSERT INTO ${MARKET_SCHEMA}.macro_indicators (series_id, name, date, value)
+    `INSERT INTO market.macro_indicators (series_id, name, date, value)
      VALUES (432, 'SELIC', current_date, 14.75), (13522, 'IPCA', date_trunc('month', current_date)::date, 4.8)
-     ON CONFLICT ON CONSTRAINT uq_series_date DO NOTHING`
+     ON CONFLICT (series_id, date) DO NOTHING`
   )
   await pool.query(
-    `INSERT INTO ${MARKET_SCHEMA}.currency_quotes (pair, name, bid, ask, high, low, updated_at)
+    `INSERT INTO market.currency_quotes (pair, name, bid, ask, high, low, updated_at)
      VALUES ('USD-BRL', 'USD/BRL', 5.42, 5.43, 5.46, 5.39, now())
      ON CONFLICT (pair) DO NOTHING`
   )
@@ -71,7 +67,7 @@ async function main() {
 
   const passwordHash = await hash('senha123456', 12)
 
-  await prisma.user.upsert({
+  const user = await prisma.user.upsert({
     where: { email: 'dev@bullcapital.app' },
     update: {},
     create: {
@@ -81,7 +77,20 @@ async function main() {
     },
   })
 
-  console.log('✅ Dev user: dev@bullcapital.app / senha123456')
+  // Tenancy: same ws-/wsm- id convention as the migration backfill (idempotent).
+  await prisma.workspace.upsert({
+    where: { id: `ws-${user.id}` },
+    update: {},
+    create: {
+      id: `ws-${user.id}`,
+      name: user.name ?? 'Dev User',
+      members: {
+        create: { id: `wsm-${user.id}`, userId: user.id, role: 'OWNER' },
+      },
+    },
+  })
+
+  console.log('✅ Dev user: dev@bullcapital.app / senha123456 (workspace OWNER)')
 
   await seedMarket()
   console.log('✅ Market: tabelas garantidas + dados sintéticos de dev (quotes, histórico, macro, câmbio)')
