@@ -47,6 +47,9 @@ coverage/
 *.log
 npm-debug.log*
 
+# Local visual QA artifacts
+.screenshots/
+
 # TypeScript
 *.tsbuildinfo
 

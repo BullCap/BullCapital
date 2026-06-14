@@ -84,6 +84,10 @@ export interface InflationEntry {
 export interface MarketIndicatorsData {
   selic: PrimeRateEntry[]
   inflation: InflationEntry[]
+  /** CDI diário (série BCB SGS 12). Opcional: ausente em payloads de fallback. */
+  cdi?: PrimeRateEntry[]
+  /** IGP-M (série BCB SGS 189). Opcional: ausente em payloads de fallback. */
+  igpm?: InflationEntry[]
 }
 
 export interface AssetSearchResult {

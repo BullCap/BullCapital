@@ -2,6 +2,10 @@
 
 > **Fonte primária de contexto**: [AGENTS.md](AGENTS.md). Este arquivo complementa o AGENTS.md com **operação específica do Claude Code** (slash commands, modo de comunicação, uso de ferramentas, memória). Leia AGENTS.md primeiro; depois leia este arquivo.
 
+<!-- SPECKIT START -->
+**Feature ativa**: `011-design-system-calm` — plano em [specs/011-design-system-calm/plan.md](specs/011-design-system-calm/plan.md)
+<!-- SPECKIT END -->
+
 ---
 
 ## 1. Como começar uma sessão neste repo

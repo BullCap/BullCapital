@@ -178,9 +178,9 @@ const getCachedPulseSnapshot = unstable_cache(
 const getCachedHomeHighlightsSnapshot = unstable_cache(
   async (): Promise<HomeHighlightsSnapshot> => {
     const [gainers, losers, mostTraded, crypto, fixedIncome, treemapQuotes] = await Promise.all([
-      safe(getDbListings({ limit: 6, sortBy: 'change', sortOrder: 'desc', type: 'stock' }), emptyListings()),
-      safe(getDbListings({ limit: 6, sortBy: 'change', sortOrder: 'asc', type: 'stock' }), emptyListings()),
-      safe(getDbListings({ limit: 6, sortBy: 'volume', sortOrder: 'desc', type: 'stock' }), emptyListings()),
+      safe(getDbListings({ limit: 20, sortBy: 'change', sortOrder: 'desc', type: 'stock' }), emptyListings()),
+      safe(getDbListings({ limit: 20, sortBy: 'change', sortOrder: 'asc', type: 'stock' }), emptyListings()),
+      safe(getDbListings({ limit: 20, sortBy: 'volume', sortOrder: 'desc', type: 'stock' }), emptyListings()),
       safe(getDbListings({ limit: 6, type: 'crypto' }), emptyListings()),
       safe(getDbListings({ limit: 6, type: 'fixed_income' }), emptyListings()),
       safe(getDbQuotes(HOME_TREEMAP_TICKERS), { results: [] }),

@@ -9,13 +9,42 @@
 @theme {
   --screen-3xl: 1800px;
 
-  --color-void: #050308;
-  --color-surface: #0D0A13;
+  --color-void: #0D0B14;
+  --color-surface: #1A1625;
   --color-starlight: #e2def0;
 
   --color-amethyst: #82759F;
   --color-amethyst-light: #B1A9C4;
   --color-amethyst-dim: #5F5675;
+
+  /* ── Design System Calm — tokens canônicos (shadcn + Tremor Raw) ──────────
+     Fonte única consumida pelos primitivos shadcn (ui/*), pelos blocos de
+     data-viz estilo Tremor Raw (ui/chart/*) e pela camada de layout (Panel).
+     Componentes novos NÃO usam hex: só estes tokens semânticos. */
+  --color-ink: #E2DEF0;            /* texto pleno */
+  --color-ink-soft: rgba(226, 222, 240, 0.70);
+  --color-ink-muted: rgba(226, 222, 240, 0.48);
+  --color-ink-faint: rgba(226, 222, 240, 0.35);
+  --color-surface-raised: #12161F; /* popover/dialog/dropdown (opaco) */
+  --color-accent-calm: #82759F;    /* ação primária, foco, ativo */
+  --color-positive: #7FB59A;       /* alta */
+  --color-negative: #C98C9A;       /* baixa */
+  --color-warning: #D0B982;        /* staleness, atenção */
+  --color-hairline: rgba(255, 255, 255, 0.06);
+  --color-hairline-strong: rgba(255, 255, 255, 0.12);
+
+  /* Paleta de séries (recharts / Tremor Raw) */
+  --color-chart-1: #82759F;
+  --color-chart-2: #7FB59A;
+  --color-chart-3: #C98C9A;
+  --color-chart-4: #D0B982;
+  --color-chart-5: #4f71a6;
+
+  --radius-panel: 16px;
+  --radius-control: 10px;
+  --text-display: clamp(1.85rem, 1.2rem + 2.4vw, 2.5rem);
+  --text-hero: clamp(2.4rem, 1.4rem + 3.4vw, 3.6rem);
+  --tracking-eyebrow: 0.14em;
 
   --color-background: hsl(var(--background));
   --color-foreground: hsl(var(--foreground));
@@ -62,40 +91,40 @@
    App e dark-only: nao redefinimos os tokens light (o tema fica travado em dark).
 --------------------------------------------------------------------------- */
 .dark {
-  --color-fd-background: #0c0f15;
+  --color-fd-background: #0D0B14;
   --color-fd-foreground: #e2def0;
 
-  --color-fd-muted: #12161f;
+  --color-fd-muted: #1A1625;
   --color-fd-muted-foreground: rgba(226, 222, 240, 0.55);
 
-  --color-fd-popover: #0d0a13;
+  --color-fd-popover: #1A1625;
   --color-fd-popover-foreground: #e2def0;
 
-  --color-fd-card: #12161f;
+  --color-fd-card: #1A1625;
   --color-fd-card-foreground: #e2def0;
 
   --color-fd-border: rgba(255, 255, 255, 0.06);
 
   --color-fd-primary: #b1a9c4;
-  --color-fd-primary-foreground: #0c0f15;
+  --color-fd-primary-foreground: #0D0B14;
 
-  --color-fd-secondary: #12161f;
+  --color-fd-secondary: #1A1625;
   --color-fd-secondary-foreground: #e2def0;
 
   --color-fd-accent: rgba(130, 117, 159, 0.14);
   --color-fd-accent-foreground: #e2def0;
 
   --color-fd-ring: rgba(130, 117, 159, 0.6);
-  --color-fd-overlay: rgba(5, 3, 8, 0.6);
+  --color-fd-overlay: rgba(13, 11, 20, 0.6);
 }
 
 /* O preset neutro clareia a sidebar (#nd-sidebar) com cinzas frios.
-   Re-ancoramos na superficie quieta para a barra lateral parecer vidro escuro. */
+   Re-ancoramos na Surface do design system. */
 .dark #nd-sidebar {
-  --color-fd-muted: rgba(130, 117, 159, 0.1);
-  --color-fd-secondary: rgba(130, 117, 159, 0.1);
+  --color-fd-muted: #1A1625;
+  --color-fd-secondary: #1A1625;
   --color-fd-muted-foreground: rgba(226, 222, 240, 0.62);
-  background-color: rgba(9, 12, 18, 0.6);
+  background-color: var(--surface);
   border-color: rgba(255, 255, 255, 0.05);
   backdrop-filter: blur(20px);
 }
@@ -109,39 +138,49 @@
 
 @layer base {
   :root {
-    --background: 222 22% 5.5%;
-    --foreground: 220 10% 86%;
+    /* shadcn semantic tokens recalibrados para a paleta calm (amethyst/ink).
+       Os primitivos shadcn (Card, Button, Input...) e os blocos Tremor Raw
+       herdam estes valores — uma única fonte de verdade. */
+    --background: 253 29% 6.1%;       /* void #0D0B14 */
+    --foreground: 252 40% 91%;        /* ink #E2DEF0 */
 
-    --card: 222 16% 8%;
-    --card-foreground: 220 10% 86%;
+    --card: 256 25% 11.6%;            /* surface */
+    --card-foreground: 252 40% 91%;
 
-    --popover: 222 22% 6%;
-    --popover-foreground: 220 10% 86%;
+    --popover: 222 24% 10%;           /* surface-raised #12161F */
+    --popover-foreground: 252 40% 91%;
 
-    --primary: 220 12% 65%;
-    --primary-foreground: 0 0% 95%;
+    --primary: 259 17% 54%;           /* amethyst #82759F */
+    --primary-foreground: 252 40% 95%;
 
     --secondary: 222 14% 10%;
-    --secondary-foreground: 220 10% 86%;
+    --secondary-foreground: 252 40% 91%;
 
     --muted: 222 10% 13%;
-    --muted-foreground: 220 8% 58%;
+    --muted-foreground: 252 12% 62%;
 
-    --accent: 220 12% 65%;
-    --accent-foreground: 0 0% 95%;
+    --accent: 259 17% 54%;            /* amethyst */
+    --accent-foreground: 252 40% 95%;
 
-    --destructive: 0 60% 50%;
+    --destructive: 346 32% 67%;       /* negative #C98C9A */
     --destructive-foreground: 0 0% 98%;
 
-    --border: 0 0% 100% / 0.04;
-    --input: 0 0% 100% / 0.04;
-    --ring: 220 12% 65%;
+    --border: 0 0% 100% / 0.06;       /* hairline */
+    --input: 0 0% 100% / 0.06;
+    --ring: 259 17% 54%;              /* amethyst */
 
-    --radius: 0.5rem;
+    --radius: 0.625rem;               /* 10px — radius-control */
+
+    /* Séries de gráfico (shadcn chart / Tremor Raw) */
+    --chart-1: 259 17% 54%;
+    --chart-2: 151 25% 60%;
+    --chart-3: 346 32% 67%;
+    --chart-4: 43 47% 66%;
+    --chart-5: 216 35% 48%;
 
     /* BullCapital Design System Tokens */
-    --void: #0C0F15;
-    --surface: #12161F;
+    --void: #0D0B14;
+    --surface: #1A1625;
     --surface-quiet: #090C12;
     --starlight: #e2def0;
     --amethyst: #82759F;

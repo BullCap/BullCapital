@@ -47,9 +47,7 @@ export default function RootLayout({
         <PWARegister />
         <RootProvider
           theme={{
-            defaultTheme: 'dark',
-            forcedTheme: 'dark',
-            enableSystem: false,
+            enabled: false,
           }}
           search={{
             options: {

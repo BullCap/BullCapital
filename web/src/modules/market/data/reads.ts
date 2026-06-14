@@ -308,6 +308,8 @@ export async function getDbIndicators(): Promise<
     selic = await selectSeries('SELIC')
   }
   const inflation = await selectSeries('IPCA')
+  const cdi = await selectSeries('CDI')
+  const igpm = await selectSeries('IGP-M')
 
   const fmt = (d: Date) =>
     `${String(d.getUTCDate()).padStart(2, '0')}/${String(d.getUTCMonth() + 1).padStart(2, '0')}/${d.getUTCFullYear()}`
@@ -316,6 +318,8 @@ export async function getDbIndicators(): Promise<
   return {
     selic: selic.map((r) => ({ date: fmt(r.date), value: r.value })),
     inflation: inflation.map((r) => ({ date: fmt(r.date), value: r.value })),
+    cdi: cdi.map((r) => ({ date: fmt(r.date), value: r.value })),
+    igpm: igpm.map((r) => ({ date: fmt(r.date), value: r.value })),
     updatedAt: updatedAt ? updatedAt.toISOString() : null,
     isStale: !updatedAt || updatedAt.toISOString().slice(0, 10) < new Date().toISOString().slice(0, 10),
   }
